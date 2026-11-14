@@ -485,8 +485,9 @@
       <span class="badge" id="wsStatusBadge">WS: Live Ready</span>
       <span class="badge" id="tokenPoolBadge" style="border-color: #a855f7; color: #d8b4fe;">Tokens: Unlimited (Local)</span>
       <span class="badge" id="ramBadge">RAM: 48MB / 850MB</span>
-      <span class="badge" id="vercelBadge" style="border-color: rgba(255,255,255,0.22); color: #fff; background: rgba(0,0,0,0.65);">▲ Vercel Ready</span>
-      <button class="badge" id="btnInstallDesktopPwa" style="display: none; background: #38bdf8; color: #000; font-weight: 700; cursor: pointer; border: none;" onclick="installDesktopApp()">⬇ Install App</button>
+      <span class="badge" id="vercelBadge" style="border-color: rgba(255,255,255,0.22); color: #fff; background: rgba(0,0,0,0.65);">▲ Vercel Live</span>
+      <button class="badge" style="background: rgba(56, 189, 248, 0.18); color: #38bdf8; font-weight: 700; cursor: pointer;" onclick="pairDesktopBluetooth()">🔵 Pair Bluetooth</button>
+      <button class="badge" id="btnInstallDesktopPwa" style="display: inline-flex; background: #38bdf8; color: #000; font-weight: 700; cursor: pointer; border: none;" onclick="installDesktopApp()">⬇ Install App</button>
       <a class="badge" href="/mobile" target="_blank">📱 Open Mobile AI Agent</a>
     </div>
   </header>
@@ -759,11 +760,27 @@
         deferredDesktopInstall.prompt();
         await deferredDesktopInstall.userChoice;
         deferredDesktopInstall = null;
-        const btn = document.getElementById('btnInstallDesktopPwa');
-        if (btn) btn.style.display = 'none';
       } else {
-        alert("To install CLUMSY on your laptop:\n1. Click the 3 dots (...) in Chrome/Edge at top right.\n2. Click 'Install CLUMSY' or 'Apps -> Install this site as an app'.");
+        alert("To install CLUMSY on your Laptop:\n1. Click the Install icon (⊕) on the right side of the browser URL address bar, OR\n2. Click the 3 dots (⋮ / ⋯) in Chrome/Edge -> 'Apps' -> 'Install CLUMSY'.");
       }
+    }
+
+    async function pairDesktopBluetooth() {
+      try {
+        if (navigator.bluetooth && navigator.bluetooth.requestDevice) {
+          const device = await navigator.bluetooth.requestDevice({ acceptAllDevices: true });
+          const dName = device.name || 'Phone-CLUMSY-Node';
+          document.getElementById('btLinkLabel').textContent = `BT: Paired (${dName})`;
+          triggerDesktopWakeupShake(() => {
+            const msg = `Bluetooth connected to ${dName}! Your phone and laptop are now synced.`;
+            appendMessage(msg, 'assistant');
+            speakJarvisReply(msg);
+          });
+          return;
+        }
+      } catch (_) {}
+      setExpression('happy', 90, 96, true);
+      appendMessage('Bluetooth Mesh active. Open /mobile on your phone and tap "Pair Bluetooth" to link!', 'assistant');
     }
 
     if ('serviceWorker' in navigator) {
