@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DESKBOT // J.A.R.V.I.S. — Holographic Fusion Command Center</title>
+  <meta name="theme-color" content="#050a14" />
+  <link rel="manifest" href="/manifest.json" />
+  <title>CLUMSY: your everyday AI — Holographic Command Center</title>
   <script src="/robot3d.js"></script>
   <script src="/eyeballs.js"></script>
   <script src="/jarvis_hud.js"></script>
@@ -639,6 +641,10 @@
     let wsConn = null;
     let activeRecognition = null;
     let isDictating = false;
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
 
     if (window.DeskbotEyeballEngine) {
       eyeballEngine = new window.DeskbotEyeballEngine(document.getElementById('eyeballCanvas'));

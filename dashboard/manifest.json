@@ -1,11 +1,11 @@
 {
-  "name": "DESKBOT // J.A.R.V.I.S. Deskbot Eyes",
-  "short_name": "Deskbot Eyes",
-  "description": "Stream-Flow AI Companion & Living Deskbot Eyeballs synced to your Laptop Hub",
-  "start_url": "/mobile",
+  "name": "CLUMSY: your everyday AI",
+  "short_name": "CLUMSY",
+  "description": "CLUMSY: your everyday AI - Offline Desktop Robot & Personal AI Assistant Hub",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#02050c",
-  "theme_color": "#0284c7",
+  "background_color": "#050a14",
+  "theme_color": "#38bdf8",
   "orientation": "any",
   "icons": [
     {
