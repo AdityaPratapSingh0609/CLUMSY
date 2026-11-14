@@ -558,6 +558,7 @@
     async function probeLaptopHub() {
       try {
         const res = await fetch(`${getApiBase()}/api/handshake`);
+        if (!res.ok) throw new Error('standalone');
         const info = await res.json();
         document.getElementById('hubDetectStatus').textContent = 'ONLINE & RECOGNIZED';
         connectMobileWebSocket(info.ws_port);
@@ -854,6 +855,7 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ query, alternatives, execute_os: true, source_device: 'mobile_app' }),
         });
+        if (!res.ok) throw new Error('standalone');
         const data = await res.json();
         const spokenText = data.spoken_tts || data.response || 'Done!';
         const finalRx = data.eye_reaction || localIntent.reaction || 'happy';
@@ -861,7 +863,7 @@
         setMobileReaction(finalRx, 90, 96);
         speakOnPhone(spokenText, finalRx);
       } catch (_) {
-        const fallbackReply = `Got it! Executing "${query}" for you right now.`;
+        const fallbackReply = localIntent.spoken || `On it! Executing "${query}" for you right now.`;
         document.getElementById('jarvisVoiceCaption').textContent = fallbackReply;
         setMobileReaction(localIntent.reaction || 'happy', 90, 96);
         speakOnPhone(fallbackReply, localIntent.reaction || 'happy');
