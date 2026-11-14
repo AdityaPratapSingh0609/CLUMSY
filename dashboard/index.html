@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#050a14" />
-  <link rel="manifest" href="/manifest.json" />
+  <link rel="manifest" href="/manifest-desktop.json" />
   <title>CLUMSY: your everyday AI — Holographic Command Center</title>
   <script src="/robot3d.js"></script>
   <script src="/eyeballs.js"></script>
@@ -402,6 +402,7 @@
       <span class="badge" id="wsStatusBadge">WS: Live Ready</span>
       <span class="badge" id="tokenPoolBadge" style="border-color: #a855f7; color: #d8b4fe;">Tokens: Unlimited (Local)</span>
       <span class="badge" id="ramBadge">RAM: 48MB / 850MB</span>
+      <button class="badge" id="btnInstallDesktopPwa" style="display: none; background: #38bdf8; color: #000; font-weight: 700; cursor: pointer; border: none;" onclick="installDesktopApp()">⬇ Install App</button>
       <a class="badge" href="/mobile" target="_blank">📱 Open Mobile AI Agent</a>
     </div>
   </header>
@@ -641,6 +642,26 @@
     let wsConn = null;
     let activeRecognition = null;
     let isDictating = false;
+
+    let deferredDesktopInstall = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredDesktopInstall = e;
+      const btn = document.getElementById('btnInstallDesktopPwa');
+      if (btn) btn.style.display = 'inline-block';
+    });
+
+    async function installDesktopApp() {
+      if (deferredDesktopInstall) {
+        deferredDesktopInstall.prompt();
+        await deferredDesktopInstall.userChoice;
+        deferredDesktopInstall = null;
+        const btn = document.getElementById('btnInstallDesktopPwa');
+        if (btn) btn.style.display = 'none';
+      } else {
+        alert("To install CLUMSY on your laptop:\n1. Click the 3 dots (...) in Chrome/Edge at top right.\n2. Click 'Install CLUMSY' or 'Apps -> Install this site as an app'.");
+      }
+    }
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(() => {});

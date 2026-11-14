@@ -2,7 +2,7 @@
   "name": "CLUMSY: your everyday AI",
   "short_name": "CLUMSY",
   "description": "CLUMSY: your everyday AI - Offline Desktop Robot & Personal AI Assistant Hub",
-  "start_url": "/",
+  "start_url": "/mobile",
   "display": "standalone",
   "background_color": "#050a14",
   "theme_color": "#38bdf8",

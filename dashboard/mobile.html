@@ -311,7 +311,7 @@
       </div>
       <div style="display: flex; gap: 6px;">
         <button class="rx-btn" onclick="toggleDrawer()">📋 Studio / Notes</button>
-        <button class="rx-btn" id="btnInstallPwa" style="display: none;" onclick="installMobileApp()">⬇ Install App</button>
+        <button class="rx-btn" id="btnInstallPwa" onclick="installMobileApp()">⬇ Install App</button>
       </div>
     </div>
 
@@ -396,10 +396,18 @@
     });
 
     async function installMobileApp() {
-      if (!deferredInstallPrompt) return;
-      deferredInstallPrompt.prompt();
-      await deferredInstallPrompt.userChoice;
-      deferredInstallPrompt = null;
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        await deferredInstallPrompt.userChoice;
+        deferredInstallPrompt = null;
+      } else {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        if (isIOS) {
+          alert("To install CLUMSY on iPhone:\n1. Tap the Share button at the bottom of Safari (square with arrow pointing up).\n2. Scroll down and tap 'Add to Home Screen' (➕).\n3. Tap 'Add' at the top right!");
+        } else {
+          alert("To install CLUMSY:\n1. Tap the three dots (⋮) in your mobile browser menu.\n2. Tap 'Install app' or 'Add to Home screen'.");
+        }
+      }
     }
 
     async function requestBackgroundWakeLock() {
