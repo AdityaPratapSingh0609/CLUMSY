@@ -209,7 +209,9 @@ def parse_voice_intent(transcript: str) -> Optional[Dict[str, Any]]:
             "spoken_response": "Right away, sir. Starting your show on Disney+ Hotstar on your connected laptop.",
         }
 
-    if any(k in low for k in ("netflix", "watch on netflix", "play on netflix", "stream on netflix")):
+    is_conceptual = bool(re.search(r"\b(who|what\s+is|what\s+are|why|how|explain|tell\s+me\s+about|history\s+of|difference\s+between)\b", low))
+
+    if not is_conceptual and ("netflix" in low and any(v in low for v in ("watch", "play", "stream", "open", "launch", "start", "find"))):
         return {
             "category": "interplatform",
             "tool": "interplatform_hub",
@@ -236,7 +238,7 @@ def parse_voice_intent(transcript: str) -> Optional[Dict[str, Any]]:
             "spoken_response": "Right away, sir. Starting that on Spotify on your connected laptop.",
         }
 
-    if any(k in low for k in ("amazon", "buy on amazon", "shop on amazon", "search amazon", "order on amazon")):
+    if not is_conceptual and ("amazon" in low and any(v in low for v in ("buy", "shop", "order", "search", "open", "purchase", "browse"))):
         return {
             "category": "interplatform",
             "tool": "interplatform_hub",
@@ -245,18 +247,21 @@ def parse_voice_intent(transcript: str) -> Optional[Dict[str, Any]]:
             "spoken_response": "Certainly, sir. Opening Amazon on your laptop and searching for your requested item.",
         }
 
-    # 2. 3D Model Rendering & Blender Bridge
-    if any(
+    # 2. 3D Model Rendering & Blender Bridge (require modeling intent or compound 3D artifact noun)
+    if not is_conceptual and any(
         k in low
         for k in (
-            "3d",
-            "blender",
-            "mesh",
-            "wireframe",
+            "3d model",
+            "3d bridge",
+            "3d drone",
+            "3d building",
+            "render 3d",
+            "blender model",
             "openscad",
             "model rendering",
             "render a model",
             "make a model",
+            "render a 3d",
         )
     ):
         return {

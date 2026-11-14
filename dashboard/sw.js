@@ -1,4 +1,4 @@
-const CACHE_NAME = "deskbot-eyes-v12";
+const CACHE_NAME = "deskbot-eyes-v13";
 const ASSETS = ["/", "/index.html", "/mobile", "/mobile.html", "/eyeballs.js", "/clumsy_brain.js", "/manifest.json"];
 
 self.addEventListener("install", (event) => {
@@ -29,6 +29,6 @@ self.addEventListener("fetch", (event) => {
         }
         return networkResp;
       })
-      .catch(() => caches.match(event.request))
+      .catch(() => caches.match(event.request, { ignoreSearch: true }))
   );
 });

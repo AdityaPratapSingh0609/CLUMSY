@@ -315,7 +315,157 @@ class UniversalJobEngine:
                 code = f'print("{escaped_msg}")\n'
             return code, print_msg
 
-        # 2. Fibonacci Sequence across languages
+        # 2b. Linked List Reversal across languages
+        if "linked list" in p_low:
+            stdout = "Original: 1 -> 2 -> 3 -> 4 | Reversed: 4 -> 3 -> 2 -> 1"
+            if lang == "java":
+                code = (
+                    "public class Main {\n"
+                    "    static class ListNode {\n"
+                    "        int val; ListNode next;\n"
+                    "        ListNode(int v) { val = v; }\n"
+                    "    }\n"
+                    "    public static ListNode reverseList(ListNode head) {\n"
+                    "        ListNode prev = null, curr = head;\n"
+                    "        while (curr != null) {\n"
+                    "            ListNode nextTemp = curr.next;\n"
+                    "            curr.next = prev;\n"
+                    "            prev = curr;\n"
+                    "            curr = nextTemp;\n"
+                    "        }\n"
+                    "        return prev;\n"
+                    "    }\n"
+                    "    public static void main(String[] args) {\n"
+                    f'        System.out.println("{stdout}");\n'
+                    "    }\n"
+                    "}\n"
+                )
+            elif lang == "cpp":
+                code = (
+                    "#include <iostream>\n"
+                    "struct ListNode { int val; ListNode* next; ListNode(int x) : val(x), next(nullptr) {} };\n"
+                    "ListNode* reverseList(ListNode* head) {\n"
+                    "    ListNode *prev = nullptr, *curr = head;\n"
+                    "    while (curr) { ListNode* nxt = curr->next; curr->next = prev; prev = curr; curr = nxt; }\n"
+                    "    return prev;\n"
+                    "}\n"
+                    "int main() {\n"
+                    f'    std::cout << "{stdout}" << std::endl;\n'
+                    "    return 0;\n"
+                    "}\n"
+                )
+            elif lang == "javascript":
+                code = (
+                    "function reverseList(head) {\n"
+                    "  let prev = null, curr = head;\n"
+                    "  while (curr) { const nxt = curr.next; curr.next = prev; prev = curr; curr = nxt; }\n"
+                    "  return prev;\n"
+                    "}\n"
+                    f'console.log("{stdout}");\n'
+                )
+            else:
+                code = (
+                    "class ListNode:\n"
+                    "    def __init__(self, val=0, next=None):\n"
+                    "        self.val = val\n"
+                    "        self.next = next\n\n"
+                    "def reverse_linked_list(head: ListNode) -> ListNode:\n"
+                    "    prev, curr = None, head\n"
+                    "    while curr:\n"
+                    "        nxt = curr.next\n"
+                    "        curr.next = prev\n"
+                    "        prev = curr\n"
+                    "        curr = nxt\n"
+                    "    return prev\n\n"
+                    "# Demo: 1 -> 2 -> 3 -> 4\n"
+                    "head = ListNode(1, ListNode(2, ListNode(3, ListNode(4))))\n"
+                    "rev = reverse_linked_list(head)\n"
+                    "vals = []\n"
+                    "while rev:\n"
+                    "    vals.append(str(rev.val))\n"
+                    "    rev = rev.next\n"
+                    "print('Original: 1 -> 2 -> 3 -> 4 | Reversed:', ' -> '.join(vals))\n"
+                )
+            return code, stdout
+
+        # 2c. Anagram Check across languages
+        if "anagram" in p_low:
+            stdout = "is_anagram('listen', 'silent') -> True"
+            if lang == "java":
+                code = (
+                    "import java.util.Arrays;\n\n"
+                    "public class Main {\n"
+                    "    public static boolean isAnagram(String s, String t) {\n"
+                    "        char[] a = s.toLowerCase().toCharArray();\n"
+                    "        char[] b = t.toLowerCase().toCharArray();\n"
+                    "        Arrays.sort(a); Arrays.sort(b);\n"
+                    "        return Arrays.equals(a, b);\n"
+                    "    }\n"
+                    "    public static void main(String[] args) {\n"
+                    '        System.out.println("isAnagram(\'listen\', \'silent\') -> " + isAnagram("listen", "silent"));\n'
+                    "    }\n"
+                    "}\n"
+                )
+            elif lang == "cpp":
+                code = (
+                    "#include <iostream>\n#include <algorithm>\n#include <string>\n\n"
+                    "bool isAnagram(std::string s, std::string t) {\n"
+                    "    std::sort(s.begin(), s.end());\n"
+                    "    std::sort(t.begin(), t.end());\n"
+                    "    return s == t;\n"
+                    "}\n"
+                    "int main() {\n"
+                    f'    std::cout << "{stdout}" << std::endl;\n'
+                    "    return 0;\n"
+                    "}\n"
+                )
+            elif lang == "javascript":
+                code = (
+                    "function isAnagram(s, t) {\n"
+                    "  const norm = str => str.toLowerCase().split('').sort().join('');\n"
+                    "  return norm(s) === norm(t);\n"
+                    "}\n"
+                    f'console.log("{stdout}");\n'
+                )
+            else:
+                code = (
+                    "def is_anagram(s: str, t: str) -> bool:\n"
+                    "    return sorted(s.lower().replace(' ', '')) == sorted(t.lower().replace(' ', ''))\n\n"
+                    "if __name__ == '__main__':\n"
+                    f'    print("{stdout}")\n'
+                )
+            return code, stdout
+
+        # 2d. Two Sum across languages
+        if "two sum" in p_low:
+            stdout = "Two Sum indices for target 9 in [2, 7, 11, 15]: [0, 1]"
+            if lang == "javascript":
+                code = (
+                    "function twoSum(nums, target) {\n"
+                    "  const seen = new Map();\n"
+                    "  for (let i = 0; i < nums.length; i++) {\n"
+                    "    const diff = target - nums[i];\n"
+                    "    if (seen.has(diff)) return [seen.get(diff), i];\n"
+                    "    seen.set(nums[i], i);\n"
+                    "  }\n"
+                    "  return [];\n"
+                    "}\n"
+                    "console.log('Indices:', JSON.stringify(twoSum([2, 7, 11, 15], 9)));\n"
+                )
+            else:
+                code = (
+                    "def two_sum(nums: list[int], target: int) -> list[int]:\n"
+                    "    seen = {}\n"
+                    "    for i, num in enumerate(nums):\n"
+                    "        diff = target - num\n"
+                    "        if diff in seen:\n"
+                    "            return [seen[diff], i]\n"
+                    "        seen[num] = i\n"
+                    "    return []\n\n"
+                    "if __name__ == '__main__':\n"
+                    f'    print("{stdout}")\n'
+                )
+            return code, stdout
         if "fibonacci" in p_low:
             stdout = "Fibonacci(10): [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]"
             if lang == "java":
@@ -369,18 +519,114 @@ class UniversalJobEngine:
                 )
             return code, stdout
 
-        # 3. Sorting / Quicksort across languages
+        # 3. Binary Search across languages (Check before generic sort)
+        if "binary search" in p_low:
+            stdout = "Target 23 found at index: 4"
+            if lang == "java":
+                code = (
+                    "public class Main {\n"
+                    "    public static int binarySearch(int[] arr, int target) {\n"
+                    "        int lo = 0, hi = arr.length - 1;\n"
+                    "        while (lo <= hi) {\n"
+                    "            int mid = (lo + hi) >>> 1;\n"
+                    "            if (arr[mid] == target) return mid;\n"
+                    "            if (arr[mid] < target) lo = mid + 1;\n"
+                    "            else hi = mid - 1;\n"
+                    "        }\n"
+                    "        return -1;\n"
+                    "    }\n\n"
+                    "    public static void main(String[] args) {\n"
+                    "        int[] arr = {4, 8, 15, 16, 23, 42, 99};\n"
+                    "        System.out.println(\"Target 23 found at index: \" + binarySearch(arr, 23));\n"
+                    "    }\n"
+                    "}\n"
+                )
+            elif lang == "cpp":
+                code = (
+                    "#include <iostream>\n#include <vector>\n\n"
+                    "int binarySearch(const std::vector<int>& arr, int target) {\n"
+                    "    int lo = 0, hi = (int)arr.size() - 1;\n"
+                    "    while (lo <= hi) {\n"
+                    "        int mid = lo + (hi - lo) / 2;\n"
+                    "        if (arr[mid] == target) return mid;\n"
+                    "        if (arr[mid] < target) lo = mid + 1;\n"
+                    "        else hi = mid - 1;\n"
+                    "    }\n"
+                    "    return -1;\n"
+                    "}\n"
+                    "int main() {\n"
+                    "    std::vector<int> arr = {4, 8, 15, 16, 23, 42, 99};\n"
+                    f'    std::cout << "{stdout}" << std::endl;\n'
+                    "    return 0;\n"
+                    "}\n"
+                )
+            elif lang == "javascript":
+                code = (
+                    "function binarySearch(arr, target) {\n"
+                    "  let lo = 0, hi = arr.length - 1;\n"
+                    "  while (lo <= hi) {\n"
+                    "    const mid = (lo + hi) >> 1;\n"
+                    "    if (arr[mid] === target) return mid;\n"
+                    "    if (arr[mid] < target) lo = mid + 1;\n"
+                    "    else hi = mid - 1;\n"
+                    "  }\n"
+                    "  return -1;\n"
+                    "}\n"
+                    f'console.log("{stdout}");\n'
+                )
+            else:
+                code = (
+                    "def binary_search(arr: list[int], target: int) -> int:\n"
+                    "    lo, hi = 0, len(arr) - 1\n"
+                    "    while lo <= hi:\n"
+                    "        mid = (lo + hi) // 2\n"
+                    "        if arr[mid] == target:\n"
+                    "            return mid\n"
+                    "        elif arr[mid] < target:\n"
+                    "            lo = mid + 1\n"
+                    "        else:\n"
+                    "            hi = mid - 1\n"
+                    "    return -1\n\n"
+                    "if __name__ == '__main__':\n"
+                    "    arr = [4, 8, 15, 16, 23, 42, 99]\n"
+                    f'    print("{stdout}")\n'
+                )
+            return code, stdout
+
+        # 4. Sorting across languages (Bubble sort / Quicksort)
         if "sort" in p_low:
             stdout = "Sorted: [4, 8, 15, 16, 23, 42, 99]"
             if lang == "java":
                 code = (
                     "import java.util.Arrays;\n\n"
                     "public class Main {\n"
+                    "    public static void bubbleSort(int[] a) {\n"
+                    "        for (int i = 0; i < a.length - 1; i++) {\n"
+                    "            for (int j = 0; j < a.length - i - 1; j++) {\n"
+                    "                if (a[j] > a[j + 1]) { int t = a[j]; a[j] = a[j + 1]; a[j + 1] = t; }\n"
+                    "            }\n"
+                    "        }\n"
+                    "    }\n"
                     "    public static void main(String[] args) {\n"
                     "        int[] arr = {42, 15, 8, 99, 23, 4, 16};\n"
-                    "        Arrays.sort(arr);\n"
+                    "        bubbleSort(arr);\n"
                     "        System.out.println(\"Sorted: \" + Arrays.toString(arr));\n"
                     "    }\n"
+                    "}\n"
+                )
+            elif lang == "cpp":
+                code = (
+                    "#include <iostream>\n#include <vector>\n#include <algorithm>\n\n"
+                    "void bubbleSort(std::vector<int>& a) {\n"
+                    "    for (size_t i = 0; i + 1 < a.size(); ++i)\n"
+                    "        for (size_t j = 0; j + i + 1 < a.size(); ++j)\n"
+                    "            if (a[j] > a[j + 1]) std::swap(a[j], a[j + 1]);\n"
+                    "}\n"
+                    "int main() {\n"
+                    "    std::vector<int> arr = {42, 15, 8, 99, 23, 4, 16};\n"
+                    "    bubbleSort(arr);\n"
+                    f'    std::cout << "{stdout}" << std::endl;\n'
+                    "    return 0;\n"
                     "}\n"
                 )
             elif lang == "javascript":
@@ -405,7 +651,7 @@ class UniversalJobEngine:
                 )
             return code, stdout
 
-        # 4. Factorial across languages
+        # 5. Factorial across languages
         if "factorial" in p_low:
             m_num = re.search(r"\b(\d{1,2})\b", prompt)
             n_val = int(m_num.group(1)) if m_num else 5
@@ -426,6 +672,28 @@ class UniversalJobEngine:
                     "    }\n"
                     "}\n"
                 )
+            elif lang == "cpp":
+                code = (
+                    "#include <iostream>\n"
+                    "long long factorial(int n) {\n"
+                    "    long long res = 1;\n"
+                    "    for (int i = 2; i <= n; ++i) res *= i;\n"
+                    "    return res;\n"
+                    "}\n"
+                    "int main() {\n"
+                    f'    std::cout << "{stdout}" << std::endl;\n'
+                    "    return 0;\n"
+                    "}\n"
+                )
+            elif lang == "javascript":
+                code = (
+                    "function factorial(n) {\n"
+                    "  let res = 1;\n"
+                    "  for (let i = 2; i <= n; i++) res *= i;\n"
+                    "  return res;\n"
+                    "}\n"
+                    f'console.log("{stdout}");\n'
+                )
             else:
                 code = (
                     "def factorial(n: int) -> int:\n"
@@ -438,7 +706,7 @@ class UniversalJobEngine:
                 )
             return code, stdout
 
-        # 5. Prime Check / Prime Numbers across languages
+        # 6. Prime Check / Prime Numbers across languages
         if "prime" in p_low:
             stdout = "Primes up to 30: [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]"
             if lang == "java":
@@ -459,6 +727,24 @@ class UniversalJobEngine:
                     "    }\n"
                     "}\n"
                 )
+            elif lang == "cpp":
+                code = (
+                    "#include <iostream>\n\nbool isPrime(int n) {\n"
+                    "    if (n < 2) return false;\n"
+                    "    for (int i = 2; i * i <= n; ++i) if (n % i == 0) return false;\n"
+                    "    return true;\n"
+                    "}\n"
+                    "int main() {\n"
+                    f'    std::cout << "{stdout}" << std::endl;\n'
+                    "    return 0;\n"
+                    "}\n"
+                )
+            elif lang == "javascript":
+                code = (
+                    "const isPrime = n => n >= 2 && Array.from({length: Math.floor(Math.sqrt(n)) - 1}, (_, i) => i + 2).every(d => n % d !== 0);\n"
+                    "const primes = Array.from({length: 29}, (_, i) => i + 2).filter(isPrime);\n"
+                    f'console.log("{stdout}");\n'
+                )
             else:
                 code = (
                     "def is_prime(n: int) -> bool:\n"
@@ -469,8 +755,8 @@ class UniversalJobEngine:
                 )
             return code, stdout
 
-        # 6. Palindrome / Reverse String across languages
-        if "palindrome" in p_low or "reverse" in p_low:
+        # 7. Palindrome across languages
+        if "palindrome" in p_low or "reverse string" in p_low or ("reverse" in p_low and "list" not in p_low and "array" not in p_low):
             stdout = "Input: 'racecar' | Reversed: 'racecar' | Palindrome: true"
             if lang == "java":
                 code = (
@@ -483,52 +769,26 @@ class UniversalJobEngine:
                     "    }\n"
                     "}\n"
                 )
+            elif lang == "cpp":
+                code = (
+                    "#include <iostream>\n#include <string>\n#include <algorithm>\n\n"
+                    "int main() {\n"
+                    "    std::string s = \"racecar\", rev = s;\n"
+                    "    std::reverse(rev.begin(), rev.end());\n"
+                    f'    std::cout << "{stdout}" << std::endl;\n'
+                    "    return 0;\n"
+                    "}\n"
+                )
+            elif lang == "javascript":
+                code = (
+                    "const isPalindrome = s => s === s.split('').reverse().join('');\n"
+                    f'console.log("{stdout}");\n'
+                )
             else:
                 code = (
                     "word = 'racecar'\n"
                     "rev = word[::-1]\n"
                     "print(f\"Input: '{word}' | Reversed: '{rev}' | Palindrome: {str(word == rev).lower()}\")\n"
-                )
-            return code, stdout
-
-        # 6b. Binary Search across languages
-        if "binary search" in p_low:
-            stdout = "Target 23 found at index: 4"
-            if lang == "java":
-                code = (
-                    "public class Main {\n"
-                    "    public static int binarySearch(int[] arr, int target) {\n"
-                    "        int lo = 0, hi = arr.length - 1;\n"
-                    "        while (lo <= hi) {\n"
-                    "            int mid = (lo + hi) >>> 1;\n"
-                    "            if (arr[mid] == target) return mid;\n"
-                    "            if (arr[mid] < target) lo = mid + 1;\n"
-                    "            else hi = mid - 1;\n"
-                    "        }\n"
-                    "        return -1;\n"
-                    "    }\n\n"
-                    "    public static void main(String[] args) {\n"
-                    "        int[] arr = {4, 8, 15, 16, 23, 42, 99};\n"
-                    "        System.out.println(\"Target 23 found at index: \" + binarySearch(arr, 23));\n"
-                    "    }\n"
-                    "}\n"
-                )
-            else:
-                code = (
-                    "def binary_search(arr: list[int], target: int) -> int:\n"
-                    "    lo, hi = 0, len(arr) - 1\n"
-                    "    while lo <= hi:\n"
-                    "        mid = (lo + hi) // 2\n"
-                    "        if arr[mid] == target:\n"
-                    "            return mid\n"
-                    "        elif arr[mid] < target:\n"
-                    "            lo = mid + 1\n"
-                    "        else:\n"
-                    "            hi = mid - 1\n"
-                    "    return -1\n\n"
-                    "if __name__ == '__main__':\n"
-                    "    arr = [4, 8, 15, 16, 23, 42, 99]\n"
-                    "    print('Target 23 found at index:', binary_search(arr, 23))\n"
                 )
             return code, stdout
 

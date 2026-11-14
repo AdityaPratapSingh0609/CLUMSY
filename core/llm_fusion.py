@@ -273,12 +273,14 @@ class JarvisFusionModel:
     def _is_coding_request(q_low: str) -> bool:
         if any(x in q_low for x in ("open vs code", "open vscode", "launch vs code", "launch vscode")):
             return False
+        # Do not hijack conceptual questions about programming languages
+        if re.search(r"\b(what\s+is|who\s+created|who\s+invented|history\s+of|explain|tell\s+me\s+about)\s+(?:python|java|c\+\+|cpp|c|javascript|html)\b", q_low):
+            return False
         return bool(
             re.search(
-                r"\b(write\s+.*code|write\s+a\s+program|write\s+a\s+script|write\s+a\s+function|java\s+code|python\s+code|c\+\+\s+code|javascript\s+code|html\s+code|in\s+java|in\s+python|in\s+c\+\+|in\s+javascript|code\s+to\s+|program\s+to\s+|script\s+to\s+|fibonacci|quicksort|binary\s+search|bubble\s+sort)\b",
+                r"\b(write\s+(?:a\s+|an\s+)?(?:python|java|c\+\+|cpp|c|javascript|js|html)?\s*(?:code|program|script|function|class|algorithm|method)|code\s+(?:to|for|in)|function\s+(?:to|for|in)|program\s+(?:to|for|in)|implement\s+(?:a\s+)?|in\s+python|in\s+java|in\s+c\+\+|in\s+javascript|java\s+code|python\s+code|c\+\+\s+code|js\s+code|html\s+code|quicksort|merge\s+sort|bubble\s+sort|binary\s+search|fibonacci|factorial|palindrome|linked\s+list|anagram|two\s+sum|dijkstra)\b",
                 q_low,
             )
-            or re.search(r"\b(code|java|python|c\+\+|cpp|javascript|html)\b", q_low)
         )
 
     def generate(self, user_query: str) -> Dict[str, Any]:
@@ -383,9 +385,14 @@ class JarvisFusionModel:
             spoken = "I'm wide awake and ready, sir! What can I do for you?"
             servo = {"pan": clamp_servo(90), "tilt": clamp_servo(98)}
 
-        # Record conversation turn in rolling memory (cap at 20 messages)
+        # Record conversation turn in rolling memory (avoid poisoning with tool announcements)
         self.history.append({"role": "user", "content": user_query})
-        self.history.append({"role": "assistant", "content": spoken})
+        recorded_assistant = spoken
+        if "I have written and executed your" in spoken:
+            recorded_assistant = f"Executed {lang} code for: {user_query}"
+        elif "rendered the interactive 3D" in spoken:
+            recorded_assistant = f"Rendered 3D CAD model for: {user_query}"
+        self.history.append({"role": "assistant", "content": recorded_assistant})
         if len(self.history) > 20:
             self.history = self.history[-20:]
 

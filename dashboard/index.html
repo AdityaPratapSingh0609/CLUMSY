@@ -9,7 +9,7 @@
   <script src="/robot3d.js"></script>
   <script src="/eyeballs.js"></script>
   <script src="/jarvis_hud.js"></script>
-  <script src="/clumsy_brain.js?v=12"></script>
+  <script src="/clumsy_brain.js?v=13"></script>
   <style>
     :root {
       --bg: #131314;
@@ -1288,9 +1288,15 @@
         const smart = await window.clumsyBrain.processSmartQuery(text);
         appendMessage(smart.response, 'assistant', smart.engine);
         if (smart.spoken_tts) speakJarvisReply(smart.spoken_tts);
-        if (smart.job_artifact) renderJobArtifact(smart.job_artifact);
+        if (smart.job_artifact) {
+          renderJobArtifact(smart.job_artifact);
+        } else if (jobStudioOutput) {
+          jobStudioOutput.style.display = 'none';
+          jobStudioOutput.innerHTML = '';
+        }
         setExpression((smart.robot_state || 'happy').toLowerCase(), 90, 96, false);
         logStreamEvent('CLUMSY_AI', `${smart.engine || 'Offline Core'} -> ${(smart.robot_state || 'HAPPY').toUpperCase()}`);
+        updateHeroUserName();
       }
     }
 
@@ -1332,25 +1338,88 @@
       if (!box) return;
       const pre = box.querySelector('pre');
       if (pre && navigator.clipboard) {
-        navigator.clipboard.writeText(pre.innerText).catch(() => {});
+        const raw = pre.getAttribute('data-raw-code');
+        const code = raw ? decodeURIComponent(raw) : pre.innerText;
+        navigator.clipboard.writeText(code).catch(() => {});
       }
       btn.textContent = '✓ Copied';
       setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
     }
 
     function formatMarkdown(raw) {
-      let html = escapeHtml(raw);
-      html = html.replace(
-        /```([a-zA-Z0-9_+]*)\n([\s\S]*?)```/g,
-        (_, lang, code) =>
-          `<div style="margin:10px 0;background:#18191b;border:1px solid rgba(168,85,247,0.38);border-radius:14px;padding:12px;"><div style="display:flex;justify-content:space-between;align-items:center;font-size:10.5px;color:#c084fc;font-weight:700;margin-bottom:6px;"><span>${(lang || 'CODE').toUpperCase()}</span><button onclick="copyDesktopCode(this)" style="font-size:10px;padding:2px 8px;border-radius:6px;">Copy</button></div><pre style="font-family:Consolas,monospace;font-size:12.5px;color:#e3e3e3;white-space:pre-wrap;margin:0;">${code.trim()}</pre></div>`
-      );
-      html = html.replace(/^###\s+(.+)$/gm, '<div style="font-size:15px;font-weight:700;color:#fff;margin-top:10px;margin-bottom:4px;">$1</div>');
-      html = html.replace(/\*\*([^*]+)\*\*/g, '<b style="color:#fff;">$1</b>');
-      html = html.replace(/`([^`]+)`/g, '<code style="background:#282a2c;padding:2px 6px;border-radius:5px;font-family:monospace;font-size:12.5px;color:#e9d5ff;">$1</code>');
-      html = html.replace(/\nSTDOUT:/g, '<br><b style="color:#34d399;">STDOUT:</b>');
-      html = html.replace(/\n/g, '<br>');
-      return html;
+      if (!raw) return '';
+      const codeBlocks = [];
+      let s = String(raw).replace(/```([a-zA-Z0-9_+]*)\n([\s\S]*?)```/g, (_, lang, code) => {
+        const idx = codeBlocks.length;
+        codeBlocks.push({ lang: lang || 'CODE', code: code.trim() });
+        return `@@@CODE_${idx}@@@`;
+      });
+
+      // Escape non-code HTML
+      s = escapeHtml(s);
+
+      // Markdown Tables
+      s = s.replace(/((?:\|[^\n]+\|\r?\n)+)/g, (match) => {
+        const rows = match.trim().split(/\r?\n/).filter(r => r.includes('|'));
+        if (rows.length < 2) return match;
+        let html = '<div style="overflow-x:auto;margin:10px 0;"><table style="border-collapse:collapse;width:100%;font-size:13px;border:1px solid rgba(168,85,247,0.3);border-radius:8px;">';
+        let isHeader = true;
+        for (const row of rows) {
+          if (/^\|(?:\s*:?-+:?\s*\|)+$/.test(row.trim())) {
+            isHeader = false;
+            continue;
+          }
+          const cells = row.split('|').slice(1, -1);
+          html += '<tr>';
+          for (const c of cells) {
+            const tag = isHeader ? 'th' : 'td';
+            const style = isHeader ? 'background:rgba(168,85,247,0.18);color:#c084fc;padding:8px 12px;font-weight:700;border:1px solid rgba(168,85,247,0.25);' : 'padding:7px 12px;border:1px solid rgba(255,255,255,0.08);color:#e3e3e3;';
+            html += `<${tag} style="${style}">${c.trim()}</${tag}>`;
+          }
+          html += '</tr>';
+          if (isHeader) isHeader = false;
+        }
+        html += '</table></div>';
+        return html;
+      });
+
+      // LaTeX math: $...$
+      s = s.replace(/\$([^\$\n]+)\$/g, '<span style="font-family:\'Cambria Math\',serif;color:#a5f3fc;font-style:italic;">$1</span>');
+
+      // Headings
+      s = s.replace(/^#\s+(.+)$/gm, '<div style="font-size:18px;font-weight:700;color:#fff;margin-top:14px;margin-bottom:6px;">$1</div>');
+      s = s.replace(/^##\s+(.+)$/gm, '<div style="font-size:16px;font-weight:700;color:#e9d5ff;margin-top:12px;margin-bottom:5px;">$1</div>');
+      s = s.replace(/^###\s+(.+)$/gm, '<div style="font-size:15px;font-weight:700;color:#c084fc;margin-top:10px;margin-bottom:4px;">$1</div>');
+
+      // Bold, inline code, stdout, bullets
+      s = s.replace(/\*\*([^*]+)\*\*/g, '<b style="color:#fff;">$1</b>');
+      s = s.replace(/`([^`]+)`/g, '<code style="background:#282a2c;padding:2px 6px;border-radius:5px;font-family:monospace;font-size:12.5px;color:#e9d5ff;">$1</code>');
+      s = s.replace(/\nSTDOUT:/g, '<br><b style="color:#34d399;">STDOUT:</b>');
+      s = s.replace(/^[-•*]\s+(.+)$/gm, '<div style="margin-left:14px;display:flex;gap:6px;"><span>•</span><span>$1</span></div>');
+      s = s.replace(/\n/g, '<br>');
+
+      // Reinsert code blocks
+      s = s.replace(/@@@CODE_(\d+)@@@/g, (_, idx) => {
+        const item = codeBlocks[Number(idx)];
+        const rawAttr = encodeURIComponent(item.code);
+        const displaySafe = escapeHtml(item.code);
+        return `<div style="margin:10px 0;background:#18191b;border:1px solid rgba(168,85,247,0.38);border-radius:14px;padding:12px;"><div style="display:flex;justify-content:space-between;align-items:center;font-size:10.5px;color:#c084fc;font-weight:700;margin-bottom:6px;"><span>${escapeHtml(item.lang.toUpperCase())}</span><button onclick="copyDesktopCode(this)" style="font-size:10px;padding:2px 8px;border-radius:6px;">Copy</button></div><pre data-raw-code="${rawAttr}" style="font-family:Consolas,monospace;font-size:12.5px;color:#e3e3e3;white-space:pre-wrap;margin:0;">${displaySafe}</pre></div>`;
+      });
+
+      return s;
+    }
+
+    function updateHeroUserName() {
+      const hero = document.getElementById('geminiHero');
+      if (!hero) return;
+      const h1 = hero.querySelector('h1');
+      if (!h1) return;
+      const name = (window.clumsyBrain && window.clumsyBrain.userName) || localStorage.getItem('clumsy_user_name');
+      if (name) {
+        h1.textContent = `Hi, ${name}`;
+      } else {
+        h1.textContent = "Hi, I'm CLUMSY-7X Omni";
+      }
     }
 
     function appendMessage(text, sender, engineLabel) {
@@ -1494,6 +1563,8 @@
       sendQuery(true, alts || [corrected]);
     }
 
+    let desktopWebSpeechBlocked = false;
+
     function toggleVoiceInput() {
       const btn = document.getElementById('btnVoiceDictation');
       const voiceBar = document.getElementById('liveVoiceTranscriptBar');
@@ -1518,6 +1589,7 @@
       btn.textContent = '🎙️ Listening (Mute)';
       setExpression('listening', 90, 105);
       if (voiceBar) voiceBar.textContent = '🎙️ Microphone active — speak naturally or say "Hey Clumsy"...';
+      startLiveMicAnalyzer();
 
       if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1541,11 +1613,17 @@
           }
           processDesktopSpeechTranscript(rawTranscript, resultItem.isFinal, alts);
         };
-        activeRecognition.onerror = () => {};
+        activeRecognition.onerror = (ev) => {
+          const err = ev && ev.error ? String(ev.error) : '';
+          if (err === 'network' || err === 'not-allowed') {
+            desktopWebSpeechBlocked = true;
+            if (voiceBar) voiceBar.textContent = '🎙️ Web speech unavailable (Brave); offline hardware mic active...';
+          }
+        };
         activeRecognition.onend = () => {
-          if (isDictating) {
+          if (isDictating && !desktopWebSpeechBlocked) {
             setTimeout(() => {
-              if (isDictating) {
+              if (isDictating && !desktopWebSpeechBlocked) {
                 try { activeRecognition.start(); } catch (_) {}
               }
             }, 250);
@@ -1555,9 +1633,9 @@
       }
     }
 
-    // Poll native Windows Offline Hardware Mic (/api/voice/poll) when browser SpeechRecognition is not active (e.g. Electron WebView)!
+    // Poll native Windows Offline Hardware Mic (/api/voice/poll) across all browsers (including Brave)!
     async function pollDesktopHardwareMic() {
-      if (isSpeakingDesktopTTS || isDictating) return;
+      if (isSpeakingDesktopTTS) return;
       try {
         const c = new AbortController();
         const t = setTimeout(() => c.abort(), 1500);

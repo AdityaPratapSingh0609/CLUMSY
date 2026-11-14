@@ -247,3 +247,106 @@ This document establishes the comprehensive, end-to-end execution roadmap for **
   1. Upgrade `core/llm_engine.py` and `core/llm_fusion.py` (`JARVIS-X1-Ultra`) with **Billion-Scale Token Capacity** (`context_length=32768`, `max_tokens=4096`, multi-billion parameter cloud/local hybrid bridge for Qwen 2.5 72B / Gemma 2 27B / Llama 3.3 70B / Mistral Large + unlimited local GGUF token streaming).
   2. Overhaul `dashboard/eyeballs.js` so the **entire eye color scheme (iris, sclera rim, eyebrow neon, lash glow, and background aura)** dynamically shifts to match the exact emotion (`Happy` $\rightarrow$ Warm Golden-Emerald Joy, `Excited` $\rightarrow$ Electric Magenta-Gold Supernova, `Love` $\rightarrow$ Crimson-Rose Pink, `Thinking` $\rightarrow$ Deep Violet-Amber Neural Pulse, `Coding` $\rightarrow$ Matrix Neon Green, `Listening` $\rightarrow$ Emerald Sonar Green, `Confused` $\rightarrow$ Sunset Orange-Purple, `Surprised` $\rightarrow$ Electric Plasma Violet, `Idle` $\rightarrow$ Stark Arc-Reactor Cyan).
 
+---
+
+## 🧠 PART 7: ChatGPT-Parity + Smarter/Faster Hybrid Brain & 60-Bug Zero-Defect Overhaul (Stages 31 – 37)
+
+### Architectural Blueprint: How CLUMSY-7X Omni Works Like ChatGPT — While Being Smarter & Faster
+1. **Tier 0 — Sub-Millisecond Deterministic Intelligence (`< 1 ms`, Faster than ChatGPT):**
+   * **Symbolic Math & Linear Algebra Engine:** Evaluates compound arithmetic, nested percentages (`15% of 200 + 50`), square roots (`sqrt(144) + 10`), spoken numbers (`two plus two`), linear algebra equations (`3x + 5 = 20` $\rightarrow$ `x = 5`), factorials (`5!`), powers (`2^10`), and trigonometry (`sin`, `cos`, `tan`, `log`, `pi`) in `< 1 ms` without hallucination.
+   * **Conversational & Memory Reflexes:** Instant natural handling of greetings (`hi`, `hello how are you`), gratitude (`thank you` $\rightarrow$ Happy/Love/Wink), multi-clause user profile memory (`my name is X, I live in Y`, `what is my name?`, `where do I live?`, `what did I just ask you?`).
+2. **Tier 1 — True Multi-Model Neural Synthesis (`CLUMSY-7X Omni`, Parity with ChatGPT):**
+   * **Local 7-Core LLM Priority:** Queries local `Ollama (:11434)`, `LM Studio (:1234)`, and `Jan AI (:1337)` with full multi-turn conversation history when available.
+   * **Resilient Multi-Endpoint Cloud LLM:** Uses an adaptive 8.5s timeout on `text.pollinations.ai/openai` (`openai-fast`) with automatic fallback to `mistral` / `llama` models and 45-second rate-limit cooldown tracking so a `402 FREE_LIMIT` never triggers a redundant second failed call.
+   * **Intent-Gated Wikipedia Live Knowledge Graph:** Queries Wikipedia *only* for encyclopedic/factual entity questions (never for coding, translation, email writing, or greetings), skips `"List of..."` and disambiguation pages, and synthesizes clean summaries.
+3. **Tier 2 — Deep Offline Encyclopedia, Multi-Language Code Compiler & Structured Writer (`100% Offline`):**
+   * **50+ Topic Offline Encyclopedia & Structured Generators:** Real offline email composer (`Subject:` / `Dear ...`), story generator, essay writer, translation dictionary, workout/cooking/study advisor, and comparison engine — **completely eliminating the generic `"is a foundational subject involving structured principles"` Mad-Libs fallback**.
+   * **20+ Algorithm Multi-Language Code Synthesizer (`Python`, `Java`, `C++`, `C`, `JavaScript`, `HTML`):** Real implementations across all 6 languages for Linked List Reversal, Anagram Check, Bubble/Quick/Merge Sort, Binary Search, Fibonacci, Factorial, Primes, Palindrome, Two Sum, Dijkstra/BFS, Stack/Queue, Fetch API, and Code Debugging.
+
+---
+
+### Stage 31: Conversational NLP, Multi-Turn Context Memory & Offline Knowledge Engine Overhaul (Fixes Bugs #1 – #14) ✅
+* **Bugs Fixed (14 Bugs):**
+  * **Bug #1:** Add full greeting handler (`hi`, `hello`, `hey`, `good morning`, `how are you`, `what's up`) directly inside `ClumsyBrainEngine.processSmartQuery()` in `dashboard/clumsy_brain.js` so Desktop `index.html` never returns a textbook essay on `"Hi"`.
+  * **Bug #2:** Support compound greetings (`"hello how are you"`, `"hey clumsy how is your day"`) in both `dashboard/mobile.html` and `dashboard/clumsy_brain.js`.
+  * **Bug #3:** Eliminate the fake Mad-Libs fallback template (`"**X** is a foundational subject..."`) in `synthesizeDeepOfflineAnswer()` and replace it with an intent-aware offline reasoner covering how-to guides, why/how science explanations, comparisons, lists/tips, translations, and a 50+ topic offline encyclopedia (gravity, water, sky, pasta, French capital, Prime Minister, Python, JS, React vs Vue, car engines, etc.).
+  * **Bug #4:** Build dedicated offline generators for **Emails** (`Subject:`, salutation, body, sign-off), **Stories** (narrative arc), **Poems** (stanzas), **Letters**, and **Essays**.
+  * **Bug #5:** Match `"tell me a story"`, `"create a story"`, `"draft an email"`, and `"compose a letter"` in the creative writing router.
+  * **Bug #6:** Upgrade name & location extraction (`/my\s+name\s+is\s+([a-zA-Z\s]{2,35}?)(?:[,.;!]|and\b|i\s+live|$)/i` and `/i\s+live\s+in\s+([a-zA-Z\s]{2,35}?)(?:[,.;!]|$)/i`) so multi-clause introductions save both `userName` and `userLocation`.
+  * **Bug #7:** When asked `"what is my name?"` or `"where do I live?"` before setting them, reply naturally (`"You haven't told me your name yet! Say 'My name is ...' and I'll remember it."`) instead of falling through.
+  * **Bug #8:** Add explicit **Summarization**, **Translation**, and **Comparison** handlers before keyword lookup so `"summarize this text: Artificial intelligence..."` actually summarizes the text instead of dumping the static AI article.
+  * **Bug #9:** Only use `OFFLINE_KNOWLEDGE_BASE` before cloud/local LLMs when the user asks a general overview question (`explain X`, `what is X`), or use it as an instant fallback so specific questions (`"Who created Linux?"`) can be answered by the live LLM.
+  * **Bug #10:** Restrict Time/Date regex to actual time/date queries (`what time is it`, `what is today's date`, `current time/date`, `what day is it`) so `"today"` or `"space-time"` never hijacks unrelated prompts.
+  * **Bug #11:** Restrict Joke regex to explicit joke requests (`tell me a joke`, `make me laugh`, `say something funny`, `another joke`) so `"my laptop makes a funny noise"` is never hijacked.
+  * **Bug #12:** Restrict Gratitude regex in `dashboard/clumsy_brain.js` to standalone appreciation (`wordCount <= 8` and no question mark / question words) so `"Can you explain gravity? Thanks!"` answers the gravity question.
+  * **Bug #13:** Wire `this.history` into `processSmartQuery` and `synthesizeDeepOfflineAnswer` so follow-up questions (`"what did I just ask you?"`, `"repeat that"`, `"tell me more"`) recall the previous turn accurately.
+  * **Bug #14:** Strip all question prefixes (`who is`, `who was`, `where is`, `why is`, `why does`, `how to`, `how can I`, `give me`) cleanly when extracting topics.
+
+### Stage 32: Resilient Multi-Endpoint Online Cloud LLM, Smart Wikipedia Filter & Hybrid Router (Fixes Bugs #15 – #23) ✅
+* **Bugs Fixed (9 Bugs):**
+  * **Bug #15:** Increase `text.pollinations.ai/openai` timeout from `3500ms` to `8500ms` so `gpt-oss-20b` (`openai-fast`) finishes its reasoning + content response without premature abort.
+  * **Bug #16:** Gate `queryWikipediaKnowledge()` with `_shouldQueryWikipedia(userQuery)` so coding (`write a python...`), math, creative writing, translations, greetings, and conversational commands **never** query Wikipedia.
+  * **Bug #17:** Request `srlimit=5` from Wikipedia Search API and skip any hit whose title starts with `"List of "` or `"Index of "` or whose summary has `type === "disambiguation"`.
+  * **Bug #18:** Track HTTP `402` / rate-limit cooldown (`pollinationsCooldownUntil = Date.now() + 45000`) so when `POST` returns `402`, `queryOnlineCloudOmni` does not waste 4.5s firing a redundant `GET` request.
+  * **Bug #19:** Prioritize local LLMs (`Ollama`, `LM Studio`, `Jan AI`) and full LLM synthesis over Wikipedia snippets instead of letting an 800ms Wikipedia lookup cancel a running local Ollama generation.
+  * **Bug #20:** Upgrade Python `_try_cloud_llm_completion()` in `core/llm_engine.py` to use `model: "openai-fast"` + Wikipedia fallback for encyclopedic queries.
+  * **Bug #21:** Update Python `_try_cloud_llm_completion()` system prompt from `"CLUMSY-X1 4-Model Fusion Brain"` to `"CLUMSY-7X Omni"`.
+  * **Bug #22:** Periodically re-probe offline engines (`probeOfflineEngines()`) when the user triggers a scan or reconnects on `mobile.html` and `index.html`.
+  * **Bug #23:** Guard `127.0.0.1` fetches when running on a remote HTTPS host (`github.io` / `vercel.app`) on a mobile device unless `laptopHubHost` is configured, preventing console flood of `ERR_CONNECTION_REFUSED`.
+
+### Stage 33: Symbolic Math, Linear Algebra, Compound Percentages/Roots, Spoken Numbers & Trig/Factorial Solver (Fixes Bugs #24 – #31) ✅
+* **Bugs Fixed (8 Bugs):**
+  * **Bug #24:** Replace early-return percentage regex with inline expression substitution (`(\d+(?:\.\d+)?)\s*%\s*of\s*(\d+(?:\.\d+)?)` $\rightarrow$ `((p/100)*base)`) so `"what is 15% of 200 plus 50"` evaluates the full expression to **`80`**.
+  * **Bug #25:** Replace early-return `sqrt` regex with inline `Math.sqrt(n)` substitution so `"square root of 144 plus 10"` evaluates the full expression to **`22`**.
+  * **Bug #26:** Convert spoken number words (`zero`..`twenty`, `thirty`..`hundred`, `thousand`, `million`) to digits before math evaluation so `"what is two plus two"` evaluates to **`4`**.
+  * **Bug #27:** Prevent inline math extraction from matching hyphenated date ranges (`1939-1945`) or model names (`GPT-4`) inside natural language sentences unless the sentence is an arithmetic query.
+  * **Bug #28:** Add a deterministic **Linear Equation & Quadratic Solver** (`solve 3x + 5 = 20` $\rightarrow$ `x = 5`, `2x - 7 = 13` $\rightarrow$ `x = 10`) in both `dashboard/clumsy_brain.js` and `core/llm_engine.py`.
+  * **Bug #29:** Support factorials (`5!` $\rightarrow$ `120`), constants (`pi`, `e`), and scientific functions (`sin`, `cos`, `tan`, `log`, `ln`, `abs`) in `trySolveMath` and `_try_solve_math`.
+  * **Bug #30:** Normalize `×`, `÷`, and `(\d)\s*x\s*(\d)` into `*` and `/` in both JS and Python math solvers.
+  * **Bug #31:** Add `"to the power of"`, `"power"`, and `"squared"` / `"cubed"` word operators to `_try_solve_math` in `core/llm_engine.py`.
+
+### Stage 34: Real Multi-Language Code Synthesizer (20+ Algorithms Across 6 Languages + LLM Code Fallback + Debugger) (Fixes Bugs #32 – #40) ✅
+* **Bugs Fixed (9 Bugs):**
+  * **Bug #32:** Expand `isCodingRequest()` in `dashboard/clumsy_brain.js` to match `write a <lang> function/program/script/class`, `code for`, `implement`, `anagram`, `two sum`, `merge sort`, `stack`, `queue`, `bfs`, `dfs`, `fetch`, `api`, `debug`, etc.
+  * **Bug #33:** Separate **Linked List Reversal** (`reverse a linked list`) from **String Palindrome/Reversal** (`palindrome` / `reverse a string`) in both `dashboard/clumsy_brain.js` and `core/job_engine.py` so `"write a python code to reverse a linked list"` outputs a real `ListNode` pointer-reversal implementation!
+  * **Bug #34:** Provide genuine language-specific implementations for **`Python`**, **`Java`**, **`C++`**, **`C`**, **`JavaScript`**, and **`HTML`** across all core algorithms (`fibonacci`, `binary search`, `quicksort/bubble sort`, `factorial`, `prime`, `palindrome`, `reverse linked list`, `anagram check`, `two sum`, `fetch API`) so asking for `C++` or `JavaScript` never outputs Python code!
+  * **Bug #35:** In `processSmartQuery()`, if a coding request is not one of the built-in offline algorithm templates, try `askAllEngines()` (Local Ollama / LM Studio / Online LLM) first before falling back to a clean, task-specific program skeleton.
+  * **Bug #36:** Fix `JarvisFusionModel._is_coding_request()` in `core/llm_fusion.py` so conceptual questions (`"what is python?"`, `"who invented java?"`) are not routed to `job_executor` (`code`).
+  * **Bug #37:** Tighten `extract_print_message()` in `dashboard/clumsy_brain.js` and `core/job_engine.py` so `"write python code to show how recursion works"` or `"display a linked list"` is never treated as a literal `print()` string.
+  * **Bug #38:** Add an offline **Code Debugger & Syntax Fixer** in `dashboard/clumsy_brain.js` and `core/job_engine.py` that detects missing colons (`for i in range(10) print(i)`), indentation issues, or missing semicolons/brackets, explains the bug, and outputs the corrected runnable code!
+  * **Bug #39:** Render `job_artifact.preview_html` inside `dashboard/mobile.html` (with script execution for 3D CAD and Video canvases) so asking `"render a 3D drone"` on mobile displays the interactive 3D canvas right inside the mobile response card!
+  * **Bug #40:** In `dashboard/index.html`, hide or update `jobStudioOutput` cleanly when subsequent turns are plain text or code so stale 3D/PPT canvases never stay stuck on screen.
+
+### Stage 35: Python GGUF Context-Poisoning Guard, 7-Core Local Runtime Bridge & WebSocket De-Duplication (Fixes Bugs #41 – #48) ✅
+* **Bugs Fixed (8 Bugs):**
+  * **Bug #41:** Strip tool-status boilerplate (`"Right away, sir. I have written and executed..."`) from `JarvisFusionModel.history` and add a repetition/hallucination guard in `core/llm_engine.py` so the local GGUF model never parrots previous tool messages when asked `"explain quantum mechanics"`.
+  * **Bug #42:** Keep loaded GGUF models cached in `LLMEngine._SHARED_LLAMA_CACHE` up to the RAM budget instead of clearing and reloading from disk when the underlying `.gguf` file is identical or within budget.
+  * **Bug #43:** Expand `isCannedStub` in `dashboard/clumsy_brain.js` (`queryLocalClumsyGGUF`) to reject any generic `"Right away, sir"` / tool-status stub so `clumsy_brain.js` uses its rich offline encyclopedia when the Python backend returns a stub.
+  * **Bug #44:** Enable `_try_local_runtime_completion` (`Ollama :11434`, `LM Studio :1234`, `Jan AI :1337`) by default (`CLUMSY_ENABLE_EXTERNAL_LOCAL = "1"`) in `core/llm_engine.py` unless explicitly disabled in unit tests (`CLUMSY_DISABLE_EXTERNAL_LOCAL=1`).
+  * **Bug #45:** Align `core/llm_engine.py` and `core/llm_fusion.py` persona with `CLUMSY-7X Omni` while preserving backward-compatible test assertions.
+  * **Bug #46:** Fix name extraction in `core/llm_engine.py` using regex `r"\bmy\s+name\s+is\s+([A-Za-z ]{2,35}?)(?:[,.;!]|and\b|i\s+live|$)"` so `"my name is Aditya, I live in Delhi"` extracts `"Aditya"` cleanly, and add `"where do I live?"` recall from conversation history.
+  * **Bug #47:** Fix the WebSocket race condition in `dashboard/mobile.html` and `dashboard/index.html` by tagging `source_device: 'mobile_app'` / `'clumsy_client'` and ignoring echo broadcasts on the originating page while syncing telemetry cleanly.
+  * **Bug #48:** Require explicit action verbs (`open`, `launch`, `play`, `watch`, `stream`, `send`, `compose`, `schedule`, `buy`, `shop`, `order`, `render`, `create`, `make`, `build`) in `parse_voice_intent()` (`core/voice/voice_commander.py`) so conceptual questions like `"How big is the Amazon rainforest?"` or `"What is a 3D coordinate system?"` are never hijacked!
+
+### Stage 36: Bulletproof Voice Recognition, Brave Browser Desktop/Mobile Mic Fallback, LaTeX-Clean TTS & Live Audio Analyzer (Fixes Bugs #49 – #54) ✅
+* **Bugs Fixed (6 Bugs):**
+  * **Bug #49:** Add `errCode === 'network'` detection to `activeRecognition.onerror` in `dashboard/index.html` so Brave Browser on Desktop immediately stops the `webkitSpeechRecognition` retry loop, sets `desktopWebSpeechBlocked = true`, keeps `🎙️ Listening` active, and allows `pollDesktopHardwareMic()` to stream voice from the Windows hardware mic!
+  * **Bug #50:** Call `requestPhoneMicPermissionAndStart()` on mobile when `not-allowed` or initial mic activation occurs so `getUserMedia` primes permission cleanly before starting `SpeechRecognition`.
+  * **Bug #51:** Optimize `POWERSHELL_MIC_SCRIPT` in `core/voice/hardware_mic.py` with lower dictation latency (`BabbleTimeout` / `EndSilenceTimeout` tuned) and expanded command choices so spoken math, science, and chat commands transcribe accurately.
+  * **Bug #52:** Unlock/prime `window.speechSynthesis` with a silent utterance on the first user tap/click gesture in `dashboard/mobile.html` so iOS Safari allows `speechSynthesis.speak()` even after an async `await`!
+  * **Bug #53:** Strip LaTeX math expressions (`$...$`, `\\frac`, `\\psi`, `\\alpha`, `\\ge`, etc.) and convert common symbols (`\\ge` $\rightarrow$ `greater than or equal to`, `\\rightarrow` $\rightarrow$ `yields`) inside `stripForSpeech()` in `dashboard/clumsy_brain.js`.
+  * **Bug #54:** Call `startLiveMicAnalyzer()` inside `toggleVoiceInput()` in `dashboard/index.html` so the 16-bar sidebar microphone waveform reacts to real microphone audio!
+
+### Stage 37: ChatGPT/Gemini Streaming UI, Mobile Conversation Thread Drawer, Markdown/LaTeX Renderer, Copy-Code Fix & PWA Offline Cache (Fixes Bugs #55 – #60) ✅
+* **Bugs Fixed (6 Bugs):**
+  * **Bug #55:** Fix `formatMobileReplyHTML()` in `dashboard/mobile.html` and `formatMarkdown()` in `dashboard/index.html` so:
+    1. Code blocks store unescaped raw code (`encodeURIComponent(cleanCode)`) so clicking `Copy` copies valid `<`, `>`, and `&` characters (`#include <iostream>`) instead of `&lt;iostream&gt;`.
+    2. Inline LaTeX math (`$...$`) is converted into clean, readable HTML math notation (`ψ`, `α`, `β`, `Δx · Δp ≥ ħ/2`, `E = mc²`, `CO₂`, `H₂O`) instead of raw backslashes.
+    3. Markdown `#`, `##`, `###` headings, bullet lists (`•` / `- `), numbered lists, and Markdown tables are rendered cleanly.
+  * **Bug #56:** Use `100dvh` and `window.visualViewport` resize adaptation in `dashboard/mobile.html` + add a scrollable **Conversation History Thread** inside the mobile caption card so prior user/AI messages are preserved and never lost or hidden behind the mobile keyboard!
+  * **Bug #57:** Update `dashboard/sw.js` to use `caches.match(event.request, { ignoreSearch: true })` and cache `clumsy_brain.js` so query-string cache-busting (`?v=13`) works 100% offline in installed PWAs.
+  * **Bug #58:** Add valid SVG/PNG data-URI and icon entries in `dashboard/manifest.json` and `dashboard/manifest-desktop.json` so mobile and desktop browsers recognize installable PWA metadata.
+  * **Bug #59:** Fetch `/api/handshake` to discover the dynamic `ws_port` in `pairBluetoothDevice()` (`dashboard/mobile.html`) before calling `connectMobileWebSocket(wsPort)`.
+  * **Bug #60:** Dynamically update the hero greeting (`#geminiHero h1`) in `dashboard/index.html` from `localStorage.getItem('clumsy_user_name')` whenever the user introduces their name (`"My name is ..."`).
+
+

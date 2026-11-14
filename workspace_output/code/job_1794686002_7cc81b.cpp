@@ -1,0 +1,12 @@
+def quicksort(arr: list[int]) -> list[int]:
+    if len(arr) <= 1:
+        return arr
+    pivot = arr[len(arr) // 2]
+    left = [x for x in arr if x < pivot]
+    mid = [x for x in arr if x == pivot]
+    right = [x for x in arr if x > pivot]
+    return quicksort(left) + mid + quicksort(right)
+
+if __name__ == '__main__':
+    sample = [42, 15, 8, 99, 23, 4, 16]
+    print('Sorted:', quicksort(sample))

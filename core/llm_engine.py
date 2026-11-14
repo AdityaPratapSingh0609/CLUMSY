@@ -313,6 +313,8 @@ class LLMEngine:
         history: Optional[List[Dict[str, str]]] = None,
     ) -> Optional[str]:
         """Queries local offline LLM servers (Ollama :11434, LM Studio :1234, Jan AI :1337) if running."""
+        if os.environ.get("CLUMSY_DISABLE_EXTERNAL_LOCAL", "0") == "1":
+            return None
         import urllib.request
 
         sys_msg = (
@@ -365,63 +367,95 @@ class LLMEngine:
         user_prompt: str,
         history: Optional[List[Dict[str, str]]] = None,
     ) -> Optional[str]:
-        """Queries the 20B Reasoning LLM when CLUMSY_LIVE_LLM=1 for rich ChatGPT-grade answers."""
-        if os.environ.get("CLUMSY_LIVE_LLM", "0") != "1":
+        """Queries resilient online cloud LLMs when online for rich ChatGPT-grade answers."""
+        if os.environ.get("CLUMSY_OFFLINE_ONLY", "0") == "1":
             return None
-        try:
-            import urllib.request
+        import urllib.request
 
-            messages: List[Dict[str, str]] = [
-                {
-                    "role": "system",
-                    "content": (
-                        "You are CLUMSY (powered by the CLUMSY-X1 4-Model Fusion Brain: Qwen 3.5 + Gemma 4 + Llama 4 + Mistral). "
-                        "Answer the user's question accurately, concisely, and helpfully like ChatGPT and JARVIS combined. "
-                        "Never brag about internal model names."
-                    ),
-                }
-            ]
-            if history:
-                for turn in history[-6:]:
-                    messages.append({"role": turn.get("role", "user"), "content": str(turn.get("content", ""))})
-            messages.append({"role": "user", "content": user_prompt})
-            req = urllib.request.Request(
-                "https://text.pollinations.ai/openai",
-                data=json.dumps({"model": "openai", "messages": messages, "temperature": 0.35}).encode("utf-8"),
-                headers={"Content-Type": "application/json", "User-Agent": "CLUMSY-X1/2.0"},
-                method="POST",
-            )
-            with urllib.request.urlopen(req, timeout=8.0) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-                reply = data.get("choices", [{}])[0].get("message", {}).get("content", "")
-                if reply and str(reply).strip():
-                    return str(reply).strip()
-        except Exception:
-            pass
+        messages: List[Dict[str, str]] = [
+            {
+                "role": "system",
+                "content": (
+                    "You are CLUMSY-7X Omni, an everyday AI assistant and living robot companion. "
+                    "Answer the user's question accurately, concisely, and helpfully like ChatGPT. "
+                    "Use clean markdown formatting and never mention other AI brand identities."
+                ),
+            }
+        ]
+        if history:
+            for turn in history[-6:]:
+                messages.append({"role": turn.get("role", "user"), "content": str(turn.get("content", ""))})
+        messages.append({"role": "user", "content": user_prompt})
+
+        endpoints = [
+            ("https://text.pollinations.ai/openai", {"model": "openai", "messages": messages, "temperature": 0.35}),
+            ("https://gen.pollinations.ai/v1/chat/completions", {"model": "openai-fast", "messages": messages, "temperature": 0.35}),
+        ]
+
+        for url, payload in endpoints:
+            try:
+                req = urllib.request.Request(
+                    url,
+                    data=json.dumps(payload).encode("utf-8"),
+                    headers={"Content-Type": "application/json", "User-Agent": "CLUMSY-7X/2.0"},
+                    method="POST",
+                )
+                with urllib.request.urlopen(req, timeout=6.5) as resp:
+                    data = json.loads(resp.read().decode("utf-8"))
+                    choices = data.get("choices")
+                    if choices and isinstance(choices, list):
+                        reply = choices[0].get("message", {}).get("content", "")
+                        if reply and str(reply).strip():
+                            return str(reply).strip()
+            except Exception:
+                continue
         return None
 
     @staticmethod
     def _try_solve_math(prompt: str) -> Optional[str]:
-        """Deterministically evaluates arithmetic, percentages, and square roots."""
+        """Deterministically evaluates linear algebra, compound percentages, square roots, spoken numbers, and arithmetic."""
         import math
 
         low = (prompt or "").strip().lower()
-        m_pct = re.search(r"(\d+(?:\.\d+)?)\s*%\s*of\s*(\d+(?:\.\d+)?)", low)
-        if m_pct:
-            p, base = float(m_pct.group(1)), float(m_pct.group(2))
-            val = (p / 100.0) * base
-            return f"{p:g}% of {base:g} is {val:g}."
-        m_sqrt = re.search(r"(?:square\s+root\s+of|sqrt\s*\(?)\s*(\d+(?:\.\d+)?)\)?", low)
-        if m_sqrt:
-            n = float(m_sqrt.group(1))
-            return f"The square root of {n:g} is {math.sqrt(n):g}."
+
+        # 1. Linear Algebra Solver ("solve 3x + 5 = 20", "2x - 7 = 13", "4x = 28")
+        linear_match = re.search(
+            r"(?:solve|find\s+x\s+in|what\s+is\s+x\s+if|evaluate)?\s*([+-]?\s*\d*(?:\.\d+)?)\s*\*?\s*x\s*(?:([+-])\s*(\d+(?:\.\d+)?))?\s*=\s*([+-]?\s*\d+(?:\.\d+)?)",
+            low,
+            re.IGNORECASE,
+        )
+        if linear_match and "x^2" not in low and "x²" not in low:
+            raw_a = linear_match.group(1).replace(" ", "")
+            a = 1.0 if raw_a in ("", "+") else (-1.0 if raw_a == "-" else float(raw_a))
+            sign = -1.0 if linear_match.group(2) == "-" else 1.0
+            b = sign * float(linear_match.group(3)) if linear_match.group(3) else 0.0
+            c = float(linear_match.group(4).replace(" ", ""))
+            if a != 0.0 and not math.isnan(a) and not math.isnan(b) and not math.isnan(c):
+                x_val = round((c - b) / a, 6)
+                b_str = "" if b == 0.0 else (f" + {b:g}" if b > 0 else f" - {abs(b):g}")
+                a_str = "" if a == 1.0 else ("-" if a == -1.0 else f"{a:g}")
+                return f"Solving **{a_str}x{b_str} = {c:g}**:\n• Subtract {b:g} from both sides: ${a:g}x = {round(c - b, 6):g}$\n• Divide by {a:g}: **x = {x_val:g}**"
+
+        # 2. Convert spoken numbers to digits
+        spoken_map = {
+            r"\bzero\b": "0", r"\bone\b": "1", r"\btwo\b": "2", r"\bthree\b": "3",
+            r"\bfour\b": "4", r"\bfive\b": "5", r"\bsix\b": "6", r"\bseven\b": "7",
+            r"\beight\b": "8", r"\bnine\b": "9", r"\bten\b": "10", r"\beleven\b": "11",
+            r"\btwelve\b": "12", r"\btwenty\b": "20", r"\bthirty\b": "30",
+            r"\bforty\b": "40", r"\bfifty\b": "50", r"\bhundred\b": "100",
+        }
+        converted = low
+        for pat, digit in spoken_map.items():
+            converted = re.sub(pat, digit, converted)
+
+        # 3. Strip conversational prefixes
         normalized = re.sub(
             r"^(?:hey\s+clumsy|hi\s+clumsy|clumsy|please|can\s+you|could\s+you|would\s+you|tell\s+me|what\s+is|what's|whats|calculate|compute|solve|evaluate|find|answer)\s+",
             "",
-            low,
+            converted,
         )
         normalized = re.sub(
-            r"^(?:please|can\s+you|could\s+you|solve|calculate|compute|evaluate|what\s+is|what's)\s+",
+            r"^(?:please|can\s+you|could\s+you|solve|calculate|compute|evaluate|what\s+is|what's|the\s+value\s+of|the)\s+",
             "",
             normalized,
         )
@@ -429,21 +463,48 @@ class LLMEngine:
         normalized = re.sub(r"\bminus\b", "-", normalized)
         normalized = re.sub(r"\b(?:times|multiplied\s+by)\b", "*", normalized)
         normalized = re.sub(r"\b(?:divided\s+by|over)\b", "/", normalized)
-        normalized = re.sub(r"[?!.=]+$", "", normalized).strip()
-        m_expr = re.match(r"^([\d\s.+\-*/()^%]+)$", normalized) or re.search(
-            r"(\d+(?:\.\d+)?(?:\s*[+\-*/^%]\s*\d+(?:\.\d+)?)+)", low
-        )
-        if m_expr:
-            expr_str = m_expr.group(1).strip()
-            if any(c.isdigit() for c in expr_str) and any(op in expr_str for op in "+-*/^%"):
-                safe = expr_str.replace("^", "**")
-                if re.match(r"^[\d\s.+\-*/()%]+$", safe):
-                    try:
-                        val = eval(safe, {"__builtins__": {}}, {})
-                        if isinstance(val, (int, float)):
-                            return f"The result of {expr_str} is {round(val, 6):g}."
-                    except Exception:
-                        pass
+        normalized = re.sub(r"\b(?:to\s+the\s+power\s+of|power|raised\s+to)\b", "**", normalized)
+        normalized = re.sub(r"\bsquared\b", "**2", normalized)
+        normalized = re.sub(r"\bcubed\b", "**3", normalized)
+        normalized = re.sub(r"×", "*", normalized)
+        normalized = re.sub(r"÷", "/", normalized)
+        normalized = re.sub(r"(\d)\s*x\s*(\d)", r"\1 * \2", normalized)
+        # Strip trailing punctuation, preserving factorial exclamation marks after digits
+        normalized = re.sub(r"(?<!\d)[?!.=]+$", "", normalized).strip()
+        normalized = re.sub(r"[?.]+$", "", normalized).strip()
+
+        display_expr = normalized
+
+        # 4. Substitute compound percentages and square roots inline
+        eval_expr = re.sub(r"(\d+(?:\.\d+)?)\s*%\s*of\s*(\d+(?:\.\d+)?)", r"((\1 / 100.0) * \2)", normalized)
+        eval_expr = re.sub(r"(?:square\s+root\s+of|sqrt)\s*\(?\s*(\d+(?:\.\d+)?)\s*\)?", r"math.sqrt(\1)", eval_expr)
+        eval_expr = re.sub(r"\^", "**", eval_expr)
+
+        # 5. Handle factorials e.g. 5!
+        def _repl_fact(m: re.Match) -> str:
+            val = int(m.group(1))
+            return str(math.factorial(min(val, 20)))
+
+        eval_expr = re.sub(r"(\d+)\s*!", _repl_fact, eval_expr)
+
+        # 6. Safe math evaluation
+        safe_check = re.sub(r"math\.(?:sqrt|pi|sin|cos|tan)", "", eval_expr)
+        if any(c.isdigit() for c in safe_check) and re.match(r"^[\d\s.+\-*/()%]+$", safe_check):
+            has_math_intent = "!" in low or any(op in eval_expr for op in ("+", "*", "/", "%", "**", "math.sqrt")) or any(
+                k in low for k in ("solve", "calculate", "compute", "evaluate", "plus", "minus", "times", "divided", "root", "percent", "power", "factorial")
+            )
+            if has_math_intent:
+                try:
+                    res = eval(eval_expr, {"__builtins__": {}, "math": math}, {})
+                    if isinstance(res, (int, float)) and not math.isnan(res) and not math.isinf(res):
+                        rounded = round(res, 6)
+                        if re.match(r"^\d+(?:\.\d+)?\s*%\s*of\s*\d+(?:\.\d+)?$", display_expr):
+                            return f"{display_expr} is **{rounded:g}**."
+                        if re.match(r"^(?:square\s+root\s+of|sqrt)\s*\(?\s*\d+(?:\.\d+)?\s*\)?$", display_expr):
+                            return f"The {display_expr} is **{rounded:g}**."
+                        return f"**{display_expr} = {rounded:g}**"
+                except Exception:
+                    pass
         return None
 
     def generate(
@@ -636,14 +697,14 @@ class LLMEngine:
                 "spoken_response": f"Adjusting optical expression to {expr}, sir.",
             }
 
-        # Natural conversational responses for standalone greetings, identity, status, jokes, time, etc.
-        if re.match(r"^(?:hello|hi|hey|good\s+morning|good\s+evening|wake\s+up|you\s+there|are\s+you\s+there)(?:\s+clumsy|\s+jarvis|\s+there)?[\s!?.]*$", text):
+        # Natural conversational responses for greetings, identity, status, jokes, time, etc.
+        if re.match(r"^(?:hello|hi|hey|good\s+(?:morning|afternoon|evening)|wake\s+up|you\s+there|are\s+you\s+there|how\s+are\s+you|how\s+are\s+you\s+doing)(?:\s+(?:clumsy|jarvis|there|how\s+are\s+you|doing|today))*[\s!?.]*$", text) and len(text.split()) <= 8:
             return {
                 "thought": "Greeting user in J.A.R.V.I.S. persona.",
                 "tool_call": {"tool": "answer_query", "params": {"topic": "greeting"}},
                 "robot_expression": "happy",
                 "robot_servo": {"pan": 90, "tilt": 96},
-                "spoken_response": "At your service, sir. All systems are online and ready for your command.",
+                "spoken_response": "At your service, sir! All systems are online and ready for your command. How may I assist you today?",
             }
 
         if re.search(r"\b(who\s+are\s+you|what\s+are\s+you|what\s+is\s+your\s+name|your\s+name|introduce\s+yourself)\b", text):
@@ -710,30 +771,90 @@ class LLMEngine:
                 "spoken_response": "Always a pleasure, sir.",
             }
 
-        # Check if user introduced their name or asked about their name from conversation history
-        if "my name is" in text and not any(k in text for k in ("code", "java", "python", "c++", "print", "program", "script")):
-            name_part = raw_prompt.split("is", 1)[-1].strip(" .,!")
+        # Check if user introduced their name or location (e.g., "my name is Aditya Pratap Singh, and I live in Delhi")
+        name_match = re.search(r"\bmy\s+name\s+is\s+([a-zA-Z]+(?:\s+[a-zA-Z]+){0,3})(?=\s*(?:[,.;!]|and\b|i\b|from\b|$))", raw_prompt, re.IGNORECASE)
+        loc_match = re.search(r"\b(?:i\s+live\s+in|i\s+am\s+from|i'm\s+from|my\s+city\s+is)\s+([a-zA-Z]+(?:\s+[a-zA-Z]+){0,2})(?=\s*(?:[,.;!]|and\b|$))", raw_prompt, re.IGNORECASE)
+
+        if (name_match or loc_match) and not any(k in text for k in ("code", "java", "python", "c++", "print", "program", "script")):
+            user_name = " ".join(w.capitalize() for w in name_match.group(1).split()) if name_match else None
+            user_loc = " ".join(w.capitalize() for w in loc_match.group(1).split()) if loc_match else None
+            parts = []
+            if user_name:
+                parts.append(f"your name is **{user_name}**")
+            if user_loc:
+                parts.append(f"you live in **{user_loc}**")
+            summary = " and ".join(parts)
             return {
-                "thought": f"User introduced themselves as {name_part}.",
-                "tool_call": {"tool": "answer_query", "params": {"topic": "user_profile", "user_name": name_part}},
+                "thought": f"User profile updated: {summary}.",
+                "tool_call": {"tool": "answer_query", "params": {"topic": "user_profile", "user_name": user_name, "user_location": user_loc}},
                 "robot_expression": "happy",
                 "robot_servo": {"pan": 90, "tilt": 98},
-                "spoken_response": f"A pleasure, {name_part}. I have logged your profile into my active memory.",
+                "spoken_response": f"A pleasure, sir! I have logged in my memory that {summary}.",
             }
 
-        if any(w in text for w in ("what is my name", "who am i")) and history:
-            for turn in reversed(history):
-                c = turn.get("content", "")
-                m = re.search(r"my name is\s+([A-Za-z ]+)", c, re.IGNORECASE)
-                if m:
-                    remembered = m.group(1).strip()
+        if any(w in text for w in ("what is my name", "who am i", "do you know my name")):
+            if history:
+                for turn in reversed(history):
+                    c = turn.get("content", "")
+                    m = re.search(r"\bmy\s+name\s+is\s+([a-zA-Z]+(?:\s+[a-zA-Z]+){0,3})(?=\s*(?:[,.;!]|and\b|i\b|from\b|$))", c, re.IGNORECASE)
+                    if m:
+                        remembered = " ".join(w.capitalize() for w in m.group(1).split())
+                        return {
+                            "thought": "Recalling user's name from conversation memory.",
+                            "tool_call": {"tool": "answer_query", "params": {"topic": "memory_recall"}},
+                            "robot_expression": "happy",
+                            "robot_servo": {"pan": 90, "tilt": 96},
+                            "spoken_response": f"Your name is {remembered}, sir.",
+                        }
+            return {
+                "thought": "User name not yet set.",
+                "tool_call": {"tool": "answer_query", "params": {"topic": "memory_recall"}},
+                "robot_expression": "happy",
+                "robot_servo": {"pan": 90, "tilt": 96},
+                "spoken_response": "You haven't told me your name yet, sir! Just say 'My name is ...' and I'll remember it.",
+            }
+
+        if any(w in text for w in ("where do i live", "where am i from", "what is my city", "my location")):
+            if history:
+                for turn in reversed(history):
+                    c = turn.get("content", "")
+                    m = re.search(r"\b(?:i\s+live\s+in|i\s+am\s+from|i'm\s+from|my\s+city\s+is)\s+([a-zA-Z]+(?:\s+[a-zA-Z]+){0,2})(?=\s*(?:[,.;!]|and\b|$))", c, re.IGNORECASE)
+                    if m:
+                        remembered_loc = " ".join(w.capitalize() for w in m.group(1).split())
+                        return {
+                            "thought": "Recalling user's location from conversation memory.",
+                            "tool_call": {"tool": "answer_query", "params": {"topic": "memory_recall"}},
+                            "robot_expression": "happy",
+                            "robot_servo": {"pan": 90, "tilt": 96},
+                            "spoken_response": f"You live in {remembered_loc}, sir.",
+                        }
+            return {
+                "thought": "User location not yet set.",
+                "tool_call": {"tool": "answer_query", "params": {"topic": "memory_recall"}},
+                "robot_expression": "happy",
+                "robot_servo": {"pan": 90, "tilt": 96},
+                "spoken_response": "You haven't told me where you live yet, sir! Just say 'I live in ...' and I'll remember it.",
+            }
+
+        if any(w in text for w in ("what did i just ask you", "what did i just ask", "what was my last question", "what did i say")):
+            if history:
+                user_turns = [t for t in history if t.get("role") == "user"]
+                if user_turns:
+                    last_q = user_turns[-1].get("content", "")
                     return {
-                        "thought": "Recalling user's name from conversation memory.",
+                        "thought": "Recalling last user query from conversation memory.",
                         "tool_call": {"tool": "answer_query", "params": {"topic": "memory_recall"}},
                         "robot_expression": "happy",
                         "robot_servo": {"pan": 90, "tilt": 96},
-                        "spoken_response": f"You are {remembered}, sir.",
+                        "spoken_response": f"You just asked me: \"{last_q}\", sir.",
                     }
+            return {
+                "thought": "No previous query in memory.",
+                "tool_call": {"tool": "answer_query", "params": {"topic": "memory_recall"}},
+                "robot_expression": "happy",
+                "robot_servo": {"pan": 90, "tilt": 96},
+                "spoken_response": "We just started this session, so you haven't asked a previous question yet, sir.",
+            }
 
         return {
             "thought": f"Conversational response to: {raw_prompt}",
