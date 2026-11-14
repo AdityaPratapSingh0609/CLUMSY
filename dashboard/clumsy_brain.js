@@ -840,7 +840,7 @@
       // 1. Primary OpenAI-compatible reasoning endpoint
       try {
         const c = new AbortController();
-        const t = setTimeout(() => c.abort(), 9500);
+        const t = setTimeout(() => c.abort(), 14000);
         const res = await fetch(`${proto}//text.pollinations.ai/openai`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -939,7 +939,8 @@
       }
 
       // 3. Fallback to Local 4-Model GGUF Hub (:8080) when offline
-      if (this.providerStatus.local_hub || (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))) {
+      const isLocalHost = typeof window !== 'undefined' && window.location && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+      if (this.providerStatus.local_hub || isLocalHost) {
         const localData = await this.queryLocalClumsyGGUF(userQuery);
         if (localData && localData.response) {
           return { text: localData.response, engine: 'CLUMSY-7X Omni', rawData: localData };
