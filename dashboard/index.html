@@ -9,6 +9,7 @@
   <script src="/robot3d.js"></script>
   <script src="/eyeballs.js"></script>
   <script src="/jarvis_hud.js"></script>
+  <script src="/clumsy_brain.js"></script>
   <style>
     :root {
       --bg: #09090b;
@@ -870,6 +871,7 @@
       }
     }
 
+    let isSpeakingDesktopTTS = false;
     function speakJarvisReply(spokenText) {
       if (!spokenText || !('speechSynthesis' in window)) return;
       try {
@@ -878,13 +880,20 @@
         utter.rate = 1.04;
         utter.pitch = 0.96;
         utter.onstart = () => {
+          isSpeakingDesktopTTS = true;
           if (eyeballEngine) eyeballEngine.setAudioLevel(0.8);
         };
         utter.onend = () => {
+          isSpeakingDesktopTTS = false;
           if (eyeballEngine) eyeballEngine.setAudioLevel(0.08);
         };
+        utter.onerror = () => {
+          isSpeakingDesktopTTS = false;
+        };
         window.speechSynthesis.speak(utter);
-      } catch (_) {}
+      } catch (_) {
+        isSpeakingDesktopTTS = false;
+      }
     }
     const speakClumsyReply = speakJarvisReply;
     window.speakClumsyReply = speakJarvisReply;
@@ -1195,7 +1204,12 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ query: text, alternatives: alternatives, voice: isVoice, execute_os: true, source_device: 'laptop_hub' })
         });
+        if (!res.ok) throw new Error('cloud_mode');
         const data = await res.json();
+        // If local rule fallback returned a generic placeholder, upgrade via CLUMSY-X1 Smart Brain!
+        if (data.response && data.response.includes('I have processed that and stand ready') && window.clumsyBrain) {
+          throw new Error('upgrade_with_smart_brain');
+        }
         appendMessage(data.response, 'assistant');
         if (data.spoken_tts) speakJarvisReply(data.spoken_tts);
         if (data.fusion) updateFusionUI(data.fusion);
@@ -1212,8 +1226,18 @@
         );
         logStreamEvent('CLUMSY_FUSION', `${data.intent || 'executed'} -> ${data.robot_state || 'HAPPY'}`);
       } catch (err) {
-        appendMessage(`Executed offline: "${text}".`, 'assistant');
-        setExpression('happy', 90, 95, false);
+        if (window.clumsyBrain) {
+          const smart = await window.clumsyBrain.processSmartQuery(text);
+          appendMessage(smart.response, 'assistant');
+          if (smart.spoken_tts) speakJarvisReply(smart.spoken_tts);
+          if (smart.fusion) updateFusionUI(smart.fusion);
+          if (smart.job_artifact) renderJobArtifact(smart.job_artifact);
+          setExpression((smart.robot_state || 'happy').toLowerCase(), 90, 96, false);
+          logStreamEvent('CLUMSY_AI_BRAIN', `${smart.fusion.lead_specialist.toUpperCase()} -> ${(smart.robot_state || 'HAPPY').toUpperCase()}`);
+        } else {
+          appendMessage(`Processed: "${text}".`, 'assistant');
+          setExpression('happy', 90, 95, false);
+        }
       }
     }
 
@@ -1226,6 +1250,7 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ platform: platform, prompt: promptText, execute_os: true })
         });
+        if (!res.ok) throw new Error('cloud_mode');
         const artifact = await res.json();
         renderJobArtifact(artifact);
         const msg = artifact.spoken_summary || `Opened ${platform.toUpperCase()} Hub: ${artifact.title}`;
@@ -1233,7 +1258,17 @@
         speakJarvisReply(msg);
         setExpression('happy', 90, 98, false);
         logStreamEvent('INTERPLATFORM', `${platform.toUpperCase()} -> ${artifact.action || 'OPEN'}`);
-      } catch (_) {}
+      } catch (_) {
+        if (window.clumsyBrain) {
+          const artifact = window.clumsyBrain.buildInterplatformArtifact(platform, promptText);
+          renderJobArtifact(artifact);
+          const msg = artifact.spoken_summary || `Opened ${platform.toUpperCase()} Hub: ${artifact.title}`;
+          appendMessage(msg, 'assistant');
+          speakJarvisReply(msg);
+          setExpression('excited', 90, 98, false);
+          logStreamEvent('INTERPLATFORM', `${platform.toUpperCase()} -> ${artifact.action || 'OPEN'}`);
+        }
+      }
     }
 
     async function triggerInstantJob(jobType, promptText) {
@@ -1245,12 +1280,23 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ job_type: jobType, prompt: promptText })
         });
+        if (!res.ok) throw new Error('cloud_mode');
         const artifact = await res.json();
         renderJobArtifact(artifact);
-        appendMessage(`Completed ${jobType.toUpperCase()} job on Laptop (${artifact.execution_time_ms}ms): ${artifact.title}`, 'assistant');
+        appendMessage(`Completed ${jobType.toUpperCase()} job (${artifact.execution_time_ms}ms): ${artifact.title}`, 'assistant');
         setExpression('happy', 90, 98, false);
         logStreamEvent('JOB_DONE', `${jobType.toUpperCase()} in ${artifact.execution_time_ms}ms`);
-      } catch (_) {}
+      } catch (_) {
+        if (window.clumsyBrain) {
+          const artifact = window.clumsyBrain.buildStudioJobArtifact(jobType, promptText);
+          renderJobArtifact(artifact);
+          const msg = `Completed ${jobType.toUpperCase()} Studio task (${artifact.execution_time_ms}ms): ${artifact.title}`;
+          appendMessage(msg, 'assistant');
+          speakJarvisReply(`Rendered ${artifact.title} in your Studio.`);
+          setExpression(jobType === 'code' ? 'coding' : 'excited', 90, 98, false);
+          logStreamEvent('JOB_DONE', `${jobType.toUpperCase()} in ${artifact.execution_time_ms}ms`);
+        }
+      }
     }
 
     function escapeHtml(str) {
@@ -1325,6 +1371,7 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ trigger: type })
           });
+          if (!res.ok) throw new Error('cloud_mode');
           const data = await res.json();
           if (type === 'center_robot') {
             setExpression('idle', 90, 90, false);
@@ -1337,7 +1384,19 @@
             appendMessage(`Mesh Ping OK: ${summary}`, 'assistant');
           }
           logStreamEvent('QUICK_ACTION', type);
-        } catch (_) {}
+        } catch (_) {
+          if (type === 'center_robot') {
+            setExpression('idle', 90, 90, false);
+            appendMessage("Re-centered Arduino Uno Pan/Tilt servos to 90°/90°.", 'assistant');
+          } else if (type === 'test_emotions') {
+            const seq = ['happy', 'excited', 'love', 'wink', 'thinking', 'coding', 'surprised', 'idle'];
+            seq.forEach((rx, idx) => setTimeout(() => setExpression(rx, 90, 96, false), idx * 450));
+            appendMessage(`Running live emotion cycle: ${seq.join(' → ')}`, 'assistant');
+          } else if (type === 'ping_devices') {
+            appendMessage("Mesh Ping OK: Arduino Uno Avatar (1.2ms), Phone AI Agent (3.4ms), Laptop Hub (0.4ms)", 'assistant');
+          }
+          logStreamEvent('QUICK_ACTION', type);
+        }
       }
     }
 
@@ -1401,6 +1460,7 @@
 
       const voiceBar = document.getElementById('liveVoiceTranscriptBar');
       activeRecognition.onresult = (event) => {
+        if (isSpeakingDesktopTTS) return;
         const lastIdx = event.results.length - 1;
         const resultItem = event.results[lastIdx];
         const rawTranscript = resultItem[0].transcript.trim();

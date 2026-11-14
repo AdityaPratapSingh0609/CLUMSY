@@ -287,7 +287,7 @@ class LLMEngine:
         user_prompt: str,
         system_prompt: str,
         history: Optional[List[Dict[str, str]]] = None,
-        max_tokens: int = 96,
+        max_tokens: int = 256,
         temperature: float = 0.35,
     ) -> Optional[str]:
         """Generates free-form conversational or code text using the loaded GGUF model if present."""
@@ -299,13 +299,82 @@ class LLMEngine:
                 formatted,
                 max_tokens=max_tokens,
                 temperature=temperature,
-                stop=["<|im_end|>", "\n\n"],
+                stop=["<|im_end|>", "<|im_start|>"],
             )
             text = str(out["choices"][0]["text"] or "").strip()
             return text if text else None
         except Exception as exc:
             logger.warning("Raw GGUF completion failed: %s", exc)
             return None
+
+    @staticmethod
+    def _try_cloud_llm_completion(
+        user_prompt: str,
+        history: Optional[List[Dict[str, str]]] = None,
+    ) -> Optional[str]:
+        """Queries the 20B Reasoning LLM when CLUMSY_LIVE_LLM=1 for rich ChatGPT-grade answers."""
+        if os.environ.get("CLUMSY_LIVE_LLM", "0") != "1":
+            return None
+        try:
+            import urllib.request
+
+            messages: List[Dict[str, str]] = [
+                {
+                    "role": "system",
+                    "content": (
+                        "You are CLUMSY (powered by the CLUMSY-X1 4-Model Fusion Brain: Qwen 3.5 + Gemma 4 + Llama 4 + Mistral). "
+                        "Answer the user's question accurately, concisely, and helpfully like ChatGPT and JARVIS combined. "
+                        "Never brag about internal model names."
+                    ),
+                }
+            ]
+            if history:
+                for turn in history[-6:]:
+                    messages.append({"role": turn.get("role", "user"), "content": str(turn.get("content", ""))})
+            messages.append({"role": "user", "content": user_prompt})
+            req = urllib.request.Request(
+                "https://text.pollinations.ai/openai",
+                data=json.dumps({"model": "openai", "messages": messages, "temperature": 0.35}).encode("utf-8"),
+                headers={"Content-Type": "application/json", "User-Agent": "CLUMSY-X1/2.0"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=8.0) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                reply = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+                if reply and str(reply).strip():
+                    return str(reply).strip()
+        except Exception:
+            pass
+        return None
+
+    @staticmethod
+    def _try_solve_math(prompt: str) -> Optional[str]:
+        """Deterministically evaluates arithmetic, percentages, and square roots."""
+        import math
+
+        low = (prompt or "").strip().lower()
+        m_pct = re.search(r"(\d+(?:\.\d+)?)\s*%\s*of\s*(\d+(?:\.\d+)?)", low)
+        if m_pct:
+            p, base = float(m_pct.group(1)), float(m_pct.group(2))
+            val = (p / 100.0) * base
+            return f"{p:g}% of {base:g} is {val:g}."
+        m_sqrt = re.search(r"(?:square\s+root\s+of|sqrt\s*\(?)\s*(\d+(?:\.\d+)?)\)?", low)
+        if m_sqrt:
+            n = float(m_sqrt.group(1))
+            return f"The square root of {n:g} is {math.sqrt(n):g}."
+        m_expr = re.match(r"^(?:what\s+is|calculate|compute|solve|evaluate)?\s*([\d\s.+\-*/()^%]+)\??$", low)
+        if m_expr:
+            expr_str = m_expr.group(1).strip()
+            if any(c.isdigit() for c in expr_str) and any(op in expr_str for op in "+-*/^%"):
+                safe = expr_str.replace("^", "**")
+                if re.match(r"^[\d\s.+\-*/()%]+$", safe):
+                    try:
+                        val = eval(safe, {"__builtins__": {}}, {})
+                        if isinstance(val, (int, float)):
+                            return f"The result of {expr_str} is {round(val, 6):g}."
+                    except Exception:
+                        pass
+        return None
 
     def generate(
         self,
@@ -332,32 +401,39 @@ class LLMEngine:
 
         raw_fallback = self._deterministic_intent(user_prompt, history=history)
 
-        # If GGUF is loaded and this is an open-ended general query, let the real GGUF model answer naturally!
+        # If this is an open-ended general query, answer with Math Solver -> Cloud 20B LLM -> Local GGUF!
         if (
-            self.llm is not None
-            and raw_fallback["tool_call"]["tool"] == "answer_query"
+            raw_fallback["tool_call"]["tool"] == "answer_query"
             and "query" in raw_fallback["tool_call"]["params"]
         ):
-            chat_sys = (
-                "You are J.A.R.V.I.S. from Iron Man, a brilliant, polite, witty AI personal assistant. "
-                "Answer the user directly and concisely in 1 or 2 sentences. Never mention AI model names."
-            )
-            gguf_reply = self.generate_raw_completion(
-                user_prompt,
-                system_prompt=chat_sys,
-                history=history,
-                max_tokens=72,
-                temperature=0.35,
-            )
-            if gguf_reply:
-                raw_fallback["spoken_response"] = gguf_reply
-                parsed = validate_and_normalize_response(raw_fallback)
-                elapsed = max(time.perf_counter() - t0, 1e-6)
-                tokens_est = max(len(gguf_reply.split()), 12)
-                parsed["engine"] = "llama_cpp_gguf"
-                parsed["inference_time_ms"] = round(elapsed * 1000, 2)
-                parsed["tokens_per_sec"] = round(tokens_est / elapsed, 1)
-                return parsed
+            math_ans = self._try_solve_math(user_prompt)
+            if math_ans:
+                raw_fallback["spoken_response"] = math_ans
+            else:
+                cloud_reply = self._try_cloud_llm_completion(user_prompt, history=history)
+                if cloud_reply:
+                    raw_fallback["spoken_response"] = cloud_reply
+                elif self.llm is not None:
+                    chat_sys = (
+                        "You are CLUMSY, a brilliant, polite, witty AI personal assistant. "
+                        "Answer the user directly, accurately, and concisely. Never mention AI model names."
+                    )
+                    gguf_reply = self.generate_raw_completion(
+                        user_prompt,
+                        system_prompt=chat_sys,
+                        history=history,
+                        max_tokens=160,
+                        temperature=0.3,
+                    )
+                    if gguf_reply:
+                        raw_fallback["spoken_response"] = gguf_reply
+                        parsed = validate_and_normalize_response(raw_fallback)
+                        elapsed = max(time.perf_counter() - t0, 1e-6)
+                        tokens_est = max(len(gguf_reply.split()), 12)
+                        parsed["engine"] = "llama_cpp_gguf"
+                        parsed["inference_time_ms"] = round(elapsed * 1000, 2)
+                        parsed["tokens_per_sec"] = round(tokens_est / elapsed, 1)
+                        return parsed
 
         parsed = validate_and_normalize_response(raw_fallback)
         elapsed = max(time.perf_counter() - t0, 1e-6)

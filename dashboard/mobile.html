@@ -11,6 +11,7 @@
   <link rel="apple-touch-icon" href="/deskbot_render.jpg" />
   <title>CLUMSY: your everyday AI // Living Robot Companion</title>
   <script src="/eyeballs.js"></script>
+  <script src="/clumsy_brain.js"></script>
   <style>
     :root {
       --bg: #09090b;
@@ -473,6 +474,7 @@
       }
     });
 
+    let isSpeakingPhoneTTS = false;
     function speakOnPhone(text, afterReaction) {
       if (!text || !('speechSynthesis' in window)) return;
       try {
@@ -481,11 +483,13 @@
         utter.rate = 1.04;
         utter.pitch = 0.98;
         utter.onstart = () => {
+          isSpeakingPhoneTTS = true;
           if (eyeballEngine && !isBotSleeping) {
             eyeballEngine.setAudioLevel(0.82);
           }
         };
         utter.onend = () => {
+          isSpeakingPhoneTTS = false;
           if (eyeballEngine) {
             eyeballEngine.setAudioLevel(0.05);
             if (!isBotSleeping && afterReaction) {
@@ -493,8 +497,13 @@
             }
           }
         };
+        utter.onerror = () => {
+          isSpeakingPhoneTTS = false;
+        };
         window.speechSynthesis.speak(utter);
-      } catch (_) {}
+      } catch (_) {
+        isSpeakingPhoneTTS = false;
+      }
     }
 
     function getApiBase() {
@@ -735,7 +744,7 @@
       speechRec.maxAlternatives = 3;
 
       speechRec.onresult = (event) => {
-        if (!streamMicEnabled) return;
+        if (!streamMicEnabled || isSpeakingPhoneTTS) return;
         const last = event.results.length - 1;
         const item = event.results[last];
         const rawText = item[0].transcript.trim();
@@ -783,7 +792,13 @@
       speechRec.onerror = () => {};
       speechRec.onend = () => {
         if (streamMicEnabled) {
-          try { speechRec.start(); } catch (_) {}
+          try { speechRec.start(); } catch (_) {
+            setTimeout(() => {
+              if (streamMicEnabled) {
+                try { speechRec.start(); } catch (_) {}
+              }
+            }, 250);
+          }
         }
       };
       try { speechRec.start(); } catch (_) {}
@@ -847,7 +862,7 @@
       }
 
       setMobileReaction('thinking', 105, 112);
-      document.getElementById('jarvisVoiceCaption').textContent = `⚡ Processing: "${query}"...`;
+      document.getElementById('jarvisVoiceCaption').textContent = `⚡ Thinking: "${query}"...`;
 
       try {
         const res = await fetch(`${getApiBase()}/api/mobile/agent`, {
@@ -857,16 +872,28 @@
         });
         if (!res.ok) throw new Error('standalone');
         const data = await res.json();
+        if (data.response && data.response.includes('I have processed that and stand ready') && window.clumsyBrain) {
+          throw new Error('upgrade_with_smart_brain');
+        }
         const spokenText = data.spoken_tts || data.response || 'Done!';
         const finalRx = data.eye_reaction || localIntent.reaction || 'happy';
         document.getElementById('jarvisVoiceCaption').textContent = spokenText;
         setMobileReaction(finalRx, 90, 96);
         speakOnPhone(spokenText, finalRx);
       } catch (_) {
-        const fallbackReply = localIntent.spoken || `On it! Executing "${query}" for you right now.`;
-        document.getElementById('jarvisVoiceCaption').textContent = fallbackReply;
-        setMobileReaction(localIntent.reaction || 'happy', 90, 96);
-        speakOnPhone(fallbackReply, localIntent.reaction || 'happy');
+        if (window.clumsyBrain) {
+          const smart = await window.clumsyBrain.processSmartQuery(query);
+          const spokenText = smart.spoken_tts || smart.response || 'Done!';
+          const finalRx = smart.robot_state || localIntent.reaction || 'happy';
+          document.getElementById('jarvisVoiceCaption').textContent = spokenText;
+          setMobileReaction(finalRx, 90, 96);
+          speakOnPhone(spokenText, finalRx);
+        } else {
+          const fallbackReply = localIntent.spoken || `On it! Executing "${query}" for you right now.`;
+          document.getElementById('jarvisVoiceCaption').textContent = fallbackReply;
+          setMobileReaction(localIntent.reaction || 'happy', 90, 96);
+          speakOnPhone(fallbackReply, localIntent.reaction || 'happy');
+        }
       }
     }
 
