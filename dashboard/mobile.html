@@ -743,26 +743,33 @@
 
     let isSpeakingPhoneTTS = false;
     let phoneTtsSafetyTimer = null;
+    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isMobileBrowser = isIOSDevice || /Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
     function speakOnPhone(text, afterReaction) {
-      if (!text || !('speechSynthesis' in window)) return;
+      if (!text || !('speechSynthesis' in window)) {
+        if (streamMicEnabled && !speechRecRunning) {
+          setTimeout(() => startAlwaysOnMic(), 150);
+        }
+        return;
+      }
       try {
+        // On mobile (iOS/Android), pause SpeechRecognition while TTS speaks so OS audio session doesn't crash the mic
+        if (speechRec && speechRecRunning) {
+          try { speechRec.abort(); } catch (_) {}
+          speechRecRunning = false;
+        }
         window.speechSynthesis.cancel();
         if (phoneTtsSafetyTimer) clearTimeout(phoneTtsSafetyTimer);
         const utter = new SpeechSynthesisUtterance(text);
         utter.rate = 1.04;
         utter.pitch = 0.98;
-        utter.onstart = () => {
-          isSpeakingPhoneTTS = true;
-          if (eyeballEngine && !isBotSleeping) {
-            eyeballEngine.setAudioLevel(0.82);
+
+        const finishTTSAndResumeMic = () => {
+          if (phoneTtsSafetyTimer) {
+            clearTimeout(phoneTtsSafetyTimer);
+            phoneTtsSafetyTimer = null;
           }
-          phoneTtsSafetyTimer = setTimeout(() => {
-            isSpeakingPhoneTTS = false;
-            if (eyeballEngine) eyeballEngine.setAudioLevel(0.05);
-          }, Math.min(8000, Math.max(2200, text.length * 60)));
-        };
-        utter.onend = () => {
-          if (phoneTtsSafetyTimer) clearTimeout(phoneTtsSafetyTimer);
           isSpeakingPhoneTTS = false;
           if (eyeballEngine) {
             eyeballEngine.setAudioLevel(0.05);
@@ -770,14 +777,24 @@
               eyeballEngine.setReaction(afterReaction, 90, 96);
             }
           }
+          if (streamMicEnabled) {
+            setTimeout(() => startAlwaysOnMic(), 220);
+          }
         };
-        utter.onerror = () => {
-          if (phoneTtsSafetyTimer) clearTimeout(phoneTtsSafetyTimer);
-          isSpeakingPhoneTTS = false;
+
+        utter.onstart = () => {
+          isSpeakingPhoneTTS = true;
+          if (eyeballEngine && !isBotSleeping) {
+            eyeballEngine.setAudioLevel(0.82);
+          }
+          phoneTtsSafetyTimer = setTimeout(finishTTSAndResumeMic, Math.min(7500, Math.max(2200, text.length * 58)));
         };
+        utter.onend = finishTTSAndResumeMic;
+        utter.onerror = finishTTSAndResumeMic;
         window.speechSynthesis.speak(utter);
       } catch (_) {
         isSpeakingPhoneTTS = false;
+        if (streamMicEnabled) setTimeout(() => startAlwaysOnMic(), 220);
       }
     }
 
@@ -1075,73 +1092,192 @@
       sendMobileCommand(alts || [text]);
     }
 
-    function startAlwaysOnMic() {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) return;
+    let micRestartTimer = null;
+    let micPermissionPrimed = false;
+    let speechRecStarting = false;
+    let lastMicStartMs = 0;
+    let hasUserTappedScreen = false;
 
-      // IMPORTANT: Never call getUserMedia while SpeechRecognition is active on mobile —
-      // getUserMedia steals exclusive hardware mic access on iOS/Android/WebViews.
-      if (!speechRec) {
-        speechRec = new SpeechRecognition();
-        speechRec.lang = 'en-US';
-        speechRec.continuous = true;
-        speechRec.interimResults = true;
-        speechRec.maxAlternatives = 3;
-
-        speechRec.onstart = () => {
-          speechRecRunning = true;
-          const btn = document.getElementById('btnStreamMic');
-          if (btn && streamMicEnabled) {
-            btn.classList.remove('muted');
-            btn.classList.add('listening-active');
-            btn.textContent = '🎙️ Mic: ON';
-          }
-        };
-
-        speechRec.onresult = (event) => {
-          if (!streamMicEnabled || isSpeakingPhoneTTS) return;
-          const last = event.results.length - 1;
-          const item = event.results[last];
-          if (!item || !item[0]) return;
-          const rawText = item[0].transcript.trim();
-          const alts = [];
-          for (let i = 0; i < item.length; i++) {
-            if (item[i] && item[i].transcript) alts.push(item[i].transcript.trim());
-          }
-          handleRecognizedSpeech(rawText, item.isFinal, alts);
-        };
-
-        speechRec.onerror = () => {
-          speechRecRunning = false;
-        };
-
-        speechRec.onend = () => {
-          speechRecRunning = false;
-          if (streamMicEnabled) {
-            setTimeout(() => {
-              if (streamMicEnabled && !speechRecRunning) {
-                try { speechRec.start(); } catch (_) {}
-              }
-            }, 280);
-          }
-        };
-      }
-
-      if (streamMicEnabled && !speechRecRunning) {
+    async function requestPhoneMicPermissionAndStart() {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         try {
-          speechRec.start();
-        } catch (_) {}
+          // Request permission, then stop tracks and wait 300ms so OS releases hardware mic before SpeechRecognition starts
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          stream.getTracks().forEach(track => track.stop());
+          micPermissionPrimed = true;
+          await new Promise(r => setTimeout(r, 300));
+        } catch (err) {
+          document.getElementById('jarvisVoiceCaption').textContent =
+            '⚠️ Microphone permission blocked. Please tap the lock/settings icon in your phone browser address bar and Allow Microphone.';
+          return false;
+        }
+      }
+      startAlwaysOnMic(true);
+      return true;
+    }
+
+    function updateMicButtonUI(state) {
+      const btn = document.getElementById('btnStreamMic');
+      if (!btn) return;
+      if (!streamMicEnabled) {
+        btn.classList.add('muted');
+        btn.classList.remove('listening-active');
+        btn.textContent = '🔇 Mic: MUTED';
+      } else if (state === 'listening' || speechRecRunning) {
+        btn.classList.remove('muted');
+        btn.classList.add('listening-active');
+        btn.textContent = '🎙️ Listening...';
+      } else {
+        btn.classList.remove('muted');
+        btn.classList.add('listening-active');
+        btn.textContent = '🎙️ Tap to Speak';
       }
     }
 
-    // Unlock SpeechRecognition + SpeechSynthesis on first user touch/click anywhere on screen
-    function unlockAudioOnGesture() {
-      if (streamMicEnabled && !speechRecRunning) {
-        startAlwaysOnMic();
+    function startAlwaysOnMic(forceFresh = false) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        document.getElementById('jarvisVoiceCaption').textContent =
+          '⚠️ Voice recognition requires Safari on iPhone or Chrome on Android.';
+        return;
+      }
+      if (!streamMicEnabled || isSpeakingPhoneTTS) return;
+      const now = Date.now();
+      if ((speechRecRunning || speechRecStarting) && !forceFresh) return;
+      // Prevent duplicate touchend + click events within 650ms from aborting an in-flight start()
+      if (speechRecStarting && (now - lastMicStartMs) < 650) return;
+
+      if (micRestartTimer) {
+        clearTimeout(micRestartTimer);
+        micRestartTimer = null;
+      }
+
+      if (speechRec) {
+        try {
+          speechRec.onend = null;
+          speechRec.onerror = null;
+          speechRec.onresult = null;
+          speechRec.abort();
+        } catch (_) {}
+        speechRec = null;
+      }
+
+      // Always create a fresh SpeechRecognition instance on mobile (iOS Safari/Android Chrome bug fix)
+      const rec = new SpeechRecognition();
+      rec.lang = navigator.language && navigator.language.startsWith('en') ? navigator.language : 'en-US';
+      // iOS Safari drops results when continuous=true; use single-utterance auto-loop on iOS
+      rec.continuous = !isIOSDevice;
+      rec.interimResults = true;
+      rec.maxAlternatives = 3;
+      speechRec = rec;
+      speechRecStarting = true;
+      lastMicStartMs = now;
+
+      rec.onstart = () => {
+        speechRecStarting = false;
+        speechRecRunning = true;
+        updateMicButtonUI('listening');
+        if (!isBotSleeping) {
+          document.getElementById('linkBadgeText').textContent = bluetoothDeviceName
+            ? `CLUMSY • BT (${bluetoothDeviceName})`
+            : 'CLUMSY • Listening ("Hey Clumsy")';
+        }
+      };
+
+      rec.onresult = (event) => {
+        if (!streamMicEnabled || isSpeakingPhoneTTS) return;
+        let combinedInterim = '';
+        let finalTranscript = '';
+        const alts = [];
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const res = event.results[i];
+          if (!res || !res[0]) continue;
+          const t = res[0].transcript.trim();
+          if (res.isFinal) {
+            finalTranscript += (finalTranscript ? ' ' : '') + t;
+            for (let k = 0; k < res.length; k++) {
+              if (res[k] && res[k].transcript) alts.push(res[k].transcript.trim());
+            }
+          } else {
+            combinedInterim += (combinedInterim ? ' ' : '') + t;
+          }
+        }
+
+        if (finalTranscript) {
+          handleRecognizedSpeech(finalTranscript, true, alts.length ? alts : [finalTranscript]);
+        } else if (combinedInterim) {
+          handleRecognizedSpeech(combinedInterim, false, [combinedInterim]);
+        }
+      };
+
+      rec.onerror = (ev) => {
+        speechRecStarting = false;
+        speechRecRunning = false;
+        const errCode = ev && ev.error ? String(ev.error) : '';
+        if (errCode === 'not-allowed' || errCode === 'service-not-allowed') {
+          updateMicButtonUI('tap_needed');
+          if (hasUserTappedScreen && !micPermissionPrimed) {
+            requestPhoneMicPermissionAndStart();
+          } else {
+            document.getElementById('jarvisVoiceCaption').textContent =
+              '🎙️ Tap "🎙️ Tap to Speak" (or tap anywhere on the eyes) to activate your phone microphone!';
+          }
+          return;
+        }
+        // For 'no-speech' or 'aborted' or transient errors, auto-restart smoothly
+        if (streamMicEnabled && !isSpeakingPhoneTTS && (hasUserTappedScreen || !isMobileBrowser)) {
+          micRestartTimer = setTimeout(() => {
+            if (streamMicEnabled && !isSpeakingPhoneTTS) startAlwaysOnMic(true);
+          }, 380);
+        }
+      };
+
+      rec.onend = () => {
+        speechRecStarting = false;
+        speechRecRunning = false;
+        // If user was speaking and onend fired before isFinal on mobile, commit latestInterimText immediately!
+        if (latestInterimText && streamMicEnabled && !isSpeakingPhoneTTS) {
+          const pending = latestInterimText.trim();
+          latestInterimText = '';
+          if (interimCommitTimer) {
+            clearTimeout(interimCommitTimer);
+            interimCommitTimer = null;
+          }
+          if (pending) {
+            document.getElementById('mobileQueryInput').value = pending;
+            sendMobileCommand([pending]);
+          }
+        }
+        if (streamMicEnabled && !isSpeakingPhoneTTS) {
+          micRestartTimer = setTimeout(() => {
+            if (streamMicEnabled && !isSpeakingPhoneTTS && !speechRecRunning && !speechRecStarting) {
+              startAlwaysOnMic(true);
+            }
+          }, isIOSDevice ? 220 : 300);
+        } else {
+          updateMicButtonUI('idle');
+        }
+      };
+
+      try {
+        rec.start();
+      } catch (_) {
+        speechRecStarting = false;
+        speechRecRunning = false;
+        updateMicButtonUI('tap_needed');
       }
     }
-    window.addEventListener('pointerdown', unlockAudioOnGesture, { passive: true });
-    window.addEventListener('touchstart', unlockAudioOnGesture, { passive: true });
+
+    // Unlock SpeechRecognition on first real user click/tap (single canonical event so touchend+click never collide!)
+    function unlockAudioOnGesture(e) {
+      hasUserTappedScreen = true;
+      if (e && e.target && (e.target.id === 'btnStreamMic' || e.target.closest('#btnStreamMic'))) return;
+      if (streamMicEnabled && !speechRecRunning && !speechRecStarting && !isSpeakingPhoneTTS) {
+        startAlwaysOnMic(true);
+      }
+    }
+    window.addEventListener('click', unlockAudioOnGesture);
 
     // Hardware Offline Microphone Polling Fallback (captures voice via Windows MS-1033-80-DESK even inside Electron WebView!)
     async function pollHardwareOfflineMic() {
@@ -1177,23 +1313,41 @@
     setInterval(pollHardwareOfflineMic, 950);
 
     function toggleStreamMic() {
+      hasUserTappedScreen = true;
+      // If mic is enabled in state, but not actively running yet on mobile (e.g. awaiting gesture),
+      // tapping the Mic button synchronously starts SpeechRecognition inside the click gesture!
+      if (streamMicEnabled && !speechRecRunning && !speechRecStarting) {
+        document.getElementById('jarvisVoiceCaption').textContent = '🎙️ Listening — speak to CLUMSY-7X now!';
+        setMobileReaction('listening', 90, 105);
+        startAlwaysOnMic(true);
+        return;
+      }
+
       streamMicEnabled = !streamMicEnabled;
-      const btn = document.getElementById('btnStreamMic');
       if (streamMicEnabled) {
-        btn.classList.remove('muted');
-        btn.classList.add('listening-active');
-        btn.textContent = '🎙️ Mic: ON';
-        startAlwaysOnMic();
+        document.getElementById('jarvisVoiceCaption').textContent = '🎙️ Microphone ON — listening for your voice...';
+        setMobileReaction('listening', 90, 105);
+        startAlwaysOnMic(true);
       } else {
         if (interimCommitTimer) {
           clearTimeout(interimCommitTimer);
           interimCommitTimer = null;
         }
+        if (micRestartTimer) {
+          clearTimeout(micRestartTimer);
+          micRestartTimer = null;
+        }
         latestInterimText = '';
-        btn.classList.add('muted');
-        btn.classList.remove('listening-active');
-        btn.textContent = '🔇 Mic: MUTED';
-        try { if (speechRec) speechRec.stop(); } catch (_) {}
+        speechRecStarting = false;
+        speechRecRunning = false;
+        if (speechRec) {
+          try {
+            speechRec.onend = null;
+            speechRec.abort();
+          } catch (_) {}
+          speechRec = null;
+        }
+        updateMicButtonUI('muted');
       }
     }
 
@@ -1274,7 +1428,13 @@
     }
 
     resetIdleSleepTimer();
-    startAlwaysOnMic();
+    if (isMobileBrowser) {
+      updateMicButtonUI('tap_needed');
+      document.getElementById('jarvisVoiceCaption').textContent =
+        "🎙️ Tap anywhere on the screen or tap '🎙️ Tap to Speak' once to activate continuous phone voice recognition!";
+    } else {
+      startAlwaysOnMic();
+    }
     probeLaptopHub();
     if (window.clumsyBrain && typeof window.clumsyBrain.probeOfflineEngines === 'function') {
       window.clumsyBrain.probeOfflineEngines();
