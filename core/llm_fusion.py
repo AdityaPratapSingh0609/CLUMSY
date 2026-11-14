@@ -271,28 +271,15 @@ class JarvisFusionModel:
 
     @staticmethod
     def _is_coding_request(q_low: str) -> bool:
-        code_triggers = (
-            "code",
-            "java",
-            "python",
-            "c++",
-            "cpp",
-            "javascript",
-            "js",
-            "html",
-            "script",
-            "program",
-            "function",
-            "algorithm",
-            "fibonacci",
-            "class ",
+        if any(x in q_low for x in ("open vs code", "open vscode", "launch vs code", "launch vscode")):
+            return False
+        return bool(
+            re.search(
+                r"\b(write\s+.*code|write\s+a\s+program|write\s+a\s+script|write\s+a\s+function|java\s+code|python\s+code|c\+\+\s+code|javascript\s+code|html\s+code|in\s+java|in\s+python|in\s+c\+\+|in\s+javascript|code\s+to\s+|program\s+to\s+|script\s+to\s+|fibonacci|quicksort|binary\s+search|bubble\s+sort)\b",
+                q_low,
+            )
+            or re.search(r"\b(code|java|python|c\+\+|cpp|javascript|html)\b", q_low)
         )
-        if any(k in q_low for k in code_triggers):
-            # Exclude "open vs code" or "launch vscode"
-            if any(x in q_low for x in ("open vs code", "open vscode", "launch vs code", "launch vscode")):
-                return False
-            return True
-        return False
 
     def generate(self, user_query: str) -> Dict[str, Any]:
         """Run 4-model fusion routing & synthesis within the single-slot RAM guard."""

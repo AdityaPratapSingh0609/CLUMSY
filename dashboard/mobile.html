@@ -219,19 +219,31 @@
     }
 
     .voice-caption {
-      background: rgba(20, 20, 26, 0.88);
+      background: rgba(20, 20, 26, 0.90);
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 12px 16px;
+      border-radius: 18px;
+      padding: 13px 16px;
       font-size: 13.5px;
-      line-height: 1.48;
+      line-height: 1.52;
       color: #f4f4f5;
-      min-height: 44px;
-      max-height: 160px;
+      min-height: 46px;
+      max-height: 230px;
       overflow-y: auto;
       text-align: left;
-      backdrop-filter: blur(12px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+      user-select: text;
+    }
+    .voice-caption pre {
+      background: #111115;
+      border: 1px solid rgba(192, 132, 252, 0.35);
+      border-radius: 10px;
+      padding: 10px;
+      margin: 8px 0;
+      font-family: Consolas, monospace;
+      font-size: 12px;
+      color: #e9d5ff;
+      overflow-x: auto;
       white-space: pre-wrap;
     }
 
@@ -284,7 +296,7 @@
 <body>
 
   <!-- STEP 1: Laptop Hub & Bluetooth Handshake Overlay -->
-  <div id="connectHandshakeScreen">
+  <div id="connectHandshakeScreen" class="hidden">
     <div class="handshake-card">
       <div class="pulse-ring">👁️</div>
       <div class="handshake-title">CLUMSY // YOUR EVERYDAY AI</div>
@@ -292,7 +304,7 @@
         Link your phone via <b>Bluetooth</b> or <b>Wi-Fi</b> to your Laptop. Your phone becomes the live <b>CLUMSY Robot Head</b> — continuously listening, reacting with living eyes, and executing tasks!
       </div>
       <div class="hub-status-box">
-        <div>📡 <b>Laptop Link:</b> <span id="hubDetectStatus" style="color: var(--success);">Ready (Bluetooth &amp; Cloud Sync)</span></div>
+        <div>📡 <b>Laptop Link:</b> <span id="hubDetectStatus" style="color: var(--success);">Ready (100% Offline + Bluetooth Sync)</span></div>
         <div>🔵 <b>Bluetooth Status:</b> <span id="btPairStatus">Tap below to pair Bluetooth or launch</span></div>
         <div>🎙️ <b>Always-On Mode:</b> Wake word <b>"Hey Clumsy"</b> • Auto-Sleep after 50s</div>
       </div>
@@ -476,10 +488,12 @@
     });
 
     let isSpeakingPhoneTTS = false;
+    let phoneTtsSafetyTimer = null;
     function speakOnPhone(text, afterReaction) {
       if (!text || !('speechSynthesis' in window)) return;
       try {
         window.speechSynthesis.cancel();
+        if (phoneTtsSafetyTimer) clearTimeout(phoneTtsSafetyTimer);
         const utter = new SpeechSynthesisUtterance(text);
         utter.rate = 1.04;
         utter.pitch = 0.98;
@@ -488,8 +502,13 @@
           if (eyeballEngine && !isBotSleeping) {
             eyeballEngine.setAudioLevel(0.82);
           }
+          phoneTtsSafetyTimer = setTimeout(() => {
+            isSpeakingPhoneTTS = false;
+            if (eyeballEngine) eyeballEngine.setAudioLevel(0.05);
+          }, Math.min(8000, Math.max(2200, text.length * 60)));
         };
         utter.onend = () => {
+          if (phoneTtsSafetyTimer) clearTimeout(phoneTtsSafetyTimer);
           isSpeakingPhoneTTS = false;
           if (eyeballEngine) {
             eyeballEngine.setAudioLevel(0.05);
@@ -499,6 +518,7 @@
           }
         };
         utter.onerror = () => {
+          if (phoneTtsSafetyTimer) clearTimeout(phoneTtsSafetyTimer);
           isSpeakingPhoneTTS = false;
         };
         window.speechSynthesis.speak(utter);
@@ -620,12 +640,27 @@
         .trim();
     }
 
+    function formatMobileReplyHTML(rawText) {
+      let s = String(rawText || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+      s = s.replace(/```([a-zA-Z0-9_+]*)\n([\s\S]*?)```/g, (_, lang, code) => {
+        return `<pre><b>${(lang || 'code').toUpperCase()}</b>\n${code.trim()}</pre>`;
+      });
+      s = s.replace(/^###\s+(.+)$/gm, '<b style="color:#c084fc;font-size:14px;">$1</b>');
+      s = s.replace(/\*\*([^*]+)\*\*/g, '<b style="color:#fff;">$1</b>');
+      s = s.replace(/\n/g, '<br>');
+      return s;
+    }
+
     // Autonomous Local Emotion & Intent Analyzer (handles "Thank You", Sleep/Wake, Randoms & Tasks)
     function analyzeAutonomousReaction(queryText) {
       const q = (queryText || '').toLowerCase().trim();
+      const wordCount = q.split(/\s+/).filter(Boolean).length;
 
       // 1. Thank you / Gratitude -> Random Happy, Love, or Wink!
-      if (/\b(thank\s*you|thanks|thx|appreciate\s+it|grateful|ty)\b/i.test(q)) {
+      if (wordCount <= 8 && /\b(thank\s*you|thanks|thx|appreciate\s+it|grateful|ty)\b/i.test(q)) {
         const pool = ['happy', 'love', 'wink'];
         const chosen = pool[Math.floor(Math.random() * pool.length)];
         const replies = {
@@ -637,7 +672,7 @@
       }
 
       // 2. Affection / Praise -> Love / Excited / Wink
-      if (/\b(i\s+love\s+you|love\s+you|you\s+are\s+awesome|you're\s+the\s+best|good\s+bot|good\s+job|well\s+done|amazing\s+job|cute)\b/i.test(q)) {
+      if (wordCount <= 8 && /\b(i\s+love\s+you|love\s+you|you\s+are\s+awesome|you're\s+the\s+best|good\s+bot|good\s+job|well\s+done|amazing\s+job)\b/i.test(q)) {
         const pool = ['love', 'excited', 'wink', 'happy'];
         const chosen = pool[Math.floor(Math.random() * pool.length)];
         return {
@@ -648,7 +683,7 @@
       }
 
       // 3. Sleep command
-      if (/\b(go\s+to\s+sleep|sleep\s+now|sleep\s+mode|good\s*night|take\s+a\s+nap)\b/i.test(q)) {
+      if (wordCount <= 7 && /\b(go\s+to\s+sleep|sleep\s+now|sleep\s+mode|good\s*night|take\s+a\s+nap)\b/i.test(q)) {
         return {
           reaction: 'sleeping',
           spoken: "Going to sleep now. Say 'Hey Clumsy' whenever you want to wake me up!",
@@ -667,11 +702,11 @@
         };
       }
 
-      // 5. Joke / Fun / Wink / Randoms
-      if (/\b(wink|give\s+me\s+a\s+wink)\b/i.test(q)) {
+      // 5. Joke / Fun / Wink / Standalone Greetings
+      if (wordCount <= 6 && /\b(wink|give\s+me\s+a\s+wink)\b/i.test(q)) {
         return { reaction: 'wink', spoken: "Here is a wink just for you!", isLocalImmediate: true };
       }
-      if (/\b(tell\s+me\s+a\s+joke|make\s+me\s+laugh|something\s+funny)\b/i.test(q)) {
+      if (wordCount <= 8 && /\b(tell\s+me\s+a\s+joke|make\s+me\s+laugh|say\s+something\s+funny)\b/i.test(q)) {
         const jokes = [
           "Why did the robot go on a diet? Because he had way too many megabytes!",
           "I tried to catch some fog earlier... I mist! Haha!",
@@ -684,23 +719,17 @@
           isLocalImmediate: true,
         };
       }
-      if (/\b(surprised|wow|no\s+way|oh\s+my\s+god|omg|shocked)\b/i.test(q)) {
-        return { reaction: 'surprised', spoken: "Whoa! That really is surprising!", isLocalImmediate: true };
-      }
-      if (/\b(confused|what\s+do\s+you\s+mean|huh)\b/i.test(q)) {
-        return { reaction: 'confused', spoken: "Hmm, let me think about that carefully for you.", isLocalImmediate: true };
-      }
-      if (/\b(how\s+are\s+you|how's\s+it\s+going|what's\s+up|hello|hi\s+there|good\s+morning|good\s+evening)\b/i.test(q)) {
+      if (/^(?:how\s+are\s+you|how's\s+it\s+going|what's\s+up|hello|hi|hey|hi\s+there|good\s+morning|good\s+evening)(?:\s+clumsy)?[\s!?.]*$/i.test(q)) {
         const pool = ['happy', 'excited', 'wink'];
         return {
           reaction: pool[Math.floor(Math.random() * pool.length)],
-          spoken: "I'm feeling fantastic and all systems are online! How can I assist you today?",
+          spoken: "I'm feeling fantastic and all offline AI systems are online! Ask me anything — science, coding, math, or daily tasks!",
           isLocalImmediate: true,
         };
       }
 
       // 6. Task-based reaction inference
-      if (/\b(code|java|python|c\+\+|javascript|html|program|algorithm|function)\b/i.test(q)) {
+      if (/\b(code|java|python|c\+\+|javascript|html|program|algorithm|quicksort|binary\s+search)\b/i.test(q)) {
         return { reaction: 'coding', spoken: null, isLocalImmediate: false };
       }
       if (/\b(3d|blender|render|video|photo|pic|netflix|prime|hotstar|youtube|spotify|play|song|music)\b/i.test(q)) {
@@ -865,42 +894,30 @@
       setMobileReaction('thinking', 105, 112);
       document.getElementById('jarvisVoiceCaption').textContent = `⚡ Thinking: "${query}"...`;
 
-      try {
-        const res = await fetch(`${getApiBase()}/api/mobile/agent`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query, alternatives, execute_os: true, source_device: 'mobile_app' }),
-        });
-        if (!res.ok) throw new Error('standalone');
-        const data = await res.json();
-        if (data.response && data.response.includes('I have processed that and stand ready') && window.clumsyBrain) {
-          throw new Error('upgrade_with_smart_brain');
-        }
-        const spokenText = data.spoken_tts || data.response || 'Done!';
-        const displayCaption = (data.response || spokenText).replace(/```[\s\S]*?```/g, '[Code Block]').replace(/[#*`]/g, '').trim();
-        const finalRx = data.eye_reaction || localIntent.reaction || 'happy';
-        document.getElementById('jarvisVoiceCaption').textContent = displayCaption;
+      // Sync to Laptop Hub in background if linked
+      fetch(`${getApiBase()}/api/mobile/agent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, alternatives, execute_os: true, source_device: 'mobile_app' }),
+      }).catch(() => {});
+
+      if (window.clumsyBrain) {
+        const smart = await window.clumsyBrain.processSmartQuery(query);
+        const spokenText = smart.spoken_tts || smart.response || 'Done!';
+        const finalRx = smart.robot_state || localIntent.reaction || 'happy';
+        document.getElementById('jarvisVoiceCaption').innerHTML = formatMobileReplyHTML(smart.response || spokenText);
         setMobileReaction(finalRx, 90, 96);
         speakOnPhone(spokenText, finalRx);
-      } catch (_) {
-        if (window.clumsyBrain) {
-          const smart = await window.clumsyBrain.processSmartQuery(query);
-          const spokenText = smart.spoken_tts || smart.response || 'Done!';
-          const displayCaption = (smart.response || spokenText).replace(/```[\s\S]*?```/g, '[Code Generated]').replace(/[#*`]/g, '').trim();
-          const finalRx = smart.robot_state || localIntent.reaction || 'happy';
-          document.getElementById('jarvisVoiceCaption').textContent = displayCaption;
-          setMobileReaction(finalRx, 90, 96);
-          speakOnPhone(spokenText, finalRx);
-        } else {
-          const fallbackReply = localIntent.spoken || `On it! Executing "${query}" for you right now.`;
-          document.getElementById('jarvisVoiceCaption').textContent = fallbackReply;
-          setMobileReaction(localIntent.reaction || 'happy', 90, 96);
-          speakOnPhone(fallbackReply, localIntent.reaction || 'happy');
-        }
+      } else {
+        const fallbackReply = localIntent.spoken || `Processed "${query}".`;
+        document.getElementById('jarvisVoiceCaption').textContent = fallbackReply;
+        setMobileReaction(localIntent.reaction || 'happy', 90, 96);
+        speakOnPhone(fallbackReply, localIntent.reaction || 'happy');
       }
     }
 
     resetIdleSleepTimer();
+    startAlwaysOnMic();
     probeLaptopHub();
     if (window.clumsyBrain && typeof window.clumsyBrain.probeOfflineEngines === 'function') {
       window.clumsyBrain.probeOfflineEngines();

@@ -292,24 +292,9 @@ def parse_voice_intent(transcript: str) -> Optional[Dict[str, Any]]:
         }
 
     # 4. AI Pic & Graphic Creator
-    if any(
-        k in low
-        for k in (
-            "pic creator",
-            "make a pic",
-            "create a pic",
-            "generate a picture",
-            "create a picture",
-            "create an image",
-            "generate an image",
-            "artwork",
-            "photo of",
-            "realistic photo",
-            "picture of",
-            "image of",
-            "pic of",
-            "photograph",
-        )
+    if re.search(
+        r"\b(pic\s+creator|make\s+a\s+pic|create\s+a\s+pic|generate\s+a\s+picture|create\s+a\s+picture|create\s+an\s+image|generate\s+an\s+image|artwork|photo\s+of|realistic\s+photo|picture\s+of|image\s+of|pic\s+of|photograph\s+of)\b",
+        low,
     ):
         return {
             "category": "creative_studio",

@@ -454,7 +454,7 @@ class LLMEngine:
 
         raw_fallback = self._deterministic_intent(user_prompt, history=history)
 
-        # If this is an open-ended general query, answer with Math Solver -> Local Ollama/LMStudio/Jan -> Cloud LLM -> Local GGUF!
+        # If this is an open-ended general query, answer with Math Solver -> Local GGUF -> Local Ollama/LMStudio/Jan -> Cloud -> Offline Synthesizer!
         if (
             raw_fallback["tool_call"]["tool"] == "answer_query"
             and "query" in raw_fallback["tool_call"]["params"]
@@ -470,31 +470,31 @@ class LLMEngine:
                 )
                 if local_rt:
                     raw_fallback["spoken_response"] = local_rt
+                elif self.llm is not None:
+                    chat_sys = (
+                        "You are CLUMSY, a brilliant, helpful, and articulate personal AI assistant. "
+                        "Answer the user's question directly, accurately, and clearly. Never mention internal model names."
+                    )
+                    gguf_reply = self.generate_raw_completion(
+                        user_prompt,
+                        system_prompt=chat_sys,
+                        history=history,
+                        max_tokens=220,
+                        temperature=0.3,
+                    )
+                    if gguf_reply:
+                        raw_fallback["spoken_response"] = gguf_reply
+                        parsed = validate_and_normalize_response(raw_fallback)
+                        elapsed = max(time.perf_counter() - t0, 1e-6)
+                        tokens_est = max(len(gguf_reply.split()), 12)
+                        parsed["engine"] = "llama_cpp_gguf"
+                        parsed["inference_time_ms"] = round(elapsed * 1000, 2)
+                        parsed["tokens_per_sec"] = round(tokens_est / elapsed, 1)
+                        return parsed
                 else:
                     cloud_reply = self._try_cloud_llm_completion(user_prompt, history=history)
                     if cloud_reply:
                         raw_fallback["spoken_response"] = cloud_reply
-                    elif self.llm is not None:
-                        chat_sys = (
-                            "You are CLUMSY, a brilliant, polite, witty AI personal assistant. "
-                            "Answer the user directly, accurately, and concisely. Never mention AI model names."
-                        )
-                        gguf_reply = self.generate_raw_completion(
-                            user_prompt,
-                            system_prompt=chat_sys,
-                            history=history,
-                            max_tokens=160,
-                            temperature=0.3,
-                        )
-                        if gguf_reply:
-                            raw_fallback["spoken_response"] = gguf_reply
-                            parsed = validate_and_normalize_response(raw_fallback)
-                            elapsed = max(time.perf_counter() - t0, 1e-6)
-                            tokens_est = max(len(gguf_reply.split()), 12)
-                            parsed["engine"] = "llama_cpp_gguf"
-                            parsed["inference_time_ms"] = round(elapsed * 1000, 2)
-                            parsed["tokens_per_sec"] = round(tokens_est / elapsed, 1)
-                            return parsed
 
         parsed = validate_and_normalize_response(raw_fallback)
         elapsed = max(time.perf_counter() - t0, 1e-6)
@@ -511,8 +511,12 @@ class LLMEngine:
     ) -> Dict[str, Any]:
         raw_prompt = (prompt or "").strip()
         text = raw_prompt.lower()
+        is_conceptual_question = bool(
+            re.match(r"^(?:explain|what\s+is\s+a|what\s+are|how\s+does|how\s+do|why\s+does|why\s+do|define|describe|tell\s+me\s+about)\b", text)
+            and not any(p in text for p in ("my phone", "my battery", "my laptop", "my system", "my cpu", "my ram", "my name"))
+        )
 
-        if any(w in text for w in ("phone", "mobile", "battery", "notification", "unread", "alert")):
+        if not is_conceptual_question and re.search(r"\b(phone|mobile|battery|notification|notifications|unread|alert|alerts)\b", text):
             return {
                 "thought": "User wants to check mobile phone battery and notifications.",
                 "tool_call": {"tool": "phone_check", "params": {}},
@@ -521,7 +525,7 @@ class LLMEngine:
                 "spoken_response": "Checking your mobile telemetry right now, sir.",
             }
 
-        if any(w in text for w in ("open", "launch", "start", "run")) and any(
+        if re.search(r"\b(open|launch|start|run)\b", text) and any(
             w in text
             for w in (
                 "app",
@@ -569,7 +573,7 @@ class LLMEngine:
                 "spoken_response": f"Right away, sir. Opening {app} on your system.",
             }
 
-        if any(w in text for w in ("music", "song", "tune", "track", "playlist", "pause", "resume")):
+        if not is_conceptual_question and re.search(r"\b(music|song|tune|track|playlist|pause|resume)\b", text) and "fine tune" not in text and "fine-tune" not in text:
             action = "pause" if "pause" in text else ("next" if "next" in text else "play")
             return {
                 "thought": f"User wants to {action} local music playback.",
@@ -585,7 +589,7 @@ class LLMEngine:
                 ),
             }
 
-        if any(w in text for w in ("cpu", "ram", "memory", "system status", "health", "diagnostics")):
+        if not is_conceptual_question and re.search(r"\b(cpu|ram|memory\s+usage|system\s+status|system\s+health|diagnostics)\b", text):
             return {
                 "thought": "User asked for local desktop system status.",
                 "tool_call": {"tool": "system_monitor", "params": {}},
@@ -594,7 +598,7 @@ class LLMEngine:
                 "spoken_response": "Running a full diagnostic on your system CPU and memory usage, sir.",
             }
 
-        if any(w in text for w in ("confused", "tilt", "nod", "look happy", "listen", "think", "wink", "excited", "sleepy")):
+        if not is_conceptual_question and re.search(r"\b(look\s+confused|confused|tilt\s+head|nod\s+head|look\s+happy|look\s+excited|wink|sleepy)\b", text) and len(text.split()) <= 7:
             expr = "happy"
             pan, tilt = 90, 95
             if "confused" in text:
@@ -615,8 +619,8 @@ class LLMEngine:
                 "spoken_response": f"Adjusting optical expression to {expr}, sir.",
             }
 
-        # Natural J.A.R.V.I.S. conversational responses for greetings, identity, status, jokes, time, math, etc.
-        if any(w in text for w in ("hello", "hi", "hey", "good morning", "good evening", "wake up", "you there")):
+        # Natural conversational responses for standalone greetings, identity, status, jokes, time, etc.
+        if re.match(r"^(?:hello|hi|hey|good\s+morning|good\s+evening|wake\s+up|you\s+there|are\s+you\s+there)(?:\s+clumsy|\s+jarvis|\s+there)?[\s!?.]*$", text):
             return {
                 "thought": "Greeting user in J.A.R.V.I.S. persona.",
                 "tool_call": {"tool": "answer_query", "params": {"topic": "greeting"}},
@@ -625,19 +629,19 @@ class LLMEngine:
                 "spoken_response": "At your service, sir. All systems are online and ready for your command.",
             }
 
-        if any(w in text for w in ("who are you", "what are you", "your name", "introduce yourself")):
+        if re.search(r"\b(who\s+are\s+you|what\s+are\s+you|what\s+is\s+your\s+name|your\s+name|introduce\s+yourself)\b", text):
             return {
                 "thought": "Explaining J.A.R.V.I.S. identity.",
                 "tool_call": {"tool": "answer_query", "params": {"topic": "identity"}},
                 "robot_expression": "happy",
                 "robot_servo": {"pan": 92, "tilt": 98},
                 "spoken_response": (
-                    "I am J.A.R.V.I.S., your personal AI assistant and the core intelligence of your Deskbot, "
+                    "I am CLUMSY, your personal offline-first AI assistant and the core intelligence of your Deskbot, "
                     "laptop command hub, and mobile companion."
                 ),
             }
 
-        if any(w in text for w in ("how are you", "how is it going", "are you ok", "feeling")):
+        if re.search(r"\b(how\s+are\s+you|how\s+is\s+it\s+going|are\s+you\s+ok)\b", text):
             return {
                 "thought": "Responding to status check.",
                 "tool_call": {"tool": "answer_query", "params": {"topic": "wellbeing"}},
@@ -646,20 +650,19 @@ class LLMEngine:
                 "spoken_response": "Operating at peak efficiency, sir. Diagnostics are green across all connected nodes. How may I assist you?",
             }
 
-        if any(w in text for w in ("what can you do", "help", "capabilities", "features")):
+        if re.search(r"\b(what\s+can\s+you\s+do|your\s+capabilities|your\s+features)\b", text) or text in ("help", "help me"):
             return {
                 "thought": "Listing capabilities in J.A.R.V.I.S. voice.",
                 "tool_call": {"tool": "answer_query", "params": {"topic": "capabilities"}},
                 "robot_expression": "excited",
                 "robot_servo": {"pan": 90, "tilt": 100},
                 "spoken_response": (
-                    "I can write and execute code in Java, Python, C++, or JavaScript, build presentations, "
-                    "render vector graphics, play music, launch applications on your laptop, and stay connected "
-                    "to your phone as your live Deskbot companion."
+                    "I can answer questions on science, math, and technology offline, write and execute code in Java, Python, C++, or JavaScript, "
+                    "build presentations, render 3D models, play music, and connect to your phone via Bluetooth."
                 ),
             }
 
-        if any(w in text for w in ("time", "date", "day is it")):
+        if re.search(r"\b(what\s+time\s+is\s+it|current\s+time|current\s+date|what\s+day\s+is\s+it|today's\s+date)\b", text) or text in ("time", "date"):
             now_str = time.strftime("%I:%M %p on %A, %B %d")
             return {
                 "thought": "Reporting current local time and date.",
@@ -669,7 +672,7 @@ class LLMEngine:
                 "spoken_response": f"It is currently {now_str}, sir.",
             }
 
-        if any(w in text for w in ("joke", "funny", "make me laugh")):
+        if re.search(r"\b(tell\s+me\s+a\s+joke|make\s+me\s+laugh|say\s+something\s+funny)\b", text) or text == "joke":
             return {
                 "thought": "Telling a witty J.A.R.V.I.S. joke.",
                 "tool_call": {"tool": "answer_query", "params": {"topic": "humor"}},
@@ -681,7 +684,7 @@ class LLMEngine:
                 ),
             }
 
-        if any(w in text for w in ("thank", "thanks", "good job", "awesome", "great", "nice")):
+        if re.search(r"\b(thank\s+you|thanks|thx|good\s+job|well\s+done)\b", text) and len(text.split()) <= 8:
             return {
                 "thought": "Acknowledging user appreciation.",
                 "tool_call": {"tool": "answer_query", "params": {"topic": "gratitude"}},

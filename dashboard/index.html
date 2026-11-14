@@ -713,12 +713,16 @@
         </div>
         <div class="status-dot"></div>
       </div>
-      <div class="device-item" id="deviceDesktop" style="margin-bottom:0;">
+      <div class="device-item" id="deviceDesktop" style="margin-bottom:6px;">
         <div class="device-info">
           <div class="device-title">Offline Neural Guard</div>
           <div class="device-sub" id="desktopSub">100% Offline • Zero Cloud Dependency</div>
         </div>
         <div class="status-dot"></div>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button onclick="sendQuickCommand('test_emotions')">Emotions</button>
+        <button onclick="sendQuickCommand('ping_devices')">Ping Nodes</button>
       </div>
     </div>
 
@@ -766,15 +770,15 @@
               <span>Explain quantum mechanics and how qubits work</span>
               <small>⚛️</small>
             </div>
-            <div class="suggestion-card" onclick="askPreset('Write a Python code for Binary Search and Quicksort')">
-              <span>Write &amp; execute Python or Java algorithms offline</span>
+            <div class="suggestion-card" onclick="askPreset('Write a Python program for Binary Search and Quicksort')">
+              <span>Write &amp; execute Python, Java, or C++ algorithms offline</span>
               <small>💻</small>
             </div>
-            <div class="suggestion-card" onclick="triggerInstantJob('3d_model', 'Create an engineering 3D model of a Skyscraper Building in Blender')">
-              <span>Render an interactive 60 FPS 3D CAD Skyscraper</span>
-              <small>🏢</small>
+            <div class="suggestion-card" onclick="askPreset('Explain how black holes and general relativity work')">
+              <span>Explain black holes, spacetime &amp; general relativity</span>
+              <small>🌌</small>
             </div>
-            <div class="suggestion-card" onclick="askPreset('How do neural networks and deep learning work?')">
+            <div class="suggestion-card" onclick="askPreset('How do neural networks and deep learning transformers work?')">
               <span>Explore how neural networks &amp; offline AI models work</span>
               <small>✨</small>
             </div>
@@ -785,42 +789,23 @@
         <div class="messages" id="messageList">
           <div class="msg assistant">
             <div class="assistant-hdr"><span class="sparkle-icon">✦</span> CLUMSY</div>
-            <div>Hi! I’m <b>CLUMSY</b>, your personal offline-first AI assistant and robot companion. I run <b>100% offline</b> with my built-in Neural Core and also connect directly to your local <b>Ollama</b>, <b>LM Studio</b>, <b>Jan AI</b>, and <b>GGUF</b> models. Ask me anything, write code, solve math, or render 3D models!</div>
+            <div>Hi! I’m <b>CLUMSY</b>, your personal offline-first AI. I run <b>100% offline</b> with my built-in Neural Core and also connect directly to your local <b>Ollama</b>, <b>LM Studio</b>, <b>Jan AI</b>, and <b>GGUF</b> models. Ask me anything — science, coding, math, essays, or reasoning!</div>
           </div>
         </div>
 
-        <!-- Live Studio Canvas Output (Gemini Canvas Style) -->
-        <div class="job-studio-box" id="jobStudioOutput">
-          <div class="job-badge">CLUMSY LIVE CANVAS // OFFLINE STUDIO</div>
-          <div style="font-size: 12.5px; color: var(--text-muted);">
-            Interactive outputs (Code + STDOUT, 60 FPS 3D CAD Models, AI Videos, Vector Artwork, Slide Decks &amp; App Launchers) render live here.
-          </div>
-        </div>
+        <!-- Hidden-by-default Canvas Drawer (only opens when an interactive artifact is rendered) -->
+        <div class="job-studio-box" id="jobStudioOutput" style="display: none;"></div>
       </div>
     </div>
 
     <!-- Bottom Floating Gemini Pill Input Bar -->
     <div class="gemini-bottom-dock">
       <div class="gemini-prompt-container">
-        <div class="studio-quick-bar" id="studioActionChips">
-          <button onclick="triggerInstantJob('code', 'Write Java code to print My name is Aditya Pratap Singh')">💻 Code Studio</button>
-          <button onclick="triggerInstantJob('3d_model', 'Create an engineering 3D model of a Skyscraper Building in Blender')">🏢 3D Building</button>
-          <button onclick="triggerInstantJob('3d_model', 'Create an engineering 3D model of a Suspension Bridge in Blender')">🌉 3D Bridge</button>
-          <button onclick="triggerInstantJob('3d_model', 'Render a 3D model of Quadcopter Drone in Blender')">🚁 3D Drone</button>
-          <button onclick="triggerInstantJob('pic', 'Generate a realistic photo of Sunset on Goa Beach')">📸 AI Photo</button>
-          <button onclick="triggerInstantJob('video', 'Make a video about CLUMSY Autonomous Robotics')">🎥 AI Video</button>
-          <button onclick="triggerInstantJob('ppt', 'Create a presentation about Offline AI Systems')">📊 PPT Deck</button>
-          <button onclick="triggerInterplatform('netflix', 'Play Stranger Things on Netflix')">🎬 Netflix</button>
-          <button onclick="triggerInterplatform('gmail', 'Compose email in Gmail')">✉️ Gmail</button>
-          <button onclick="triggerInterplatform('calendar', 'Schedule meeting in Google Calendar')">📅 Calendar</button>
-          <button onclick="triggerInterplatform('notes', 'Take a note: Test CLUMSY with Ollama and LM Studio')">📝 Save Note</button>
-        </div>
-
         <div class="gemini-pill-bar">
           <input
             type="text"
             id="userInput"
-            placeholder="Ask CLUMSY anything (works 100% offline — math, science, code, 3D, essays)..."
+            placeholder="Ask CLUMSY anything (100% offline — science, coding, math, essays, reasoning)..."
             onkeydown="if(event.key==='Enter') sendQuery(false)"
           />
           <button class="pill-action-btn" id="btnVoiceDictation" onclick="toggleVoiceInput()" title="Always-On Voice Recognition">🎙️ Speak</button>
@@ -828,7 +813,7 @@
         </div>
 
         <div id="liveVoiceTranscriptBar" style="font-size: 11px; color: var(--text-muted); text-align: center; min-height: 15px;">
-          ✦ 100% Offline Ready • Supports Built-In Neural Core, Ollama (:11434), LM Studio (:1234), Jan AI (:1337) &amp; Always-On "Hey Clumsy" Wake Word
+          ✦ CLUMSY Offline AI • Built-In Neural Core + Ollama (:11434) + LM Studio (:1234) + Jan AI (:1337)
         </div>
       </div>
     </div>
@@ -864,12 +849,33 @@
       if (window.clumsyBrain) window.clumsyBrain.history = [];
       const hero = document.getElementById('geminiHero');
       if (hero) hero.style.display = 'block';
+      if (jobStudioOutput) {
+        jobStudioOutput.style.display = 'none';
+        jobStudioOutput.innerHTML = '';
+      }
       messageList.innerHTML = `
         <div class="msg assistant">
           <div class="assistant-hdr"><span class="sparkle-icon">✦</span> CLUMSY</div>
-          <div>Started a fresh offline conversation! Ask me anything or pick a Studio tool below.</div>
+          <div>Started a fresh offline conversation! Ask me anything — science, coding, math, essays, or reasoning.</div>
         </div>
       `;
+    }
+
+    async function sendQuickCommand(trigger) {
+      logStreamEvent('QUICK_ACTION', trigger);
+      if (trigger === 'test_emotions') {
+        const seq = ['happy', 'excited', 'love', 'wink', 'thinking', 'listening', 'idle'];
+        seq.forEach((rx, idx) => {
+          setTimeout(() => setExpression(rx, 90, 96, false), idx * 450);
+        });
+      }
+      try {
+        await fetch('/api/quick_action', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ trigger })
+        });
+      } catch (_) {}
     }
 
     function askPreset(text) {
@@ -959,8 +965,9 @@
 
     function renderJobArtifact(artifact) {
       if (!artifact || !jobStudioOutput) return;
-      if (artifact.preview_html) {
-        jobStudioOutput.innerHTML = artifact.preview_html;
+      if (artifact.preview_html && artifact.job_type !== 'code') {
+        jobStudioOutput.style.display = 'block';
+        jobStudioOutput.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:6px;"><button onclick="document.getElementById('jobStudioOutput').style.display='none'" style="font-size:10px;padding:2px 8px;">✕ Close Canvas</button></div>` + artifact.preview_html;
         jobStudioOutput.querySelectorAll('script').forEach((oldScript) => {
           const newScript = document.createElement('script');
           newScript.textContent = oldScript.textContent;
@@ -975,22 +982,30 @@
     }
 
     let isSpeakingDesktopTTS = false;
+    let desktopTtsSafetyTimer = null;
     function speakJarvisReply(spokenText) {
       if (!spokenText || !('speechSynthesis' in window)) return;
       try {
         window.speechSynthesis.cancel();
+        if (desktopTtsSafetyTimer) clearTimeout(desktopTtsSafetyTimer);
         const utter = new SpeechSynthesisUtterance(spokenText);
         utter.rate = 1.04;
         utter.pitch = 0.96;
         utter.onstart = () => {
           isSpeakingDesktopTTS = true;
           if (eyeballEngine) eyeballEngine.setAudioLevel(0.8);
+          desktopTtsSafetyTimer = setTimeout(() => {
+            isSpeakingDesktopTTS = false;
+            if (eyeballEngine) eyeballEngine.setAudioLevel(0.08);
+          }, Math.min(9000, Math.max(2500, spokenText.length * 65)));
         };
         utter.onend = () => {
+          if (desktopTtsSafetyTimer) clearTimeout(desktopTtsSafetyTimer);
           isSpeakingDesktopTTS = false;
           if (eyeballEngine) eyeballEngine.setAudioLevel(0.08);
         };
         utter.onerror = () => {
+          if (desktopTtsSafetyTimer) clearTimeout(desktopTtsSafetyTimer);
           isSpeakingDesktopTTS = false;
         };
         window.speechSynthesis.speak(utter);

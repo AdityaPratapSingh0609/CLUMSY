@@ -135,5 +135,17 @@
     "when": "Tomorrow at 10:00 AM",
     "url": "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Robotics+Demo&details=Scheduled+via+J.A.R.V.I.S.+Voice+Command+%28Tomorrow+at+10%3A00+AM%29",
     "created_at": "2026-11-14 19:29"
+  },
+  {
+    "title": "Deskbot 3D Launch Tomorrow At 4Pm",
+    "when": "Tomorrow at 10:00 AM",
+    "url": "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Deskbot+3D+Launch+Tomorrow+At+4Pm&details=Scheduled+via+J.A.R.V.I.S.+Voice+Command+%28Tomorrow+at+10%3A00+AM%29",
+    "created_at": "2026-11-14 20:53"
+  },
+  {
+    "title": "Robotics Demo",
+    "when": "Tomorrow at 10:00 AM",
+    "url": "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Robotics+Demo&details=Scheduled+via+J.A.R.V.I.S.+Voice+Command+%28Tomorrow+at+10%3A00+AM%29",
+    "created_at": "2026-11-14 20:53"
   }
 ]

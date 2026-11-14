@@ -323,7 +323,7 @@
 
     async queryLocalClumsyGGUF(userQuery) {
       const c = new AbortController();
-      const t = setTimeout(() => c.abort(), 6000);
+      const t = setTimeout(() => c.abort(), 5000);
       try {
         const res = await fetch('http://127.0.0.1:8080/api/query', {
           method: 'POST',
@@ -334,7 +334,15 @@
         clearTimeout(t);
         if (!res.ok) return null;
         const data = await res.json();
-        if (data && data.response && !data.response.includes('I have processed that and stand ready')) {
+        const respText = (data && data.response) ? String(data.response) : '';
+        const isCannedStub = (
+          respText.includes('I have processed that and stand ready') ||
+          respText.includes('Checking your mobile telemetry') ||
+          respText.includes('Running a full diagnostic on your system CPU') ||
+          respText.includes('At your service, sir. All systems are online') ||
+          respText.includes('Always a pleasure, sir.')
+        );
+        if (respText && !isCannedStub) {
           return data;
         }
       } catch (_) {
@@ -829,19 +837,19 @@
         if (r) return { text: r, engine: 'Jan AI (Offline Local)' };
       }
 
-      // 2. Try Local CLUMSY Python GGUF Server (http://127.0.0.1:8080)
-      if (this.providerStatus.local_hub || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        const localData = await this.queryLocalClumsyGGUF(userQuery);
-        if (localData && localData.response) {
-          return { text: localData.response, engine: 'CLUMSY Local GGUF', rawData: localData };
-        }
-      }
-
-      // 3. Check if topic is in our Instant Offline Knowledge Base first!
+      // 2. Check if topic is in our Instant Offline Knowledge Base first (<1ms deterministic offline accuracy)
       const qLow = userQuery.toLowerCase();
       for (const entry of OFFLINE_KNOWLEDGE_BASE) {
         if (entry.keys.some(k => qLow.includes(k))) {
           return { text: entry.response, engine: 'CLUMSY Offline Neural Core' };
+        }
+      }
+
+      // 3. Try Local CLUMSY Python GGUF Server (http://127.0.0.1:8080)
+      if (this.providerStatus.local_hub || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        const localData = await this.queryLocalClumsyGGUF(userQuery);
+        if (localData && localData.response) {
+          return { text: localData.response, engine: 'CLUMSY Local GGUF', rawData: localData };
         }
       }
 
