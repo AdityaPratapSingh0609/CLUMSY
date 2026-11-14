@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#02050c" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="/manifest.json" />
+  <title>J.A.R.V.I.S. MOBILE AGENT // Deskbot Eyes Stream-Flow App</title>
+  <script src="/eyeballs.js"></script>
+  <style>
+    :root {
+      --bg: #02050c;
+      --card: rgba(11, 21, 40, 0.90);
+      --border: rgba(56, 189, 248, 0.35);
+      --accent: #38bdf8;
+      --success: #34d399;
+      --danger: #f43f5e;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* STEP 1: Connect to Laptop Hub Handshake Screen */
+    #connectHandshakeScreen {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: radial-gradient(circle at 50% 25%, #0c2444 0%, #02050c 75%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+    #connectHandshakeScreen.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(1.04);
+    }
+    .handshake-card {
+      max-width: 440px;
+      width: 100%;
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: 24px;
+      padding: 26px 22px;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.65), inset 0 0 28px rgba(56, 189, 248, 0.08);
+    }
+    .pulse-ring {
+      width: 78px;
+      height: 78px;
+      border-radius: 50%;
+      margin: 0 auto 16px;
+      border: 2.5px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      box-shadow: 0 0 28px rgba(56, 189, 248, 0.45);
+      animation: pulseGlow 2s infinite ease-in-out;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(56, 189, 248, 0.35); }
+      50% { transform: scale(1.07); box-shadow: 0 0 36px rgba(56, 189, 248, 0.75); }
+    }
+    .handshake-title {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      margin-bottom: 6px;
+    }
+    .handshake-sub {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-bottom: 18px;
+    }
+    .hub-status-box {
+      background: rgba(4, 10, 22, 0.85);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      text-align: left;
+      font-size: 12px;
+      margin-bottom: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .connect-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #38bdf8, #0284c7);
+      color: #020617;
+      font-weight: 800;
+      font-size: 14.5px;
+      border: none;
+      border-radius: 14px;
+      padding: 14px 18px;
+      cursor: pointer;
+      box-shadow: 0 6px 22px rgba(56, 189, 248, 0.4);
+      transition: transform 0.15s ease;
+    }
+    .connect-btn:active { transform: scale(0.98); }
+
+    /* STEP 2: Full-Screen Living Deskbot Eyeballs Mode */
+    #eyesStreamScreen {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: radial-gradient(circle at 50% 48%, #071529 0%, #020409 82%);
+    }
+    #mobileEyeballCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: 1;
+    }
+
+    /* Floating Top Status Bar */
+    .top-hud {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 18px;
+      pointer-events: auto;
+    }
+    .hud-pill {
+      background: rgba(9, 18, 34, 0.82);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 13px;
+      font-size: 11.5px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      backdrop-filter: blur(8px);
+    }
+    .dot-live {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+
+    /* Bottom Floating Stream-Flow Voice & Reaction Controls */
+    .bottom-hud {
+      position: relative;
+      z-index: 10;
+      padding: 12px 16px 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(to top, rgba(2, 5, 12, 0.92) 0%, rgba(2, 5, 12, 0) 100%);
+    }
+    .voice-caption {
+      max-width: 620px;
+      width: 100%;
+      background: rgba(11, 21, 40, 0.86);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-size: 13px;
+      text-align: center;
+      color: #e0f2fe;
+      backdrop-filter: blur(8px);
+    }
+    .reaction-strip {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .rx-btn {
+      background: rgba(15, 23, 42, 0.85);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 11px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .rx-btn:hover, .rx-btn.active {
+      background: var(--accent);
+      color: #000;
+    }
+    .control-bar {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+      max-width: 540px;
+    }
+    .control-bar input {
+      flex: 1;
+      background: rgba(6, 11, 20, 0.9);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      outline: none;
+    }
+    .btn-action {
+      background: var(--accent);
+      color: #020617;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-weight: 700;
+      font-size: 12.5px;
+      cursor: pointer;
+    }
+    .btn-mic {
+      background: rgba(52, 211, 153, 0.18);
+      color: var(--success);
+      border: 1px solid var(--success);
+      border-radius: 12px;
+      padding: 10px 13px;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .btn-mic.muted {
+      background: rgba(244, 63, 94, 0.18);
+      color: var(--danger);
+      border-color: var(--danger);
+    }
+
+    /* Slide-Up Command Output & Notes Drawer */
+    #agentDrawer {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 30;
+      background: rgba(8, 15, 29, 0.96);
+      border-top: 1.5px solid var(--accent);
+      border-radius: 22px 22px 0 0;
+      padding: 18px;
+      max-height: 68vh;
+      overflow-y: auto;
+      transform: translateY(105%);
+      transition: transform 0.28s ease;
+    }
+    #agentDrawer.open {
+      transform: translateY(0);
+    }
+    .drawer-code pre {
+      background: #050a14;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      font-family: Consolas, monospace;
+      font-size: 12px;
+      color: #38bdf8;
+      overflow-x: auto;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- STEP 1: Laptop Hub Recognition & Handshake Overlay -->
+  <div id="connectHandshakeScreen">
+    <div class="handshake-card">
+      <div class="pulse-ring">👁️</div>
+      <div class="handshake-title">DESKBOT EYES // STREAM-FLOW</div>
+      <div class="handshake-sub">
+        Connect your phone to the <b>J.A.R.V.I.S. Laptop Hub</b>. Once recognized, your phone transforms into your live <b>Deskbot Eyeballs</b> with always-on microphone &amp; speaker streaming.
+      </div>
+      <div class="hub-status-box">
+        <div>📡 <b>Laptop Hub Status:</b> <span id="hubDetectStatus" style="color: var(--success);">Detecting Laptop Hub...</span></div>
+        <div>🔗 <b>Link Endpoint:</b> <span id="hubEndpointText">Auto-Discovery (Wi-Fi / BT PAN)</span></div>
+        <div>🎙️ <b>Stream-Flow Mode:</b> Always-On Mic + Speaker + Background WakeLock</div>
+      </div>
+      <button class="connect-btn" id="btnConnectLaptop" onclick="completeLaptopHandshake()">
+        🔗 Connect to Laptop Hub &amp; Launch Deskbot Eyes
+      </button>
+    </div>
+  </div>
+
+  <!-- STEP 2: Full-Screen Living Eyeballs Avatar -->
+  <div id="eyesStreamScreen">
+    <canvas id="mobileEyeballCanvas"></canvas>
+
+    <div class="top-hud">
+      <div class="hud-pill">
+        <span class="dot-live" id="wsDot"></span>
+        <span id="linkBadgeText">Deskbot Eyes • Linked to Laptop Hub</span>
+      </div>
+      <div style="display: flex; gap: 6px;">
+        <button class="rx-btn" onclick="toggleDrawer()">📋 Studio / Notes</button>
+        <button class="rx-btn" id="btnInstallPwa" style="display: none;" onclick="installMobileApp()">⬇ Install App</button>
+      </div>
+    </div>
+
+    <div class="bottom-hud">
+      <div class="voice-caption" id="jarvisVoiceCaption">
+        "At your service, sir. Deskbot Eyes are online and listening continuously."
+      </div>
+
+      <div class="reaction-strip" style="margin-bottom: 2px;">
+        <button class="rx-btn" onclick="quickMobileVoiceCmd('Play Stranger Things on Netflix')">🎬 Netflix</button>
+        <button class="rx-btn" onclick="quickMobileVoiceCmd('Play The Boys on Amazon Prime Video')">📺 Prime Video</button>
+        <button class="rx-btn" onclick="quickMobileVoiceCmd('Play Marvel Avengers on Disney+ Hotstar')">🌟 Hotstar</button>
+        <button class="rx-btn" onclick="quickMobileVoiceCmd('Compose email in Gmail about Deskbot status')">✉️ Gmail</button>
+        <button class="rx-btn" onclick="quickMobileVoiceCmd('Schedule meeting in Google Calendar tomorrow at 10am')">📅 Calendar</button>
+        <button class="rx-btn" onclick="quickMobileVoiceCmd('Take a note: Test 3D Blender model rendering')">📝 Notes</button>
+        <button class="rx-btn" onclick="quickMobileVoiceCmd('Create an engineering 3D model of a Skyscraper Building in Blender')">🏢 3D Building</button>
+        <button class="rx-btn" onclick="quickMobileVoiceCmd('Create an engineering 3D model of a Suspension Bridge in Blender')">🌉 3D Bridge</button>
+        <button class="rx-btn" onclick="quickMobileVoiceCmd('Generate a realistic photo of Sunset on Goa Beach')">📸 AI Photo</button>
+        <button class="rx-btn" onclick="quickMobileVoiceCmd('Make a video about JARVIS Robotics')">🎥 AI Video</button>
+      </div>
+
+      <div class="reaction-strip">
+        <button class="rx-btn" onclick="setMobileReaction('idle')">Idle</button>
+        <button class="rx-btn active" onclick="setMobileReaction('happy')">Happy ^_^</button>
+        <button class="rx-btn" onclick="setMobileReaction('excited')">Excited ✨</button>
+        <button class="rx-btn" onclick="setMobileReaction('love')">Love ❤️</button>
+        <button class="rx-btn" onclick="setMobileReaction('listening')">Listen 🎙️</button>
+        <button class="rx-btn" onclick="setMobileReaction('thinking')">Think 🧠</button>
+        <button class="rx-btn" onclick="setMobileReaction('coding')">Coding 💻</button>
+        <button class="rx-btn" onclick="setMobileReaction('wink')">Wink 😉</button>
+        <button class="rx-btn" onclick="setMobileReaction('surprised')">Surprised 😮</button>
+        <button class="rx-btn" onclick="setMobileReaction('confused')">Confused 🤔</button>
+      </div>
+
+      <div class="control-bar">
+        <button class="btn-mic" id="btnStreamMic" onclick="toggleStreamMic()">🎙️ Mic: ON</button>
+        <input
+          type="text"
+          id="mobileQueryInput"
+          placeholder="Say anything or type to J.A.R.V.I.S. (opens on Laptop & Phone)..."
+          onkeydown="if(event.key==='Enter') sendMobileCommand()"
+        />
+        <button class="btn-action" onclick="sendMobileCommand()">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide-Up Studio & Personal Agent Notes Drawer -->
+  <div id="agentDrawer">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+      <h3 style="font-size: 14px; color: var(--accent);">⚡ J.A.R.V.I.S. MOBILE AGENT &amp; LAPTOP OUTPUT</h3>
+      <button class="rx-btn" onclick="toggleDrawer()">✕ Close</button>
+    </div>
+    <div id="drawerJobOutput" class="drawer-code" style="font-size: 12.5px; color: var(--muted); margin-bottom: 12px;">
+      Ask J.A.R.V.I.S. to write Java/Python/C++ code, create a PPT presentation, play a song, or open any app on your laptop!
+    </div>
+    <h4 style="font-size: 12px; color: var(--accent); margin-bottom: 6px;">📌 Synced Personal Notes &amp; Reminders</h4>
+    <div id="mobileNotesList" style="font-size: 12.5px; display: flex; flex-direction: column; gap: 6px;"></div>
+  </div>
+
+  <script>
+    const eyeballCanvas = document.getElementById('mobileEyeballCanvas');
+    const eyeballEngine = window.DeskbotEyeballEngine
+      ? new window.DeskbotEyeballEngine(eyeballCanvas, { fullScreen: true })
+      : null;
+
+    let wsConn = null;
+    let streamMicEnabled = true;
+    let speechRec = null;
+    let wakeLockSentinel = null;
+    let deferredInstallPrompt = null;
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      const btn = document.getElementById('btnInstallPwa');
+      if (btn) btn.style.display = 'inline-block';
+    });
+
+    async function installMobileApp() {
+      if (!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+    }
+
+    async function requestBackgroundWakeLock() {
+      if ('wakeLock' in navigator) {
+        try {
+          wakeLockSentinel = await navigator.wakeLock.request('screen');
+        } catch (_) {}
+      }
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        requestBackgroundWakeLock();
+      }
+    });
+
+    function speakOnPhone(text) {
+      if (!text || !('speechSynthesis' in window)) return;
+      try {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.rate = 1.04;
+        utter.pitch = 0.96;
+        utter.onstart = () => {
+          if (eyeballEngine) {
+            eyeballEngine.setReaction('speaking');
+            eyeballEngine.setAudioLevel(0.82);
+          }
+        };
+        utter.onend = () => {
+          if (eyeballEngine) {
+            eyeballEngine.setReaction('happy');
+            eyeballEngine.setAudioLevel(0.08);
+          }
+        };
+        window.speechSynthesis.speak(utter);
+      } catch (_) {}
+    }
+
+    function setMobileReaction(rx, pan = 90, tilt = 95) {
+      if (eyeballEngine) eyeballEngine.setReaction(rx, pan, tilt);
+      document.querySelectorAll('.reaction-strip .rx-btn').forEach((b) => {
+        b.classList.toggle('active', b.textContent.toLowerCase().startsWith(rx));
+      });
+      fetch('/api/robot/telemetry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expression: rx, pan, tilt }),
+      }).catch(() => {});
+    }
+
+    function toggleDrawer() {
+      document.getElementById('agentDrawer').classList.toggle('open');
+    }
+
+    function connectMobileWebSocket(wsPort) {
+      const host = window.location.hostname || '127.0.0.1';
+      const url = `ws://${host}:${wsPort || 9121}`;
+      try {
+        if (wsConn && (wsConn.readyState === WebSocket.OPEN || wsConn.readyState === WebSocket.CONNECTING)) {
+          return;
+        }
+        wsConn = new WebSocket(url);
+        wsConn.onopen = () => {
+          document.getElementById('linkBadgeText').textContent = 'Deskbot Eyes • WS Live Synced';
+        };
+        wsConn.onmessage = (ev) => {
+          try {
+            const data = JSON.parse(ev.data);
+            const payload = data.payload || data;
+            if (payload.telemetry && eyeballEngine) {
+              eyeballEngine.setReaction(
+                payload.telemetry.expression || 'happy',
+                payload.telemetry.pan_deg || 90,
+                payload.telemetry.tilt_deg || 95
+              );
+            }
+            if (payload.response) {
+              document.getElementById('jarvisVoiceCaption').textContent =
+                payload.spoken_tts || payload.response.split('```')[0].trim();
+            }
+          } catch (_) {}
+        };
+        wsConn.onclose = () => {
+          wsConn = null;
+          setTimeout(() => connectMobileWebSocket(wsPort), 2500);
+        };
+      } catch (_) {}
+    }
+
+    async function probeLaptopHub() {
+      try {
+        const res = await fetch('/api/handshake');
+        const info = await res.json();
+        document.getElementById('hubDetectStatus').textContent = 'ONLINE & RECOGNIZED';
+        document.getElementById('hubEndpointText').textContent = `${info.lan_ip}:${info.http_port} (WS :${info.ws_port})`;
+        connectMobileWebSocket(info.ws_port);
+
+        // If previously paired in localStorage, auto-connect immediately!
+        if (localStorage.getItem('deskbot_laptop_paired') === '1') {
+          setTimeout(() => completeLaptopHandshake(true), 450);
+        }
+      } catch (_) {
+        document.getElementById('hubDetectStatus').textContent = 'Waiting for Laptop Hub...';
+        setTimeout(probeLaptopHub, 2500);
+      }
+    }
+
+    async function completeLaptopHandshake(isAuto = false) {
+      try {
+        const res = await fetch('/api/mobile/connect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            device_name: 'Phone-Deskbot-Eyes',
+            always_on_mic: true,
+            voice_output_target: 'source_device',
+          }),
+        });
+        const data = await res.json();
+        localStorage.setItem('deskbot_laptop_paired', '1');
+        document.getElementById('connectHandshakeScreen').classList.add('hidden');
+        if (eyeballEngine) eyeballEngine.setReaction('happy', 90, 96);
+        requestBackgroundWakeLock();
+        startAlwaysOnMic();
+        if (!isAuto && data.welcome_speech) {
+          speakOnPhone(data.welcome_speech);
+        }
+        refreshAgentNotes();
+      } catch (_) {
+        document.getElementById('connectHandshakeScreen').classList.add('hidden');
+        if (eyeballEngine) eyeballEngine.setReaction('happy', 90, 96);
+      }
+    }
+
+    function startAlwaysOnMic() {
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) return;
+      if (speechRec) return;
+
+      // Also hook getUserMedia audio level so pupils dilate with live voice
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices
+          .getUserMedia({ audio: true })
+          .then((stream) => {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const src = ctx.createMediaStreamSource(stream);
+            const analyser = ctx.createAnalyser();
+            analyser.fftSize = 64;
+            src.connect(analyser);
+            const buf = new Uint8Array(analyser.frequencyBinCount);
+            function updateLevel() {
+              if (streamMicEnabled && eyeballEngine) {
+                analyser.getByteFrequencyData(buf);
+                let s = 0;
+                for (let i = 0; i < buf.length; i++) s += buf[i];
+                eyeballEngine.setAudioLevel(Math.min(1, (s / (buf.length * 255)) * 2.4));
+              }
+              requestAnimationFrame(updateLevel);
+            }
+            requestAnimationFrame(updateLevel);
+          })
+          .catch(() => {});
+      }
+
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      speechRec = new SpeechRecognition();
+      speechRec.lang = 'en-US';
+      speechRec.continuous = true;
+      speechRec.interimResults = true;
+      speechRec.maxAlternatives = 3;
+
+      speechRec.onresult = (event) => {
+        if (!streamMicEnabled) return;
+        const last = event.results.length - 1;
+        const item = event.results[last];
+        const rawText = item[0].transcript.trim();
+        const text = normalizeMobilePhonetics(rawText);
+        if (!item.isFinal) {
+          document.getElementById('jarvisVoiceCaption').textContent = `🎙️ Hearing: "${text}"...`;
+          return;
+        }
+        const alts = [];
+        for (let i = 0; i < item.length; i++) {
+          if (item[i] && item[i].transcript) alts.push(item[i].transcript.trim());
+        }
+        if (text) {
+          document.getElementById('mobileQueryInput').value = text;
+          sendMobileCommand(alts);
+        }
+      };
+      speechRec.onerror = () => {};
+      speechRec.onend = () => {
+        if (streamMicEnabled) {
+          try { speechRec.start(); } catch (_) {}
+        }
+      };
+      try { speechRec.start(); } catch (_) {}
+    }
+
+    function toggleStreamMic() {
+      streamMicEnabled = !streamMicEnabled;
+      const btn = document.getElementById('btnStreamMic');
+      if (streamMicEnabled) {
+        btn.classList.remove('muted');
+        btn.textContent = '🎙️ Mic: ON';
+        try { if (speechRec) speechRec.start(); } catch (_) {}
+      } else {
+        btn.classList.add('muted');
+        btn.textContent = '🔇 Mic: MUTED';
+        try { if (speechRec) speechRec.stop(); } catch (_) {}
+      }
+    }
+
+    function normalizeMobilePhonetics(rawText) {
+      if (!rawText) return '';
+      return String(rawText)
+        .replace(/\b(harvis|charvis|jervis|jarves)\b/gi, 'JARVIS')
+        .replace(/\b(jeemail|gee\s*mail|g\s+mail|g-mail)\b/gi, 'Gmail')
+        .replace(/\b(callender|calender|calandar)\b/gi, 'Calendar')
+        .replace(/\b(net\s+flicks|netflex|net\s+flix)\b/gi, 'Netflix')
+        .replace(/\b(ama\s+zon|amazn)\b/gi, 'Amazon')
+        .replace(/\b(blander|blendr|blendar)\b/gi, 'Blender')
+        .replace(/\b(three\s+d|3\s+d|3-d|threed)\b/gi, '3D')
+        .trim();
+    }
+
+    function quickMobileVoiceCmd(cmdText) {
+      document.getElementById('mobileQueryInput').value = cmdText;
+      sendMobileCommand();
+    }
+
+    async function sendMobileCommand(alternatives = null) {
+      const input = document.getElementById('mobileQueryInput');
+      const query = normalizeMobilePhonetics(input.value.trim());
+      if (!query) return;
+      input.value = '';
+
+      setMobileReaction('thinking', 105, 112);
+      document.getElementById('jarvisVoiceCaption').textContent = `Listening: "${query}"...`;
+
+      try {
+        const res = await fetch('/api/mobile/agent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query, alternatives, execute_os: true, source_device: 'mobile_app' }),
+        });
+        const data = await res.json();
+        const spokenText = data.spoken_tts || data.response || 'Done, sir.';
+        document.getElementById('jarvisVoiceCaption').textContent = spokenText;
+        setMobileReaction(data.eye_reaction || 'happy', 90, 96);
+        speakOnPhone(spokenText);
+
+        if (data.job_artifact && data.job_artifact.preview_html) {
+          const drawerOut = document.getElementById('drawerJobOutput');
+          drawerOut.innerHTML = data.job_artifact.preview_html;
+          drawerOut.querySelectorAll('script').forEach((oldScript) => {
+            const newScript = document.createElement('script');
+            newScript.textContent = oldScript.textContent;
+            oldScript.parentNode.replaceChild(newScript, oldScript);
+          });
+          // Automatically slide open the Studio Drawer when a 3D model, AI photo, or streaming task is created!
+          document.getElementById('agentDrawer').classList.add('open');
+        }
+        refreshAgentNotes();
+      } catch (_) {
+        document.getElementById('jarvisVoiceCaption').textContent = 'Processed locally on Deskbot Eyes.';
+        setMobileReaction('happy', 90, 95);
+      }
+    }
+
+    async function refreshAgentNotes() {
+      try {
+        const res = await fetch('/api/mobile/agent');
+        const state = await res.json();
+        const list = document.getElementById('mobileNotesList');
+        if (list && state.notes) {
+          list.innerHTML = state.notes
+            .map((n) => `<div style="background:#050a14;padding:8px 10px;border-radius:8px;border:1px solid var(--border);">• ${n.text}</div>`)
+            .join('');
+        }
+      } catch (_) {}
+    }
+
+    probeLaptopHub();
+  </script>
+</body>
+</html>

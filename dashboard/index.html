@@ -1,0 +1,1183 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DESKBOT // J.A.R.V.I.S. — Holographic Fusion Command Center</title>
+  <script src="/robot3d.js"></script>
+  <script src="/eyeballs.js"></script>
+  <script src="/jarvis_hud.js"></script>
+  <style>
+    :root {
+      --bg: #050a14;
+      --card-bg: rgba(15, 23, 42, 0.88);
+      --card-border: rgba(56, 189, 248, 0.32);
+      --accent: #38bdf8;
+      --accent-cyan: #22d3ee;
+      --accent-glow: rgba(56, 189, 248, 0.38);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --success: #34d399;
+      --warning: #fbbf24;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    body {
+      background: radial-gradient(circle at 50% 0%, #0c1f38 0%, var(--bg) 72%);
+      color: var(--text);
+      padding: 20px 24px;
+      min-height: 100vh;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .brand h1 { font-size: 23px; font-weight: 800; letter-spacing: 1.2px; color: var(--text); }
+    .badge {
+      background: rgba(56, 189, 248, 0.14);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .grid-layout {
+      display: grid;
+      grid-template-columns: 360px 1fr 360px;
+      gap: 18px;
+    }
+
+    @media (max-width: 1120px) {
+      .grid-layout {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      body { padding: 12px; }
+      .grid-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45), inset 0 0 20px rgba(56, 189, 248, 0.05);
+    }
+    .card h2 {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--accent);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    /* Robot Face Avatar (2D OLED Digital Twin) */
+    .robot-stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #060b14;
+      border-radius: 16px;
+      padding: 16px;
+      border: 1.5px solid var(--card-border);
+      position: relative;
+    }
+    .oled-screen {
+      width: 268px;
+      height: 136px;
+      background: radial-gradient(circle at 50% 50%, #071224 0%, #02040a 85%);
+      border-radius: 18px;
+      border: 2px solid rgba(56, 189, 248, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      box-shadow: inset 0 0 28px rgba(56, 189, 248, 0.25), 0 0 22px rgba(56, 189, 248, 0.12);
+      position: relative;
+    }
+    .oled-meta {
+      display: none;
+    }
+    .eye {
+      width: 44px;
+      height: 44px;
+      background: var(--accent);
+      border-radius: 50%;
+      position: relative;
+      box-shadow: 0 0 18px var(--accent-glow);
+      transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .eye.pupil::after {
+      content: '';
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: #000;
+      border-radius: 50%;
+      top: calc(10px + var(--pupil-dy, 0px));
+      left: calc(10px + var(--pupil-dx, 0px));
+      transition: top 0.12s ease, left 0.12s ease;
+    }
+    .eye.happy {
+      border-radius: 50% 50% 0 0;
+      height: 22px;
+      border-bottom: none;
+    }
+    .eye.listening {
+      transform: scale(1.22);
+      box-shadow: 0 0 24px var(--accent);
+    }
+    .eye.thinking {
+      transform: translate(6px, -8px) scale(0.9);
+    }
+    .eye.sleeping, .eye.blinking {
+      height: 4px;
+      margin-top: 18px;
+      border-radius: 4px;
+    }
+
+    .telemetry-row {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .slider-panel {
+      width: 100%;
+      margin-top: 10px;
+      background: #091222;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 11px;
+    }
+    .slider-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .slider-row input[type="range"] {
+      flex: 1;
+      accent-color: var(--accent);
+    }
+
+    /* Live Mic Waveform Bar */
+    .mic-waveform-box {
+      margin-top: 12px;
+      background: #060b14;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 8px 12px;
+    }
+    .wf-bars {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      height: 28px;
+      gap: 4px;
+      margin-top: 6px;
+    }
+    .wf-bar {
+      flex: 1;
+      background: linear-gradient(to top, #0284c7, #38bdf8);
+      border-radius: 3px;
+      transition: height 0.08s ease;
+    }
+
+    /* Control buttons */
+    .btn-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-top: 12px;
+    }
+    button {
+      background: #17253b;
+      color: var(--text);
+      border: 1px solid var(--card-border);
+      padding: 7px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 11.5px;
+      font-weight: 500;
+      transition: all 0.15s ease;
+    }
+    button:hover { background: var(--accent); color: #000; }
+    button.primary { background: var(--accent); color: #000; font-weight: 700; }
+    button.recording { background: #ef4444; color: #fff; border-color: #f87171; }
+
+    /* Chat / Voice Console */
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 250px;
+    }
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-right: 6px;
+    }
+    .msg {
+      padding: 10px 14px;
+      border-radius: 12px;
+      max-width: 85%;
+      line-height: 1.45;
+      font-size: 13.5px;
+    }
+    .msg.user { background: #0284c7; align-self: flex-end; color: #fff; }
+    .msg.assistant { background: #1e293b; border: 1px solid var(--card-border); align-self: flex-start; }
+    .input-bar {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .input-bar input {
+      flex: 1;
+      background: #060b14;
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 13.5px;
+      outline: none;
+    }
+    .input-bar input:focus { border-color: var(--accent); }
+
+    /* Live ASAP Job Studio Output Drawer */
+    .job-studio-box {
+      margin-top: 14px;
+      background: #060b14;
+      border: 1px solid var(--accent);
+      border-radius: 12px;
+      padding: 12px;
+      min-height: 155px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    .job-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-family: monospace;
+      color: #000;
+      background: var(--accent);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .job-code-preview pre, .doc-job-preview pre {
+      background: #0f172a;
+      padding: 10px;
+      border-radius: 8px;
+      font-family: Consolas, monospace;
+      font-size: 11.5px;
+      color: #38bdf8;
+      overflow-x: auto;
+    }
+    .job-stdout {
+      margin-top: 6px;
+      font-family: monospace;
+      font-size: 11.5px;
+      color: var(--success);
+    }
+    .ppt-slide {
+      background: #0f172a;
+      border-left: 3px solid var(--accent);
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+    .ppt-slide-hdr { font-size: 10px; color: var(--accent); font-family: monospace; }
+
+    .event-stream-box {
+      margin-top: 10px;
+      background: #060b14;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-family: monospace;
+      font-size: 10.5px;
+      color: var(--text-muted);
+      height: 68px;
+      overflow-y: auto;
+    }
+
+    /* 4-Model Fusion Telemetry Matrix */
+    .fusion-matrix {
+      background: #091222;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+    .model-bar-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11.5px;
+      margin-bottom: 6px;
+      gap: 8px;
+    }
+    .model-bar-track {
+      flex: 1;
+      height: 7px;
+      background: #1e293b;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .model-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #0284c7, #38bdf8);
+      transition: width 0.25s ease;
+    }
+
+    /* Device List */
+    .device-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: #091222;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      margin-bottom: 8px;
+    }
+    .device-info { display: flex; flex-direction: column; gap: 2px; }
+    .device-title { font-weight: 600; font-size: 13px; }
+    .device-sub { font-size: 11px; color: var(--text-muted); }
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <canvas id="arcReactorCanvas" width="64" height="64"></canvas>
+      <div>
+        <h1>DESKBOT // J.A.R.V.I.S. FUSION HUB</h1>
+        <p style="font-size: 12px; color: var(--text-muted);">
+          4-Model Local AI (`Qwen 3.5 + Gemma 4 + Llama 4 + Mistral`) • Arduino Uno Bot • Laptop Hub • Mobile Agent
+        </p>
+      </div>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+      <span class="badge" id="wsStatusBadge">WS: Live Ready</span>
+      <span class="badge" id="tokenPoolBadge" style="border-color: #a855f7; color: #d8b4fe;">Tokens: Unlimited (Local)</span>
+      <span class="badge" id="ramBadge">RAM: 48MB / 850MB</span>
+      <a class="badge" href="/mobile" target="_blank">📱 Open Mobile AI Agent</a>
+    </div>
+  </header>
+
+  <div class="grid-layout">
+    <!-- Left Column: Robot Hardware Avatar (Arduino Uno + 2D OLED + 3D Viewer + Live Mic) -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h2 style="margin-bottom: 0;"><span>🤖</span> Arduino Uno Bot Avatar</h2>
+        <div style="display: flex; gap: 4px;">
+          <button id="btn2D" class="primary" style="padding: 4px 8px; font-size: 11px;" onclick="switchView('2d')">2D OLED</button>
+          <button id="btn3D" style="padding: 4px 8px; font-size: 11px;" onclick="switchView('3d')">3D Model</button>
+          <button id="btnPhoto" style="padding: 4px 8px; font-size: 11px;" onclick="switchView('photo')">Render</button>
+        </div>
+      </div>
+
+      <!-- 2D OLED Digital Twin View (60 FPS Living Eyeball Engine) -->
+      <div id="view2D" class="robot-stage">
+        <div class="oled-screen" id="oledScreen">
+          <canvas id="eyeballCanvas" style="width: 100%; height: 100%; display: block;"></canvas>
+          <span class="oled-meta" id="unoFrameTag"></span>
+          <div id="leftEye" class="eye pupil" style="display: none;"></div>
+          <div id="rightEye" class="eye pupil" style="display: none;"></div>
+        </div>
+        <div class="telemetry-row">
+          <span>Pan (D9): <b id="panDeg">90°</b></span>
+          <span>Tilt (D10): <b id="tiltDeg">90°</b></span>
+          <span>State: <b id="robotState" style="color:var(--accent);">IDLE</b></span>
+        </div>
+      </div>
+
+      <!-- 3D Interactive Robot Viewer -->
+      <div id="view3D" style="display: none; height: 185px; width: 100%; border-radius: 16px; overflow: hidden; background: #080d1a; border: 2px solid var(--card-border); position: relative;">
+        <canvas id="canvas3D" style="width: 100%; height: 100%; display: block;"></canvas>
+        <div style="position: absolute; top: 8px; right: 10px; font-size: 10px; color: var(--accent); font-family: monospace;">
+          <span id="fpsReadout">60 FPS</span> • <span id="lagReadout">0.2ms</span>
+        </div>
+        <div style="position: absolute; bottom: 8px; left: 10px; font-size: 11px; color: var(--text-muted); pointer-events: none;">
+          🖱️ Drag 360° • Double-click to re-center
+        </div>
+      </div>
+
+      <!-- Studio 3D Concept Render View -->
+      <div id="viewPhoto" style="display: none; height: 185px; width: 100%; border-radius: 16px; overflow: hidden; background: #080d1a; border: 2px solid var(--card-border); position: relative;">
+        <img src="/deskbot_render.jpg" alt="DESKBOT Studio Render" style="width: 100%; height: 100%; object-fit: cover;" />
+      </div>
+
+      <!-- Live Microphone Activity & Bluetooth Status -->
+      <div class="mic-waveform-box">
+        <div style="display: flex; justify-content: space-between; font-size: 11px;">
+          <span>🎙️ <b>Mic Activity</b> (<span id="micSourceLabel">Laptop Array + BT</span>)</span>
+          <span id="btLinkLabel" style="color: var(--success);">BT: Virtual Uno Linked</span>
+        </div>
+        <div class="wf-bars" id="micWaveformBar"></div>
+      </div>
+
+      <!-- Real-Time Pan & Tilt Servo Sliders -->
+      <div class="slider-panel">
+        <div class="slider-row">
+          <label for="panSlider">Pan D9 (15°–165°)</label>
+          <input type="range" id="panSlider" min="15" max="165" value="90" oninput="onServoSliderChange()" />
+        </div>
+        <div class="slider-row">
+          <label for="tiltSlider">Tilt D10 (15°–165°)</label>
+          <input type="range" id="tiltSlider" min="15" max="165" value="90" oninput="onServoSliderChange()" />
+        </div>
+      </div>
+
+      <div class="btn-row" style="grid-template-columns: repeat(4, 1fr);">
+        <button onclick="setExpression('idle', 90, 90)">Idle</button>
+        <button onclick="setExpression('happy', 90, 96)">Happy ^_^</button>
+        <button onclick="setExpression('excited', 90, 104)">Excited ✨</button>
+        <button onclick="setExpression('love', 90, 98)">Love ❤️</button>
+        <button onclick="setExpression('listening', 90, 105)">Listen 🎙️</button>
+        <button onclick="setExpression('thinking', 108, 112)">Think 🧠</button>
+        <button onclick="setExpression('coding', 95, 100)">Coding 💻</button>
+        <button onclick="setExpression('wink', 84, 98)">Wink 😉</button>
+        <button onclick="setExpression('surprised', 90, 108)">Surprised 😮</button>
+        <button onclick="setExpression('focused', 90, 92)">Focused 🎯</button>
+        <button onclick="setExpression('confused', 75, 82)">Confused 🤔</button>
+        <button onclick="blink()">Blink 👁️</button>
+      </div>
+
+      <div style="margin-top: 14px;">
+        <h2><span>🎵</span> System Audio &amp; Song Deck</h2>
+        <div style="background: #091222; border-radius: 10px; padding: 10px 12px; border: 1px solid var(--card-border);">
+          <div style="font-size: 12.5px; font-weight: 600;" id="nowPlaying">Chill Synth Beats (Local)</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;" id="mediaStatus">Laptop Master Audio • Ready</div>
+          <div style="display: flex; gap: 6px;">
+            <button onclick="toggleMedia()">▶ / ⏸ Play Song</button>
+            <button onclick="nextTrack()">⏭ Next Track</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center Column: JARVIS Voice & Universal ASAP Job Studio -->
+    <div class="card">
+      <h2>
+        <span>⚡ J.A.R.V.I.S. Master Orchestrator</span>
+        <span style="font-size: 11px; color: var(--text-muted);" id="activeSpecialistBadge">Lead: Mistral + Qwen 3.5</span>
+      </h2>
+      <div class="chat-container">
+        <div class="messages" id="messageList">
+          <div class="msg assistant">
+            Good day! I am running on your <b>JARVIS-X1 4-Model Fusion Engine</b> (Qwen 3.5 + Google Gemma 4 + Meta Llama 4 + Mistral). Ask me to <b>write code</b>, <b>make a PPT presentation</b>, <b>create a graphic</b>, <b>play a song on your system</b>, or <b>check your phone</b>!
+          </div>
+        </div>
+        <div class="input-bar">
+          <input type="text" id="userInput" placeholder="Speak or type to JARVIS ('open Gmail & send email', 'schedule meeting in Calendar', 'render 3D model in Blender', 'play Stranger Things on Netflix')..." onkeydown="if(event.key==='Enter') sendQuery(false)" />
+          <button class="primary" onclick="sendQuery(false)">Execute</button>
+          <button id="btnVoiceDictation" onclick="toggleVoiceInput()" title="Hands-Free Voice Recognition Toggle">🎙️ Speak</button>
+        </div>
+        <div id="liveVoiceTranscriptBar" style="margin-top: 6px; font-size: 11px; color: var(--accent-cyan); font-family: monospace; min-height: 16px;">
+          🎙️ Voice Engine Ready: Say "Open Gmail", "Schedule Calendar meeting", "Save Note", "Play on Netflix", "Search Amazon", "Render 3D Model in Blender", "Make AI Video", or "Create AI Pic".
+        </div>
+      </div>
+
+      <!-- Instant ASAP Job Studio Output Preview -->
+      <div class="job-studio-box" id="jobStudioOutput" style="max-height: 295px;">
+        <div class="job-badge">LAPTOP ASAP JOB &amp; CREATIVE AI STUDIO // READY</div>
+        <div style="font-size: 12.5px; color: var(--text-muted);">
+          Every voice or text command renders live here: <b>Interplatform Hub</b> (Gmail, Calendar, Notes, Netflix, Amazon), <b>3D Model &amp; Blender Studio</b>, <b>AI Video Maker</b>, <b>AI Pic &amp; Graphic Creator</b>, <b>Code</b>, <b>PPT</b>, and <b>AI Flowcharts</b>.
+        </div>
+        <div style="display: flex; gap: 6px; margin-top: 9px; flex-wrap: wrap;">
+          <button onclick="triggerInterplatform('netflix', 'Play Stranger Things on Netflix')">🎬 Netflix</button>
+          <button onclick="triggerInterplatform('prime_video', 'Play The Boys on Amazon Prime Video')">📺 Prime Video</button>
+          <button onclick="triggerInterplatform('hotstar', 'Play Marvel Avengers on Disney+ Hotstar')">🌟 Hotstar</button>
+          <button onclick="triggerInterplatform('gmail', 'Compose email in Gmail about JARVIS Launch')">✉️ Gmail</button>
+          <button onclick="triggerInterplatform('calendar', 'Schedule meeting JARVIS Review in Google Calendar tomorrow at 10am')">📅 Calendar</button>
+          <button onclick="triggerInterplatform('notes', 'Take a note: Upgrade Deskbot 3D Blender pipeline')">📝 Notes</button>
+          <button onclick="triggerInterplatform('amazon', 'Search Arduino Servo Kit on Amazon')">🛒 Amazon</button>
+          <button onclick="triggerInstantJob('3d_model', 'Create an engineering 3D model of a Skyscraper Building in Blender')">🏢 3D Building</button>
+          <button onclick="triggerInstantJob('3d_model', 'Create an engineering 3D model of a Suspension Bridge in Blender')">🌉 3D Bridge</button>
+          <button onclick="triggerInstantJob('3d_model', 'Render a 3D model of Quadcopter Drone in Blender')">🚁 3D Drone</button>
+          <button onclick="triggerInstantJob('pic', 'Generate a realistic photo of Sunset on Goa Beach')">📸 AI Photo Studio</button>
+          <button onclick="triggerInstantJob('video', 'Make a video about JARVIS Autonomous Robotics')">🎥 AI Video Maker</button>
+          <button onclick="triggerInstantJob('ai_tool', 'Create a mind map flowchart of JARVIS Tri-Node Architecture')">🧠 AI Flowchart</button>
+          <button onclick="triggerInstantJob('code', 'Write Java code to print My name is Aditya Pratap Singh')">💻 Java/Python Code</button>
+        </div>
+      </div>
+
+      <div class="event-stream-box" id="liveEventStream">
+        <div>[JARVIS KERNEL] 4-Model Fusion &amp; Multi-Node Bluetooth Mesh active.</div>
+      </div>
+    </div>
+
+    <!-- Right Column: 4-Model Fusion Telemetry & Connected Mesh Map -->
+    <div class="card">
+      <h2><span>🧠</span> 4-Model Fusion Brain (`JARVIS-X1`)</h2>
+      <div class="fusion-matrix" id="fusionMatrixPanel">
+        <div class="model-bar-row">
+          <span style="width: 92px;">Qwen 3.5</span>
+          <div class="model-bar-track"><div class="model-bar-fill" id="barQwen" style="width: 25%;"></div></div>
+          <span id="pctQwen" style="width: 34px; text-align: right;">25%</span>
+        </div>
+        <div class="model-bar-row">
+          <span style="width: 92px;">Gemma 4</span>
+          <div class="model-bar-track"><div class="model-bar-fill" id="barGemma" style="width: 25%;"></div></div>
+          <span id="pctGemma" style="width: 34px; text-align: right;">25%</span>
+        </div>
+        <div class="model-bar-row">
+          <span style="width: 92px;">Llama 4</span>
+          <div class="model-bar-track"><div class="model-bar-fill" id="barLlama" style="width: 25%;"></div></div>
+          <span id="pctLlama" style="width: 34px; text-align: right;">25%</span>
+        </div>
+        <div class="model-bar-row" style="margin-bottom: 0;">
+          <span style="width: 92px;">Mistral</span>
+          <div class="model-bar-track"><div class="model-bar-fill" id="barMistral" style="width: 25%;"></div></div>
+          <span id="pctMistral" style="width: 34px; text-align: right;">25%</span>
+        </div>
+      </div>
+
+      <h2><span>🌐</span> Tri-Node Mesh Topology</h2>
+      <div class="device-item" id="deviceAvatar">
+        <div class="device-info">
+          <div class="device-title">Arduino Uno Bot Avatar</div>
+          <div class="device-sub" id="avatarSub">Virtual + HC-05 BT • D9/D10 PWM • A4/A5 OLED</div>
+        </div>
+        <div class="status-dot"></div>
+      </div>
+
+      <div class="device-item" id="devicePhone">
+        <div class="device-info">
+          <div class="device-title">Mobile Personal AI Agent</div>
+          <div class="device-sub" id="phoneSub">Laptop Bluetooth Linked • Battery: 87%</div>
+        </div>
+        <div class="status-dot"></div>
+      </div>
+
+      <div class="device-item" id="deviceLaptop">
+        <div class="device-info">
+          <div class="device-title">Laptop Master Map (Heart)</div>
+          <div class="device-sub" id="laptopSub">ASAP Job Engine • Code / PPT / Graphics / Audio</div>
+        </div>
+        <div class="status-dot"></div>
+      </div>
+
+      <div class="device-item" id="deviceDesktop">
+        <div class="device-info">
+          <div class="device-title">Single-Slot RAM Guard</div>
+          <div class="device-sub" id="desktopSub">Ultra-Low RAM (&lt; 850 MB) • 100% Offline</div>
+        </div>
+        <div class="status-dot"></div>
+      </div>
+
+      <div style="margin-top: 14px;">
+        <h2><span>⚡</span> Quick Command Triggers</h2>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <button onclick="sendQuickCommand('phone_check')">📱 Sync Mobile AI Agent &amp; Battery</button>
+          <button onclick="sendQuickCommand('open_spotify')">💻 Launch App on Laptop System</button>
+          <button onclick="sendQuickCommand('center_robot')">🤖 Re-Center Arduino Servos (90°/90°)</button>
+          <button onclick="sendQuickCommand('test_emotions')">🎭 Run Full Bot Emotion Cycle</button>
+          <button onclick="sendQuickCommand('ping_devices')">📡 Ping All Mesh Nodes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const leftEye = document.getElementById('leftEye');
+    const rightEye = document.getElementById('rightEye');
+    const robotState = document.getElementById('robotState');
+    const panDeg = document.getElementById('panDeg');
+    const tiltDeg = document.getElementById('tiltDeg');
+    const panSlider = document.getElementById('panSlider');
+    const tiltSlider = document.getElementById('tiltSlider');
+    const messageList = document.getElementById('messageList');
+    const liveEventStream = document.getElementById('liveEventStream');
+    const wsStatusBadge = document.getElementById('wsStatusBadge');
+    const jobStudioOutput = document.getElementById('jobStudioOutput');
+
+    let viewer3D = null;
+    let eyeballEngine = null;
+    let jarvisHUD = null;
+    let currentExpression = 'idle';
+    let wsConn = null;
+    let activeRecognition = null;
+    let isDictating = false;
+
+    if (window.DeskbotEyeballEngine) {
+      eyeballEngine = new window.DeskbotEyeballEngine(document.getElementById('eyeballCanvas'));
+    }
+    if (window.JarvisHolographicHUD) {
+      jarvisHUD = new window.JarvisHolographicHUD('arcReactorCanvas', 'micWaveformBar');
+    }
+
+    function logStreamEvent(label, detail) {
+      if (!liveEventStream) return;
+      const line = document.createElement('div');
+      const ts = new Date().toLocaleTimeString();
+      line.textContent = `[${ts}] ${label}: ${detail}`;
+      liveEventStream.appendChild(line);
+      liveEventStream.scrollTop = liveEventStream.scrollHeight;
+    }
+
+    function updateFusionUI(fusion) {
+      if (!fusion || !fusion.weights) return;
+      const w = fusion.weights;
+      const map = [
+        ['qwen3.5', 'barQwen', 'pctQwen'],
+        ['gemma4', 'barGemma', 'pctGemma'],
+        ['llama4', 'barLlama', 'pctLlama'],
+        ['mistral', 'barMistral', 'pctMistral'],
+      ];
+      for (const [key, barId, pctId] of map) {
+        const pct = Math.round((w[key] || 0.25) * 100);
+        const b = document.getElementById(barId);
+        const p = document.getElementById(pctId);
+        if (b) b.style.width = pct + '%';
+        if (p) p.textContent = pct + '%';
+      }
+      const badge = document.getElementById('activeSpecialistBadge');
+      if (badge && fusion.lead_display) {
+        badge.textContent = `Lead: ${fusion.lead_display}`;
+      }
+      const ramBadge = document.getElementById('ramBadge');
+      if (ramBadge && fusion.active_ram_mb) {
+        ramBadge.textContent = `RAM: ${fusion.active_ram_mb}MB / ${fusion.max_ram_mb || 850}MB`;
+      }
+    }
+
+    function renderJobArtifact(artifact) {
+      if (!artifact || !jobStudioOutput) return;
+      if (artifact.preview_html) {
+        jobStudioOutput.innerHTML = artifact.preview_html;
+        // Execute any embedded inline <script> tags inside the preview_html (e.g. 3D Model Viewer & AI Video Canvas)
+        jobStudioOutput.querySelectorAll('script').forEach((oldScript) => {
+          const newScript = document.createElement('script');
+          newScript.textContent = oldScript.textContent;
+          oldScript.parentNode.replaceChild(newScript, oldScript);
+        });
+      }
+      if (artifact.job_type === 'music' && jarvisHUD) {
+        jarvisHUD.toggleSynthMusic(true);
+        document.getElementById('nowPlaying').textContent = artifact.track || 'JARVIS Synthwave';
+        document.getElementById('mediaStatus').textContent = 'Playing on Laptop Master Audio';
+      }
+    }
+
+    function speakJarvisReply(spokenText) {
+      if (!spokenText || !('speechSynthesis' in window)) return;
+      try {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(spokenText);
+        utter.rate = 1.04;
+        utter.pitch = 0.96;
+        utter.onstart = () => {
+          if (eyeballEngine) eyeballEngine.setAudioLevel(0.8);
+        };
+        utter.onend = () => {
+          if (eyeballEngine) eyeballEngine.setAudioLevel(0.08);
+        };
+        window.speechSynthesis.speak(utter);
+      } catch (_) {}
+    }
+
+    function connectWebSocket(wsUrl) {
+      try {
+        if (wsConn && (wsConn.readyState === WebSocket.OPEN || wsConn.readyState === WebSocket.CONNECTING)) {
+          return;
+        }
+        wsConn = new WebSocket(wsUrl);
+        wsConn.onopen = () => {
+          wsStatusBadge.textContent = 'WS: LIVE CONNECTED';
+          wsStatusBadge.style.borderColor = '#34d399';
+          wsStatusBadge.style.color = '#34d399';
+          logStreamEvent('WS_OPEN', wsUrl);
+        };
+        wsConn.onmessage = (ev) => {
+          try {
+            const data = JSON.parse(ev.data);
+            const payload = data.payload || data.params || data;
+            if (payload.telemetry) {
+              setExpression(
+                payload.telemetry.expression || 'idle',
+                payload.telemetry.pan_deg || 90,
+                payload.telemetry.tilt_deg || 90,
+                false
+              );
+            }
+            if (payload.fusion) updateFusionUI(payload.fusion);
+            if (payload.job_artifact) renderJobArtifact(payload.job_artifact);
+            if (payload.auto_open_url) {
+              // The server already opened this natively on the laptop; just log it (avoids a duplicate tab).
+              logStreamEvent('LAPTOP_AUTO_PLAY', payload.auto_open_url);
+            }
+            if (payload.response) appendMessage(payload.response, 'assistant');
+          } catch (_) {}
+        };
+        wsConn.onclose = () => {
+          wsConn = null;
+          setTimeout(() => connectWebSocket(wsUrl), 2500);
+        };
+      } catch (_) {}
+    }
+
+    function init3D() {
+      if (viewer3D) return;
+      const canvas = document.getElementById('canvas3D');
+      if (window.Deskbot3DViewer && canvas) {
+        viewer3D = new window.Deskbot3DViewer(canvas);
+        viewer3D.setPose(Number(panSlider.value), Number(tiltSlider.value), currentExpression);
+      }
+    }
+
+    function switchView(mode) {
+      const v2D = document.getElementById('view2D');
+      const v3D = document.getElementById('view3D');
+      const vPhoto = document.getElementById('viewPhoto');
+      const b2D = document.getElementById('btn2D');
+      const b3D = document.getElementById('btn3D');
+      const bPhoto = document.getElementById('btnPhoto');
+
+      v2D.style.display = 'none';
+      v3D.style.display = 'none';
+      vPhoto.style.display = 'none';
+      b2D.classList.remove('primary');
+      b3D.classList.remove('primary');
+      bPhoto.classList.remove('primary');
+
+      if (mode === '3d') {
+        v3D.style.display = 'block';
+        b3D.classList.add('primary');
+        init3D();
+      } else if (mode === 'photo') {
+        vPhoto.style.display = 'block';
+        bPhoto.classList.add('primary');
+      } else {
+        v2D.style.display = 'flex';
+        b2D.classList.add('primary');
+      }
+    }
+
+    function updatePupilOffsets(pan, tilt) {
+      const dx = (((pan - 90) / 75) * 6).toFixed(1) + 'px';
+      const dy = (((90 - tilt) / 75) * 5).toFixed(1) + 'px';
+      document.documentElement.style.setProperty('--pupil-dx', dx);
+      document.documentElement.style.setProperty('--pupil-dy', dy);
+    }
+
+    function setExpression(expr, pan = 90, tilt = 90, syncServer = true) {
+      const clampedPan = Math.max(15, Math.min(165, Math.round(pan)));
+      const clampedTilt = Math.max(15, Math.min(165, Math.round(tilt)));
+      currentExpression = expr;
+
+      leftEye.className = 'eye';
+      rightEye.className = 'eye';
+      robotState.textContent = expr.toUpperCase();
+      panDeg.textContent = clampedPan + '°';
+      tiltDeg.textContent = clampedTilt + '°';
+      panSlider.value = clampedPan;
+      tiltSlider.value = clampedTilt;
+      updatePupilOffsets(clampedPan, clampedTilt);
+
+      const unoTag = document.getElementById('unoFrameTag');
+      if (unoTag) unoTag.textContent = '';
+
+      if (eyeballEngine) {
+        eyeballEngine.setReaction(expr, clampedPan, clampedTilt);
+        const audioEnergy = (expr === 'listening' || expr === 'speaking') ? 0.72 : 0.08;
+        eyeballEngine.setAudioLevel(audioEnergy);
+      }
+
+      if (jarvisHUD) {
+        const eLevel = expr === 'listening' ? 0.9 : (expr === 'thinking' ? 0.7 : 0.3);
+        jarvisHUD.setActivity(expr, eLevel);
+      }
+
+      if (viewer3D) {
+        viewer3D.setPose(clampedPan, clampedTilt, expr);
+        const fpsEl = document.getElementById('fpsReadout');
+        const lagEl = document.getElementById('lagReadout');
+        if (fpsEl) fpsEl.textContent = `${viewer3D.fps} FPS`;
+        if (lagEl) lagEl.textContent = `${viewer3D.lastPostureLagMs}ms`;
+      }
+
+      if (expr === 'happy') {
+        leftEye.classList.add('happy');
+        rightEye.classList.add('happy');
+      } else if (expr === 'listening') {
+        leftEye.classList.add('listening');
+        rightEye.classList.add('listening');
+      } else if (expr === 'thinking') {
+        leftEye.classList.add('thinking');
+        rightEye.classList.add('thinking');
+      } else if (expr === 'confused') {
+        leftEye.classList.add('listening');
+        rightEye.classList.add('happy');
+      } else if (expr === 'sleeping') {
+        leftEye.classList.add('sleeping');
+        rightEye.classList.add('sleeping');
+      } else {
+        leftEye.classList.add('pupil');
+        rightEye.classList.add('pupil');
+      }
+
+      if (syncServer) {
+        logStreamEvent('UNO_SERIAL', `<P${clampedPan},T${clampedTilt},E${expr}>`);
+        fetch('/api/robot/telemetry', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ expression: expr, pan: clampedPan, tilt: clampedTilt })
+        }).catch(() => {});
+      }
+    }
+
+    function onServoSliderChange() {
+      setExpression(currentExpression, Number(panSlider.value), Number(tiltSlider.value), true);
+    }
+
+    function blink() {
+      if (eyeballEngine) eyeballEngine.triggerBlink();
+      leftEye.classList.add('blinking');
+      rightEye.classList.add('blinking');
+      setTimeout(() => {
+        leftEye.classList.remove('blinking');
+        rightEye.classList.remove('blinking');
+      }, 180);
+    }
+
+    setInterval(() => {
+      if (robotState.textContent === 'IDLE') blink();
+    }, 4500);
+
+    async function refreshStatus() {
+      try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        const phoneSub = document.getElementById('phoneSub');
+        if (phoneSub && data.phone_battery !== undefined) {
+          phoneSub.textContent = `Laptop BT Linked • Battery: ${data.phone_battery}% • ${data.phone_unread || 0} Alerts`;
+        }
+        if (data.fusion) updateFusionUI(data.fusion);
+        if (data.telemetry) {
+          setExpression(
+            data.telemetry.expression || 'idle',
+            data.telemetry.pan_deg || 90,
+            data.telemetry.tilt_deg || 90,
+            false
+          );
+        }
+        if (!wsConn && data.ws_port) {
+          connectWebSocket(`ws://${window.location.hostname || '127.0.0.1'}:${data.ws_port}`);
+        }
+      } catch (_) {}
+    }
+
+    function normalizeVoicePhoneticsJS(rawText) {
+      if (!rawText) return '';
+      return String(rawText)
+        .replace(/\b(harvis|charvis|jervis|jarves)\b/gi, 'JARVIS')
+        .replace(/\b(jeemail|gee\s*mail|g\s+mail|g-mail)\b/gi, 'Gmail')
+        .replace(/\b(callender|calender|calandar)\b/gi, 'Calendar')
+        .replace(/\b(net\s+flicks|netflex|net\s+flix)\b/gi, 'Netflix')
+        .replace(/\b(ama\s+zon|amazn)\b/gi, 'Amazon')
+        .replace(/\b(blander|blendr|blendar)\b/gi, 'Blender')
+        .replace(/\b(three\s+d|3\s+d|3-d|threed)\b/gi, '3D')
+        .replace(/\b(p\s+p\s+t|power\s+point)\b/gi, 'PPT')
+        .replace(/\b(java\s+script)\b/gi, 'JavaScript')
+        .trim();
+    }
+
+    async function sendQuery(isVoice = false, alternatives = null) {
+      const input = document.getElementById('userInput');
+      const rawText = input.value.trim();
+      const text = normalizeVoicePhoneticsJS(rawText);
+      if (!text) return;
+
+      appendMessage(text, 'user');
+      input.value = '';
+      setExpression('thinking', 105, 115, false);
+      if (jarvisHUD) jarvisHUD.playSciFiChime('wake');
+      logStreamEvent(isVoice ? 'VOICE_CMD' : 'USER_CMD', text);
+
+      try {
+        const res = await fetch('/api/query', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: text, alternatives: alternatives, voice: isVoice, execute_os: true, source_device: 'laptop_hub' })
+        });
+        const data = await res.json();
+        appendMessage(data.response, 'assistant');
+        if (data.spoken_tts) speakJarvisReply(data.spoken_tts);
+        if (data.fusion) updateFusionUI(data.fusion);
+        if (data.job_artifact) renderJobArtifact(data.job_artifact);
+        if (data.auto_open_url) {
+          logStreamEvent('LAPTOP_AUTO_PLAY', data.auto_open_url);
+        }
+        const t = data.telemetry || {};
+        setExpression(
+          (data.robot_state || 'happy').toLowerCase(),
+          t.pan_deg || 90,
+          t.tilt_deg || 95,
+          false
+        );
+        logStreamEvent('JARVIS_FUSION', `${data.intent || 'executed'} -> ${data.robot_state || 'HAPPY'}`);
+      } catch (err) {
+        appendMessage(`Executed offline: "${text}".`, 'assistant');
+        setExpression('happy', 90, 95, false);
+      }
+    }
+
+    async function triggerInterplatform(platform, promptText) {
+      setExpression('thinking', 102, 112, false);
+      if (jarvisHUD) jarvisHUD.playSciFiChime('exec');
+      try {
+        const res = await fetch('/api/interplatform', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ platform: platform, prompt: promptText, execute_os: true })
+        });
+        const artifact = await res.json();
+        renderJobArtifact(artifact);
+        const msg = artifact.spoken_summary || `Opened ${platform.toUpperCase()} Hub: ${artifact.title}`;
+        appendMessage(msg, 'assistant');
+        speakJarvisReply(msg);
+        setExpression('happy', 90, 98, false);
+        logStreamEvent('INTERPLATFORM', `${platform.toUpperCase()} -> ${artifact.action || 'OPEN'}`);
+      } catch (_) {}
+    }
+
+    async function triggerInstantJob(jobType, promptText) {
+      setExpression('thinking', 105, 115, false);
+      if (jarvisHUD) jarvisHUD.playSciFiChime('exec');
+      try {
+        const res = await fetch('/api/jobs/execute', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ job_type: jobType, prompt: promptText })
+        });
+        const artifact = await res.json();
+        renderJobArtifact(artifact);
+        appendMessage(`Completed ${jobType.toUpperCase()} job on Laptop (${artifact.execution_time_ms}ms): ${artifact.title}`, 'assistant');
+        setExpression('happy', 90, 98, false);
+        logStreamEvent('JOB_DONE', `${jobType.toUpperCase()} in ${artifact.execution_time_ms}ms`);
+      } catch (_) {}
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function appendMessage(text, sender) {
+      const div = document.createElement('div');
+      div.className = `msg ${sender}`;
+      const raw = String(text || '');
+      if (raw.includes('```')) {
+        const formatted = escapeHtml(raw).replace(
+          /```([a-zA-Z0-9_+]*)\n([\s\S]*?)```/g,
+          (_, lang, code) =>
+            `<div style="margin-top:8px;background:#091222;border:1px solid rgba(56,189,248,0.4);border-radius:8px;padding:8px;"><div style="font-size:10px;color:#38bdf8;font-weight:700;margin-bottom:4px;">${(lang || 'CODE').toUpperCase()}</div><pre style="font-family:Consolas,monospace;font-size:12px;color:#e0f2fe;white-space:pre-wrap;margin:0;">${code.trim()}</pre></div>`
+        );
+        div.innerHTML = formatted.replace(/\nSTDOUT:/g, '<br><b style="color:#34d399;">STDOUT:</b>');
+      } else {
+        div.textContent = raw;
+      }
+      messageList.appendChild(div);
+      messageList.scrollTop = messageList.scrollHeight;
+    }
+
+    async function toggleMedia() {
+      const playing = jarvisHUD ? jarvisHUD.toggleSynthMusic() : true;
+      try {
+        const res = await fetch('/api/media', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: playing ? 'play' : 'pause' })
+        });
+        const data = await res.json();
+        document.getElementById('nowPlaying').textContent = data.track || 'Chill Synth Beats (Local)';
+        document.getElementById('mediaStatus').textContent = playing
+          ? `Playing on System Audio • Vol ${data.volume || 70}%`
+          : 'Paused';
+      } catch (_) {}
+      appendMessage(playing ? "Playing synthwave audio on your laptop system." : "Paused system audio.", 'assistant');
+      setExpression('happy', 90, 95);
+    }
+
+    async function nextTrack() {
+      if (jarvisHUD) jarvisHUD.toggleSynthMusic(true);
+      try {
+        const res = await fetch('/api/media', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'next' })
+        });
+        const data = await res.json();
+        document.getElementById('nowPlaying').textContent = data.track || 'Cyberpunk Night Drive';
+      } catch (_) {}
+      appendMessage("Skipped to next track on system audio.", 'assistant');
+      setExpression('happy', 90, 95);
+    }
+
+    async function sendQuickCommand(type) {
+      if (type === 'phone_check') {
+        document.getElementById('userInput').value = "check my details from my phone";
+        sendQuery(false);
+      } else if (type === 'open_spotify') {
+        document.getElementById('userInput').value = "open spotify on my laptop";
+        sendQuery(false);
+      } else if (type === 'center_robot' || type === 'test_emotions' || type === 'ping_devices') {
+        try {
+          const res = await fetch('/api/quick_action', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ trigger: type })
+          });
+          const data = await res.json();
+          if (type === 'center_robot') {
+            setExpression('idle', 90, 90, false);
+            appendMessage(data.message || "Re-centered Arduino Uno servos to 90°.", 'assistant');
+          } else if (type === 'test_emotions') {
+            appendMessage(`Executed emotion cycle: ${(data.sequence || []).join(' → ')}`, 'assistant');
+            setExpression('idle', 90, 90, false);
+          } else if (type === 'ping_devices') {
+            const summary = (data.devices || []).map(d => `${d.name} (${d.rtt_ms}ms)`).join(', ');
+            appendMessage(`Mesh Ping OK: ${summary}`, 'assistant');
+          }
+          logStreamEvent('QUICK_ACTION', type);
+        } catch (_) {}
+      }
+    }
+
+    let liveMicContext = null;
+    let liveMicAnalyser = null;
+
+    async function startLiveMicAnalyzer() {
+      if (liveMicAnalyser || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        liveMicContext = new (window.AudioContext || window.webkitAudioContext)();
+        const source = liveMicContext.createMediaStreamSource(stream);
+        liveMicAnalyser = liveMicContext.createAnalyser();
+        liveMicAnalyser.fftSize = 64;
+        source.connect(liveMicAnalyser);
+        const freqData = new Uint8Array(liveMicAnalyser.frequencyBinCount);
+
+        function pollAudioLevel() {
+          if (liveMicAnalyser && isDictating) {
+            liveMicAnalyser.getByteFrequencyData(freqData);
+            let sum = 0;
+            for (let i = 0; i < freqData.length; i++) sum += freqData[i];
+            const avg = sum / (freqData.length * 255);
+            if (eyeballEngine) eyeballEngine.setAudioLevel(Math.min(1, avg * 2.2));
+            if (jarvisHUD) jarvisHUD.setActivity('listening', Math.max(0.25, Math.min(1, avg * 2.5)));
+          }
+          requestAnimationFrame(pollAudioLevel);
+        }
+        requestAnimationFrame(pollAudioLevel);
+      } catch (_) {}
+    }
+
+    function toggleVoiceInput() {
+      const btn = document.getElementById('btnVoiceDictation');
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        alert("Speech Recognition API is not supported in this browser. Please type your query.");
+        return;
+      }
+      if (isDictating) {
+        isDictating = false;
+        if (activeRecognition) {
+          try { activeRecognition.stop(); } catch (_) {}
+        }
+        btn.classList.remove('recording');
+        btn.textContent = '🎙️ Stream Mic: OFF';
+        setExpression('idle', 90, 90, false);
+        return;
+      }
+
+      startLiveMicAnalyzer();
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      activeRecognition = new SpeechRecognition();
+      activeRecognition.lang = 'en-US';
+      activeRecognition.continuous = true;
+      activeRecognition.interimResults = true;
+      activeRecognition.maxAlternatives = 3;
+      isDictating = true;
+      btn.classList.add('recording');
+      btn.textContent = '🎙️ Stream Mic: ON (Mute)';
+      setExpression('listening', 90, 105);
+
+      const voiceBar = document.getElementById('liveVoiceTranscriptBar');
+      activeRecognition.onresult = (event) => {
+        const lastIdx = event.results.length - 1;
+        const resultItem = event.results[lastIdx];
+        const rawTranscript = resultItem[0].transcript.trim();
+        const corrected = normalizeVoicePhoneticsJS(rawTranscript);
+        if (!resultItem.isFinal) {
+          if (voiceBar) voiceBar.textContent = `🎙️ Hearing (Live): "${corrected}"...`;
+          return;
+        }
+        const alts = [];
+        for (let i = 0; i < resultItem.length; i++) {
+          if (resultItem[i] && resultItem[i].transcript) {
+            alts.push(resultItem[i].transcript.trim());
+          }
+        }
+        if (corrected) {
+          if (voiceBar) voiceBar.textContent = `✅ Voice Recognized: "${corrected}"`;
+          document.getElementById('userInput').value = corrected;
+          sendQuery(true, alts);
+        }
+      };
+      activeRecognition.onerror = () => {};
+      activeRecognition.onend = () => {
+        // Continuous Stream-Flow mode: auto-restart listening unless user muted
+        if (isDictating) {
+          try { activeRecognition.start(); } catch (_) {}
+        }
+      };
+      try { activeRecognition.start(); } catch (_) {}
+    }
+
+    refreshStatus();
+  </script>
+</body>
+</html>

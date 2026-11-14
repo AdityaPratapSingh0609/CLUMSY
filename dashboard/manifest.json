@@ -1,0 +1,17 @@
+{
+  "name": "DESKBOT // J.A.R.V.I.S. Deskbot Eyes",
+  "short_name": "Deskbot Eyes",
+  "description": "Stream-Flow AI Companion & Living Deskbot Eyeballs synced to your Laptop Hub",
+  "start_url": "/mobile",
+  "display": "standalone",
+  "background_color": "#02050c",
+  "theme_color": "#0284c7",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/deskbot_render.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}

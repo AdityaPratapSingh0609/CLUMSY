@@ -1,0 +1,43 @@
+{
+  "profile_name": "DESKBOT_FDM_Precision_0.16mm",
+  "slicer_targets": ["PrusaSlicer", "UltiMaker Cura", "OrcaSlicer"],
+  "materials": ["PLA", "PETG"],
+  "layer_height_mm": 0.16,
+  "first_layer_height_mm": 0.20,
+  "infill_percent": 20,
+  "infill_pattern": "gyroid",
+  "wall_perimeters": 3,
+  "wall_thickness_mm": 2.4,
+  "servo_clearance_mm": 0.3,
+  "supports": {
+    "enabled": true,
+    "type": "tree_organic",
+    "overhang_threshold_deg": 50
+  },
+  "parts": [
+    {
+      "id": "robot_head",
+      "file": "robot_head.stl",
+      "dimensions_mm": [68.0, 50.0, 54.0],
+      "features": ["oled_window_24.5x13.0mm", "inmp441_mic_port_2.5mm", "tilt_pivot_bore_16mm"]
+    },
+    {
+      "id": "neck_pan_tilt",
+      "file": "neck_pan_tilt.stl",
+      "dimensions_mm": [29.0, 18.2, 26.8],
+      "features": ["sg90_tilt_pocket_23.3x12.5mm", "pan_shaft_stem_10mm"]
+    },
+    {
+      "id": "robot_body",
+      "file": "robot_body.stl",
+      "dimensions_mm": [58.0, 48.0, 44.0],
+      "features": ["sg90_pan_socket_23.3x12.5mm", "nano_esp32_rails_45x18mm", "usbc_cutout_10x4mm", "speaker_grille_3slots"]
+    },
+    {
+      "id": "robot_base",
+      "file": "robot_base.stl",
+      "dimensions_mm": [74.0, 74.0, 8.0],
+      "features": ["body_alignment_recess", "rubber_feet_pockets_4x10mm"]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+node_modules/
+.env
+*.log
+models/*.gguf
+models/*.bin
+models/*.onnx
+scratch/
+.deskbot_state.json
