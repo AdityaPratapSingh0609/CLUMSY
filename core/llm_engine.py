@@ -308,6 +308,59 @@ class LLMEngine:
             return None
 
     @staticmethod
+    def _try_local_runtime_completion(
+        user_prompt: str,
+        history: Optional[List[Dict[str, str]]] = None,
+    ) -> Optional[str]:
+        """Queries local offline LLM servers (Ollama :11434, LM Studio :1234, Jan AI :1337) if running."""
+        import urllib.request
+
+        sys_msg = (
+            "You are CLUMSY, a personal offline-first AI assistant and robot companion. "
+            "Answer directly, accurately, and concisely. Never mention internal model names."
+        )
+        messages: List[Dict[str, str]] = [{"role": "system", "content": sys_msg}]
+        if history:
+            for turn in history[-6:]:
+                messages.append({"role": turn.get("role", "user"), "content": str(turn.get("content", ""))})
+        messages.append({"role": "user", "content": user_prompt})
+
+        # 1. Try Ollama (http://127.0.0.1:11434/api/chat)
+        ollama_model = os.environ.get("CLUMSY_OLLAMA_MODEL", "llama3.2")
+        try:
+            req = urllib.request.Request(
+                "http://127.0.0.1:11434/api/chat",
+                data=json.dumps({"model": ollama_model, "messages": messages, "stream": False}).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=1.5) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                reply = data.get("message", {}).get("content", "")
+                if reply and str(reply).strip():
+                    return str(reply).strip()
+        except Exception:
+            pass
+
+        # 2. Try LM Studio (:1234) and Jan AI (:1337) OpenAI-compatible local servers
+        for base_url in ("http://127.0.0.1:1234/v1/chat/completions", "http://127.0.0.1:1337/v1/chat/completions"):
+            try:
+                req = urllib.request.Request(
+                    base_url,
+                    data=json.dumps({"model": "local-model", "messages": messages, "temperature": 0.35}).encode("utf-8"),
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+                with urllib.request.urlopen(req, timeout=1.5) as resp:
+                    data = json.loads(resp.read().decode("utf-8"))
+                    reply = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+                    if reply and str(reply).strip():
+                        return str(reply).strip()
+            except Exception:
+                pass
+        return None
+
+    @staticmethod
     def _try_cloud_llm_completion(
         user_prompt: str,
         history: Optional[List[Dict[str, str]]] = None,
@@ -401,7 +454,7 @@ class LLMEngine:
 
         raw_fallback = self._deterministic_intent(user_prompt, history=history)
 
-        # If this is an open-ended general query, answer with Math Solver -> Cloud 20B LLM -> Local GGUF!
+        # If this is an open-ended general query, answer with Math Solver -> Local Ollama/LMStudio/Jan -> Cloud LLM -> Local GGUF!
         if (
             raw_fallback["tool_call"]["tool"] == "answer_query"
             and "query" in raw_fallback["tool_call"]["params"]
@@ -410,30 +463,38 @@ class LLMEngine:
             if math_ans:
                 raw_fallback["spoken_response"] = math_ans
             else:
-                cloud_reply = self._try_cloud_llm_completion(user_prompt, history=history)
-                if cloud_reply:
-                    raw_fallback["spoken_response"] = cloud_reply
-                elif self.llm is not None:
-                    chat_sys = (
-                        "You are CLUMSY, a brilliant, polite, witty AI personal assistant. "
-                        "Answer the user directly, accurately, and concisely. Never mention AI model names."
-                    )
-                    gguf_reply = self.generate_raw_completion(
-                        user_prompt,
-                        system_prompt=chat_sys,
-                        history=history,
-                        max_tokens=160,
-                        temperature=0.3,
-                    )
-                    if gguf_reply:
-                        raw_fallback["spoken_response"] = gguf_reply
-                        parsed = validate_and_normalize_response(raw_fallback)
-                        elapsed = max(time.perf_counter() - t0, 1e-6)
-                        tokens_est = max(len(gguf_reply.split()), 12)
-                        parsed["engine"] = "llama_cpp_gguf"
-                        parsed["inference_time_ms"] = round(elapsed * 1000, 2)
-                        parsed["tokens_per_sec"] = round(tokens_est / elapsed, 1)
-                        return parsed
+                local_rt = (
+                    self._try_local_runtime_completion(user_prompt, history=history)
+                    if os.environ.get("CLUMSY_ENABLE_EXTERNAL_LOCAL", "0") == "1"
+                    else None
+                )
+                if local_rt:
+                    raw_fallback["spoken_response"] = local_rt
+                else:
+                    cloud_reply = self._try_cloud_llm_completion(user_prompt, history=history)
+                    if cloud_reply:
+                        raw_fallback["spoken_response"] = cloud_reply
+                    elif self.llm is not None:
+                        chat_sys = (
+                            "You are CLUMSY, a brilliant, polite, witty AI personal assistant. "
+                            "Answer the user directly, accurately, and concisely. Never mention AI model names."
+                        )
+                        gguf_reply = self.generate_raw_completion(
+                            user_prompt,
+                            system_prompt=chat_sys,
+                            history=history,
+                            max_tokens=160,
+                            temperature=0.3,
+                        )
+                        if gguf_reply:
+                            raw_fallback["spoken_response"] = gguf_reply
+                            parsed = validate_and_normalize_response(raw_fallback)
+                            elapsed = max(time.perf_counter() - t0, 1e-6)
+                            tokens_est = max(len(gguf_reply.split()), 12)
+                            parsed["engine"] = "llama_cpp_gguf"
+                            parsed["inference_time_ms"] = round(elapsed * 1000, 2)
+                            parsed["tokens_per_sec"] = round(tokens_est / elapsed, 1)
+                            return parsed
 
         parsed = validate_and_normalize_response(raw_fallback)
         elapsed = max(time.perf_counter() - t0, 1e-6)

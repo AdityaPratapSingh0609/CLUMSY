@@ -3,541 +3,625 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#09090b" />
+  <meta name="theme-color" content="#131314" />
   <link rel="manifest" href="/manifest-desktop.json" />
-  <title>CLUMSY: your everyday AI — Holographic Command Center</title>
+  <title>CLUMSY — Your Personal Offline AI</title>
   <script src="/robot3d.js"></script>
   <script src="/eyeballs.js"></script>
   <script src="/jarvis_hud.js"></script>
   <script src="/clumsy_brain.js"></script>
   <style>
     :root {
-      --bg: #09090b;
-      --card-bg: rgba(20, 20, 26, 0.86);
-      --card-border: rgba(255, 255, 255, 0.09);
-      --accent: #c084fc;
-      --accent-cyan: #f472b6;
-      --accent-glow: rgba(192, 132, 252, 0.35);
-      --text: #fafafa;
-      --text-muted: #a1a1aa;
+      --bg: #131314;
+      --sidebar-bg: #1e1f20;
+      --surface: #1e1f20;
+      --surface-hover: #282a2c;
+      --surface-elevated: #282a2c;
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #e3e3e3;
+      --text-muted: #9aa0a6;
+      --accent: #a8c7fa;
+      --accent-violet: #c084fc;
+      --accent-rose: #f472b6;
       --success: #34d399;
-      --warning: #fbbf24;
-      --geist-black: #000000;
-      --geist-accents-1: #141418;
-      --geist-border: rgba(255, 255, 255, 0.1);
+      --gemini-grad: linear-gradient(90deg, #4facfe 0%, #a855f7 50%, #f43f5e 100%);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Google Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
     body {
-      background:
-        radial-gradient(circle at 18% 0%, rgba(168, 85, 247, 0.15) 0%, transparent 45%),
-        radial-gradient(circle at 82% 0%, rgba(244, 63, 94, 0.12) 0%, transparent 45%),
-        radial-gradient(circle at 50% 100%, rgba(16, 185, 129, 0.08) 0%, transparent 50%),
-        linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px),
-        var(--bg);
-      background-size: 100% 100%, 100% 100%, 100% 100%, 36px 36px, 36px 36px, 100% 100%;
+      background: var(--bg);
       color: var(--text);
-      padding: 20px 26px;
-      min-height: 100vh;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
       -webkit-font-smoothing: antialiased;
     }
 
-    header {
+    /* Left Collapsible Gemini Sidebar */
+    .gemini-sidebar {
+      width: 330px;
+      min-width: 330px;
+      height: 100vh;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
+      flex-direction: column;
+      padding: 14px;
       gap: 12px;
-      margin-bottom: 16px;
-      padding-bottom: 14px;
-      border-bottom: 1px solid var(--card-border);
+      overflow-y: auto;
+      transition: margin-left 0.25s ease;
     }
-    .brand { display: flex; align-items: center; gap: 14px; }
-    .brand h1 {
-      font-size: 23px;
-      font-weight: 800;
-      letter-spacing: 1px;
-      background: linear-gradient(135deg, #ffffff 0%, #e9d5ff 50%, #fbcfe8 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      color: var(--text);
-    }
-    .badge {
-      background: rgba(255, 255, 255, 0.05);
-      color: #e4e4e7;
-      border: 1px solid var(--card-border);
-      padding: 6px 13px;
-      border-radius: 9999px;
-      font-size: 11px;
-      font-weight: 600;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.2s ease;
-    }
-    .badge:hover {
-      border-color: var(--accent);
-      background: rgba(168, 85, 247, 0.16);
-      color: #ffffff;
+    .gemini-sidebar.collapsed {
+      margin-left: -330px;
     }
 
-    /* GSD Phased Execution Ribbon */
-    .gsd-ribbon {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
-      margin-bottom: 18px;
-      padding: 9px 14px;
-      background: rgba(20, 20, 26, 0.78);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 14px;
-      backdrop-filter: blur(14px);
-    }
-    .gsd-pill {
-      font-size: 11px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      color: var(--text-muted);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      background: rgba(255, 255, 255, 0.035);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 8px;
-    }
-    .gsd-pill b {
-      color: #f472b6;
-      font-weight: 700;
-    }
-    .gsd-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--success);
-      box-shadow: 0 0 8px var(--success);
-      display: inline-block;
-    }
-
-    /* Studio category tabs */
-    .studio-tabs {
-      display: flex;
-      gap: 6px;
-      margin-top: 10px;
-      margin-bottom: 8px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      padding-bottom: 6px;
-    }
-    .tab-btn {
-      background: transparent;
-      border: 1px solid transparent;
-      color: var(--text-muted);
-      font-size: 11px;
-      padding: 4px 10px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-    .tab-btn.active, .tab-btn:hover {
-      background: linear-gradient(135deg, rgba(168, 85, 247, 0.22), rgba(244, 63, 94, 0.22));
-      color: #ffffff;
-      border-color: rgba(192, 132, 252, 0.4);
-    }
-
-    .grid-layout {
-      display: grid;
-      grid-template-columns: 360px 1fr 360px;
-      gap: 18px;
-    }
-
-    @media (max-width: 1120px) {
-      .grid-layout {
-        grid-template-columns: 1fr 1fr;
-      }
-    }
-
-    @media (max-width: 760px) {
-      body { padding: 12px; }
-      .grid-layout {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 18px;
-      padding: 18px;
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-      backdrop-filter: blur(18px);
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    }
-    .card:hover {
-      border-color: rgba(192, 132, 252, 0.32);
-    }
-    .card h2 {
-      font-size: 12.5px;
-      text-transform: uppercase;
-      letter-spacing: 1.2px;
-      color: #e4e4e7;
-      margin-bottom: 12px;
+    .sidebar-top {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
     }
 
-    /* Robot Face Avatar (2D OLED Digital Twin) */
+    .new-chat-btn {
+      flex: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface-elevated);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .new-chat-btn:hover {
+      background: #333538;
+    }
+
+    .sidebar-section {
+      background: rgba(19, 19, 20, 0.65);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px;
+    }
+    .sidebar-section h2 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Robot Face Avatar inside Sidebar */
     .robot-stage {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: #111116;
-      border-radius: 16px;
-      padding: 16px;
-      border: 1px solid var(--card-border);
-      position: relative;
+      background: #0e0e10;
+      border-radius: 14px;
+      padding: 12px;
+      border: 1px solid var(--border);
     }
     .oled-screen {
-      width: 268px;
-      height: 136px;
+      width: 248px;
+      height: 122px;
       background: radial-gradient(circle at 50% 50%, #161324 0%, #070709 85%);
-      border-radius: 18px;
-      border: 1.5px solid rgba(192, 132, 252, 0.35);
+      border-radius: 16px;
+      border: 1.5px solid rgba(168, 85, 247, 0.35);
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      box-shadow: inset 0 0 28px rgba(168, 85, 247, 0.18), 0 0 20px rgba(244, 63, 94, 0.1);
+      box-shadow: inset 0 0 24px rgba(168, 85, 247, 0.16);
       position: relative;
     }
-    .oled-meta {
-      display: none;
-    }
+    .oled-meta { display: none; }
     .eye {
-      width: 44px;
-      height: 44px;
-      background: var(--accent);
+      width: 40px;
+      height: 40px;
+      background: var(--accent-violet);
       border-radius: 50%;
       position: relative;
-      box-shadow: 0 0 18px var(--accent-glow);
-      transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .eye.pupil::after {
       content: '';
       position: absolute;
-      width: 12px;
-      height: 12px;
+      width: 11px;
+      height: 11px;
       background: #000;
       border-radius: 50%;
       top: calc(10px + var(--pupil-dy, 0px));
       left: calc(10px + var(--pupil-dx, 0px));
-      transition: top 0.12s ease, left 0.12s ease;
     }
-    .eye.happy {
-      border-radius: 50% 50% 0 0;
-      height: 22px;
-      border-bottom: none;
-    }
-    .eye.listening {
-      transform: scale(1.22);
-      box-shadow: 0 0 24px var(--accent);
-    }
-    .eye.thinking {
-      transform: translate(6px, -8px) scale(0.9);
-    }
-    .eye.sleeping, .eye.blinking {
-      height: 4px;
-      margin-top: 18px;
-      border-radius: 4px;
-    }
+    .eye.happy { border-radius: 50% 50% 0 0; height: 20px; }
+    .eye.listening { transform: scale(1.2); }
+    .eye.thinking { transform: translate(5px, -6px) scale(0.9); }
+    .eye.sleeping, .eye.blinking { height: 4px; margin-top: 16px; border-radius: 4px; }
 
     .telemetry-row {
       display: flex;
       justify-content: space-between;
       width: 100%;
-      margin-top: 12px;
-      font-size: 12px;
+      margin-top: 8px;
+      font-size: 11px;
       color: var(--text-muted);
     }
 
     .slider-panel {
       width: 100%;
-      margin-top: 10px;
-      background: #14141a;
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 8px 12px;
+      margin-top: 8px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
       font-size: 11px;
+      color: var(--text-muted);
     }
     .slider-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
+      gap: 8px;
     }
     .slider-row input[type="range"] {
       flex: 1;
       accent-color: #a855f7;
     }
 
-    /* Live Mic Waveform Bar */
     .mic-waveform-box {
-      margin-top: 12px;
-      background: #121217;
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 8px 12px;
+      margin-top: 8px;
+      background: #131314;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 6px 10px;
     }
     .wf-bars {
       display: flex;
       align-items: flex-end;
       justify-content: space-between;
-      height: 28px;
-      gap: 4px;
-      margin-top: 6px;
+      height: 20px;
+      gap: 3px;
+      margin-top: 4px;
     }
     .wf-bar {
       flex: 1;
-      background: linear-gradient(to top, #8b5cf6, #ec4899, #fbbf24);
-      border-radius: 3px;
+      background: var(--gemini-grad);
+      border-radius: 2px;
       transition: height 0.08s ease;
     }
 
-    /* Control buttons */
     .btn-row {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 6px;
-      margin-top: 12px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+      margin-top: 8px;
     }
     button {
-      background: #1c1c24;
-      color: #f4f4f5;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      padding: 7px 10px;
-      border-radius: 9px;
+      background: var(--surface-elevated);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 5px 8px;
+      border-radius: 8px;
       cursor: pointer;
-      font-size: 11.5px;
+      font-size: 11px;
       font-weight: 500;
       transition: all 0.15s ease;
     }
     button:hover {
-      background: linear-gradient(135deg, #8b5cf6, #ec4899);
-      color: #ffffff;
-      border-color: transparent;
+      background: #35373a;
+      color: #fff;
     }
     button.primary {
-      background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
-      color: #ffffff;
+      background: var(--gemini-grad);
+      color: #fff;
       border-color: transparent;
-      font-weight: 700;
+      font-weight: 600;
     }
-    button.recording { background: #ef4444; color: #fff; border-color: #f87171; }
+    button.recording {
+      background: #ef4444;
+      color: #fff;
+      border-color: #f87171;
+    }
 
-    /* Chat / Voice Console */
-    .chat-container {
+    .device-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 10px;
+      background: #131314;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 6px;
+    }
+    .device-info { display: flex; flex-direction: column; gap: 1px; }
+    .device-title { font-weight: 600; font-size: 11.5px; }
+    .device-sub { font-size: 10px; color: var(--text-muted); }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 6px var(--success);
+    }
+
+    /* Main Gemini Stage */
+    .gemini-main {
+      flex: 1;
+      height: 100vh;
       display: flex;
       flex-direction: column;
-      height: 250px;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
     }
-    .messages {
+
+    /* Gemini Top Header Bar */
+    .gemini-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .icon-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .model-selector-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 999px;
+    }
+    .model-selector-wrap select {
+      background: transparent;
+      color: var(--text);
+      border: none;
+      font-size: 13.5px;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+    }
+    .model-selector-wrap select option {
+      background: #1e1f20;
+      color: #e3e3e3;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Center Scrollable Chat & Welcome Area */
+    .gemini-scroll-area {
       flex: 1;
       overflow-y: auto;
+      padding: 24px 20px 16px;
       display: flex;
       flex-direction: column;
+      align-items: center;
+    }
+    .gemini-content-col {
+      width: 100%;
+      max-width: 820px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* Gemini Welcome Hero */
+    .gemini-hero {
+      padding: 18px 0 8px;
+      transition: all 0.25s ease;
+    }
+    .gemini-hero h1 {
+      font-size: 40px;
+      font-weight: 700;
+      line-height: 1.18;
+      letter-spacing: -0.5px;
+      background: var(--gemini-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: inline-block;
+    }
+    .gemini-hero p {
+      font-size: 22px;
+      font-weight: 500;
+      color: #7c8288;
+      margin-top: 4px;
+    }
+
+    .gemini-suggestions {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
       gap: 10px;
-      padding-right: 6px;
+      margin-top: 16px;
+    }
+    .suggestion-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 108px;
+      transition: background 0.18s ease, border-color 0.18s ease;
+      text-align: left;
+    }
+    .suggestion-card:hover {
+      background: var(--surface-hover);
+      border-color: rgba(168, 85, 247, 0.4);
+    }
+    .suggestion-card span {
+      font-size: 12.5px;
+      color: var(--text);
+      line-height: 1.4;
+      font-weight: 500;
+    }
+    .suggestion-card small {
+      font-size: 18px;
+      align-self: flex-end;
+      margin-top: 8px;
+    }
+
+    /* Chat Messages Stream */
+    .messages {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      width: 100%;
     }
     .msg {
-      padding: 10px 14px;
-      border-radius: 13px;
-      max-width: 85%;
-      line-height: 1.45;
-      font-size: 13.5px;
-    }
-    .msg.user { background: linear-gradient(135deg, #7c3aed, #db2777); align-self: flex-end; color: #fff; }
-    .msg.assistant { background: #18181f; border: 1px solid var(--card-border); align-self: flex-start; }
-    .input-bar {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-    }
-    .input-bar input {
-      flex: 1;
-      background: #121217;
-      border: 1px solid var(--card-border);
+      line-height: 1.6;
+      font-size: 15px;
       color: var(--text);
-      padding: 10px 14px;
-      border-radius: 11px;
-      font-size: 13.5px;
-      outline: none;
     }
-    .input-bar input:focus { border-color: var(--accent); }
+    .msg.user {
+      align-self: flex-end;
+      background: var(--surface-elevated);
+      color: #fff;
+      padding: 12px 18px;
+      border-radius: 22px 22px 6px 22px;
+      max-width: 78%;
+      border: 1px solid var(--border);
+    }
+    .msg.assistant {
+      align-self: flex-start;
+      background: transparent;
+      padding: 4px 2px;
+      max-width: 100%;
+      width: 100%;
+    }
+    .assistant-hdr {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #c084fc;
+      margin-bottom: 6px;
+    }
+    .sparkle-icon {
+      display: inline-flex;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      align-items: center;
+      justify-content: center;
+      background: var(--gemini-grad);
+      color: #fff;
+      font-size: 12px;
+    }
 
-    /* Live ASAP Job Studio Output Drawer */
+    /* Collapsible Gemini Studio Canvas */
     .job-studio-box {
-      margin-top: 14px;
-      background: #121217;
-      border: 1px solid rgba(192, 132, 252, 0.28);
-      border-radius: 14px;
-      padding: 12px;
-      min-height: 155px;
-      max-height: 220px;
-      overflow-y: auto;
+      background: var(--surface);
+      border: 1px solid rgba(168, 85, 247, 0.28);
+      border-radius: 18px;
+      padding: 14px 16px;
+      width: 100%;
     }
     .job-badge {
       display: inline-block;
       font-size: 10px;
       font-family: monospace;
-      color: #ffffff;
-      background: linear-gradient(135deg, #8b5cf6, #ec4899);
-      padding: 3px 9px;
-      border-radius: 6px;
+      color: #fff;
+      background: var(--gemini-grad);
+      padding: 3px 10px;
+      border-radius: 999px;
       font-weight: 700;
       margin-bottom: 8px;
     }
     .job-code-preview pre, .doc-job-preview pre {
-      background: #18181f;
-      padding: 10px;
-      border-radius: 8px;
+      background: #131314;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
       font-family: Consolas, monospace;
-      font-size: 11.5px;
+      font-size: 12.5px;
       color: #e9d5ff;
       overflow-x: auto;
     }
     .job-stdout {
       margin-top: 6px;
       font-family: monospace;
-      font-size: 11.5px;
+      font-size: 12px;
       color: var(--success);
     }
     .ppt-slide {
-      background: #18181f;
-      border-left: 3px solid var(--accent);
+      background: #131314;
+      border-left: 3px solid #a855f7;
       padding: 8px 12px;
       border-radius: 6px;
       margin-bottom: 8px;
-      font-size: 12px;
+      font-size: 12.5px;
     }
-    .ppt-slide-hdr { font-size: 10px; color: var(--accent); font-family: monospace; }
+    .ppt-slide-hdr { font-size: 10px; color: #c084fc; font-family: monospace; }
 
-    .event-stream-box {
-      margin-top: 10px;
-      background: #121217;
-      border: 1px solid var(--card-border);
-      border-radius: 10px;
-      padding: 8px 10px;
-      font-family: monospace;
-      font-size: 10.5px;
-      color: var(--text-muted);
-      height: 68px;
-      overflow-y: auto;
-    }
-
-    /* 4-Model Fusion Telemetry Matrix */
-    .fusion-matrix {
-      background: #14141a;
-      border: 1px solid var(--card-border);
-      border-radius: 14px;
-      padding: 12px;
-      margin-bottom: 14px;
-    }
-    .model-bar-row {
+    /* Bottom Floating Gemini Prompt Bar */
+    .gemini-bottom-dock {
+      width: 100%;
+      padding: 8px 20px 18px;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: space-between;
-      font-size: 11.5px;
-      margin-bottom: 7px;
+      background: linear-gradient(to top, var(--bg) 75%, transparent);
+    }
+    .gemini-prompt-container {
+      width: 100%;
+      max-width: 820px;
+      display: flex;
+      flex-direction: column;
       gap: 8px;
     }
-    .model-bar-track {
-      flex: 1;
-      height: 7px;
-      background: #27272a;
+    .studio-quick-bar {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+    .studio-quick-bar button {
       border-radius: 999px;
-      overflow: hidden;
+      padding: 5px 12px;
+      white-space: nowrap;
+      background: var(--surface);
+      font-size: 11.5px;
     }
-    .model-bar-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #8b5cf6, #ec4899);
-      transition: width 0.25s ease;
-    }
-    #barQwen { background: linear-gradient(90deg, #8b5cf6, #c084fc); }
-    #barGemma { background: linear-gradient(90deg, #f43f5e, #fb7185); }
-    #barLlama { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
-    #barMistral { background: linear-gradient(90deg, #10b981, #34d399); }
 
-    /* Device List */
-    .device-item {
+    .gemini-pill-bar {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 10px 12px;
-      background: #14141a;
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      margin-bottom: 8px;
+      gap: 10px;
+      background: var(--surface);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 32px;
+      padding: 8px 12px 8px 20px;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+      transition: border-color 0.2s ease;
     }
-    .device-info { display: flex; flex-direction: column; gap: 2px; }
-    .device-title { font-weight: 600; font-size: 13px; }
-    .device-sub { font-size: 11px; color: var(--text-muted); }
-    .status-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--success);
-      box-shadow: 0 0 8px var(--success);
+    .gemini-pill-bar:focus-within {
+      border-color: #a855f7;
+    }
+    .gemini-pill-bar input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-size: 15px;
+      outline: none;
+      padding: 6px 0;
+    }
+    .gemini-pill-bar input::placeholder {
+      color: var(--text-muted);
+    }
+    .pill-action-btn {
+      border-radius: 999px;
+      padding: 9px 16px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .event-stream-box {
+      font-family: monospace;
+      font-size: 10px;
+      color: var(--text-muted);
+      max-height: 44px;
+      overflow-y: auto;
+      padding: 4px 8px;
+      background: #131314;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    @media (max-width: 1120px) {
+      .gemini-suggestions {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 760px) {
+      .gemini-sidebar {
+        position: fixed;
+        z-index: 50;
+        left: 0;
+        top: 0;
+      }
+      .gemini-suggestions {
+        grid-template-columns: 1fr;
+      }
+      .gemini-hero h1 { font-size: 28px; }
+      .gemini-hero p { font-size: 16px; }
     }
   </style>
 </head>
 <body>
-  <header>
-    <div class="brand">
-      <canvas id="arcReactorCanvas" width="64" height="64"></canvas>
-      <div>
-        <h1>CLUMSY // YOUR EVERYDAY AI</h1>
-      </div>
+
+  <!-- Left Collapsible Gemini Sidebar (Robot Companion + Offline Hardware Mesh) -->
+  <aside class="gemini-sidebar" id="geminiSidebar">
+    <div class="sidebar-top">
+      <button class="new-chat-btn" onclick="startNewClumsyChat()">✦ New Chat</button>
+      <canvas id="arcReactorCanvas" width="38" height="38" title="CLUMSY Neural Core"></canvas>
     </div>
-    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-      <span class="badge" id="wsStatusBadge">WS: Live Ready</span>
-      <span class="badge" id="tokenPoolBadge" style="border-color: rgba(168,85,247,0.4); color: #e9d5ff;">Tokens: Unlimited (Local)</span>
-      <span class="badge" id="ramBadge">RAM: 48MB / 850MB</span>
-      <span class="badge" id="vercelBadge" style="border-color: rgba(255,255,255,0.2); color: #fff; background: rgba(255,255,255,0.06);">▲ Vercel Live</span>
-      <button class="badge" style="background: rgba(168, 85, 247, 0.16); color: #e9d5ff; border-color: rgba(168, 85, 247, 0.38); font-weight: 700; cursor: pointer;" onclick="pairDesktopBluetooth()">🟣 Pair Bluetooth</button>
-      <button class="badge" id="btnInstallDesktopPwa" style="display: inline-flex; background: linear-gradient(135deg, #8b5cf6, #ec4899); color: #fff; font-weight: 700; cursor: pointer; border: none;" onclick="installDesktopApp()">⬇ Install App</button>
-      <a class="badge" href="/mobile" target="_blank">📱 Open Mobile AI Agent</a>
-    </div>
-  </header>
 
-  <!-- GSD Phased Execution & Milestone Telemetry Ribbon -->
-  <div class="gsd-ribbon">
-    <div class="gsd-pill"><span class="gsd-dot"></span> <b>STATUS</b> ONLINE</div>
-    <div class="gsd-pill"><b>GOAL</b> Everyday Autonomous AI &amp; Desktop Hardware Robot</div>
-    <div class="gsd-pill"><b>GSD PIPELINE</b> Plan &rarr; 4-Model Fusion &rarr; System Action</div>
-    <div class="gsd-pill"><b>HARDWARE</b> Arduino Uno • Pan/Tilt Servos • 60 FPS Eyes</div>
-    <div class="gsd-pill"><b>MESH SYNC</b> Zero-Lag Tri-Node Network</div>
-  </div>
+    <!-- Live CLUMSY Robot Companion Dock -->
+    <div class="sidebar-section">
+      <h2>
+        <span>🤖 CLUMSY Robot Companion</span>
+        <span style="display:flex;gap:3px;">
+          <button id="btn2D" class="primary" style="padding:2px 6px;font-size:10px;" onclick="switchView('2d')">2D</button>
+          <button id="btn3D" style="padding:2px 6px;font-size:10px;" onclick="switchView('3d')">3D</button>
+          <button id="btnPhoto" style="padding:2px 6px;font-size:10px;" onclick="switchView('photo')">Render</button>
+        </span>
+      </h2>
 
-  <div class="grid-layout">
-    <!-- Left Column: Robot Hardware Avatar (Arduino Uno + 2D OLED + 3D Viewer + Live Mic) -->
-    <div class="card">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-        <h2 style="margin-bottom: 0;"><span>🤖</span> Arduino Uno Bot Avatar</h2>
-        <div style="display: flex; gap: 4px;">
-          <button id="btn2D" class="primary" style="padding: 4px 8px; font-size: 11px;" onclick="switchView('2d')">2D OLED</button>
-          <button id="btn3D" style="padding: 4px 8px; font-size: 11px;" onclick="switchView('3d')">3D Model</button>
-          <button id="btnPhoto" style="padding: 4px 8px; font-size: 11px;" onclick="switchView('photo')">Render</button>
-        </div>
-      </div>
-
-      <!-- 2D OLED Digital Twin View (60 FPS Living Eyeball Engine) -->
       <div id="view2D" class="robot-stage">
         <div class="oled-screen" id="oledScreen">
           <canvas id="eyeballCanvas" style="width: 100%; height: 100%; display: block;"></canvas>
@@ -546,209 +630,209 @@
           <div id="rightEye" class="eye pupil" style="display: none;"></div>
         </div>
         <div class="telemetry-row">
-          <span>Pan (D9): <b id="panDeg">90°</b></span>
-          <span>Tilt (D10): <b id="tiltDeg">90°</b></span>
-          <span>State: <b id="robotState" style="color:var(--accent);">IDLE</b></span>
+          <span>Pan: <b id="panDeg">90°</b></span>
+          <span>Tilt: <b id="tiltDeg">90°</b></span>
+          <span>State: <b id="robotState" style="color:#c084fc;">IDLE</b></span>
         </div>
       </div>
 
-      <!-- 3D Interactive Robot Viewer -->
-      <div id="view3D" style="display: none; height: 185px; width: 100%; border-radius: 16px; overflow: hidden; background: #111116; border: 1px solid var(--card-border); position: relative;">
+      <div id="view3D" style="display: none; height: 155px; width: 100%; border-radius: 14px; overflow: hidden; background: #0e0e10; border: 1px solid var(--border); position: relative;">
         <canvas id="canvas3D" style="width: 100%; height: 100%; display: block;"></canvas>
-        <div style="position: absolute; top: 8px; right: 10px; font-size: 10px; color: var(--accent); font-family: monospace;">
+        <div style="position: absolute; top: 6px; right: 8px; font-size: 9.5px; color: #c084fc; font-family: monospace;">
           <span id="fpsReadout">60 FPS</span> • <span id="lagReadout">0.2ms</span>
         </div>
-        <div style="position: absolute; bottom: 8px; left: 10px; font-size: 11px; color: var(--text-muted); pointer-events: none;">
-          🖱️ Drag 360° • Double-click to re-center
-        </div>
       </div>
 
-      <!-- Studio 3D Concept Render View -->
-      <div id="viewPhoto" style="display: none; height: 185px; width: 100%; border-radius: 16px; overflow: hidden; background: #111116; border: 1px solid var(--card-border); position: relative;">
-        <img src="/deskbot_render.jpg" alt="DESKBOT Studio Render" style="width: 100%; height: 100%; object-fit: cover;" />
+      <div id="viewPhoto" style="display: none; height: 155px; width: 100%; border-radius: 14px; overflow: hidden; background: #0e0e10; border: 1px solid var(--border); position: relative;">
+        <img src="/deskbot_render.jpg" alt="CLUMSY Render" style="width: 100%; height: 100%; object-fit: cover;" />
       </div>
 
-      <!-- Live Microphone Activity & Bluetooth Status -->
       <div class="mic-waveform-box">
-        <div style="display: flex; justify-content: space-between; font-size: 11px;">
-          <span>🎙️ <b>Mic Activity</b> (<span id="micSourceLabel">Laptop Array + BT</span>)</span>
-          <span id="btLinkLabel" style="color: var(--success);">BT: Virtual Uno Linked</span>
+        <div style="display: flex; justify-content: space-between; font-size: 10.5px;">
+          <span>🎙️ <b>Mic</b> (<span id="micSourceLabel">Always-On</span>)</span>
+          <span id="btLinkLabel" style="color: var(--success);">BT Ready</span>
         </div>
         <div class="wf-bars" id="micWaveformBar"></div>
       </div>
 
-      <!-- Real-Time Pan & Tilt Servo Sliders -->
       <div class="slider-panel">
         <div class="slider-row">
-          <label for="panSlider">Pan D9 (15°–165°)</label>
+          <label for="panSlider">Pan D9</label>
           <input type="range" id="panSlider" min="15" max="165" value="90" oninput="onServoSliderChange()" />
         </div>
         <div class="slider-row">
-          <label for="tiltSlider">Tilt D10 (15°–165°)</label>
+          <label for="tiltSlider">Tilt D10</label>
           <input type="range" id="tiltSlider" min="15" max="165" value="90" oninput="onServoSliderChange()" />
         </div>
       </div>
 
-      <div class="btn-row" style="grid-template-columns: repeat(4, 1fr);">
+      <div class="btn-row">
         <button onclick="setExpression('idle', 90, 90)">Idle</button>
-        <button onclick="setExpression('happy', 90, 96)">Happy ^_^</button>
-        <button onclick="setExpression('excited', 90, 104)">Excited ✨</button>
+        <button onclick="setExpression('happy', 90, 96)">Happy</button>
+        <button onclick="setExpression('excited', 90, 104)">Excited</button>
         <button onclick="setExpression('love', 90, 98)">Love ❤️</button>
-        <button onclick="setExpression('listening', 90, 105)">Listen 🎙️</button>
-        <button onclick="setExpression('thinking', 108, 112)">Think 🧠</button>
-        <button onclick="setExpression('coding', 95, 100)">Coding 💻</button>
+        <button onclick="setExpression('listening', 90, 105)">Listen</button>
+        <button onclick="setExpression('thinking', 108, 112)">Think</button>
         <button onclick="setExpression('wink', 84, 98)">Wink 😉</button>
-        <button onclick="setExpression('surprised', 90, 108)">Surprised 😮</button>
-        <button onclick="setExpression('focused', 90, 92)">Focused 🎯</button>
-        <button onclick="setExpression('confused', 75, 82)">Confused 🤔</button>
-        <button onclick="blink()">Blink 👁️</button>
-      </div>
-
-      <div style="margin-top: 14px;">
-        <h2><span>🎵</span> System Audio &amp; Song Deck</h2>
-        <div style="background: #14141a; border-radius: 12px; padding: 10px 12px; border: 1px solid var(--card-border);">
-          <div style="font-size: 12.5px; font-weight: 600;" id="nowPlaying">Chill Synth Beats (Local)</div>
-          <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;" id="mediaStatus">Laptop Master Audio • Ready</div>
-          <div style="display: flex; gap: 6px;">
-            <button onclick="toggleMedia()">▶ / ⏸ Play Song</button>
-            <button onclick="nextTrack()">⏭ Next Track</button>
-          </div>
-        </div>
+        <button onclick="blink()">Blink</button>
       </div>
     </div>
 
-    <!-- Center Column: CLUMSY Voice & Universal ASAP Job Studio -->
-    <div class="card">
-      <h2>
-        <span>⚡ CLUMSY Master Orchestrator</span>
-        <span style="font-size: 11px; color: var(--text-muted);" id="activeSpecialistBadge">Lead: Mistral + Qwen 3.5</span>
-      </h2>
-      <div class="chat-container">
-        <div class="messages" id="messageList">
-          <div class="msg assistant">
-            Good day! I am <b>CLUMSY: your everyday AI</b>, running on your <b>4-Model Fusion Engine</b> (Qwen 3.5 + Google Gemma 4 + Meta Llama 4 + Mistral). Ask me to <b>write code</b>, <b>render 3D models in Blender</b>, <b>create graphics or videos</b>, <b>play songs</b>, or <b>automate your system</b>!
-          </div>
-        </div>
-        <div class="input-bar">
-          <input type="text" id="userInput" placeholder="Speak or type to CLUMSY ('open Gmail & send email', 'write Java quicksort', 'render 3D model in Blender', 'play Netflix')..." onkeydown="if(event.key==='Enter') sendQuery(false)" />
-          <button class="primary" onclick="sendQuery(false)">Execute ↵</button>
-          <button id="btnVoiceDictation" onclick="toggleVoiceInput()" title="Hands-Free Voice Recognition Toggle">🎙️ Speak</button>
-        </div>
-        <div id="liveVoiceTranscriptBar" style="margin-top: 6px; font-size: 11px; color: var(--accent-cyan); font-family: monospace; min-height: 16px;">
-          🎙️ Voice Engine Ready: Say "Hey Clumsy", "Open Gmail", "Schedule Calendar meeting", "Save Note", "Play on Netflix", "Render 3D Model in Blender", "Make AI Video", or "Create AI Pic".
-        </div>
-      </div>
-
-      <!-- Instant ASAP Job Studio Output Preview -->
-      <div class="job-studio-box" id="jobStudioOutput" style="max-height: 295px;">
-        <div class="job-badge">CLUMSY EVERYDAY AI // CREATIVE &amp; EXECUTION STUDIO</div>
-        <div style="font-size: 12px; color: var(--text-muted);">
-          Every voice or text command renders live here: <b>Interplatform Hub</b> (Gmail, Calendar, Notes, Netflix, Amazon), <b>3D Model &amp; Blender Studio</b>, <b>AI Video Maker</b>, <b>AI Pic &amp; Graphic Creator</b>, <b>Code</b>, <b>PPT</b>, and <b>AI Flowcharts</b>.
-        </div>
-
-        <!-- Vercel-Style Filter Tabs -->
-        <div class="studio-tabs">
-          <button class="tab-btn active" onclick="filterStudio('all', this)">All (14)</button>
-          <button class="tab-btn" onclick="filterStudio('apps', this)">Apps &amp; Hub</button>
-          <button class="tab-btn" onclick="filterStudio('3d', this)">3D &amp; CAD</button>
-          <button class="tab-btn" onclick="filterStudio('media', this)">Media &amp; Video</button>
-          <button class="tab-btn" onclick="filterStudio('code', this)">Code &amp; Docs</button>
-        </div>
-
-        <div style="display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap;" id="studioActionChips">
-          <button data-cat="apps" onclick="triggerInterplatform('netflix', 'Play Stranger Things on Netflix')">🎬 Netflix</button>
-          <button data-cat="apps" onclick="triggerInterplatform('prime_video', 'Play The Boys on Amazon Prime Video')">📺 Prime Video</button>
-          <button data-cat="apps" onclick="triggerInterplatform('hotstar', 'Play Marvel Avengers on Disney+ Hotstar')">🌟 Hotstar</button>
-          <button data-cat="apps" onclick="triggerInterplatform('gmail', 'Compose email in Gmail about CLUMSY Launch')">✉️ Gmail</button>
-          <button data-cat="apps" onclick="triggerInterplatform('calendar', 'Schedule meeting CLUMSY Review in Google Calendar tomorrow at 10am')">📅 Calendar</button>
-          <button data-cat="apps" onclick="triggerInterplatform('notes', 'Take a note: Upgrade Deskbot 3D Blender pipeline')">📝 Notes</button>
-          <button data-cat="apps" onclick="triggerInterplatform('amazon', 'Search Arduino Servo Kit on Amazon')">🛒 Amazon</button>
-          <button data-cat="3d" onclick="triggerInstantJob('3d_model', 'Create an engineering 3D model of a Skyscraper Building in Blender')">🏢 3D Building</button>
-          <button data-cat="3d" onclick="triggerInstantJob('3d_model', 'Create an engineering 3D model of a Suspension Bridge in Blender')">🌉 3D Bridge</button>
-          <button data-cat="3d" onclick="triggerInstantJob('3d_model', 'Render a 3D model of Quadcopter Drone in Blender')">🚁 3D Drone</button>
-          <button data-cat="media" onclick="triggerInstantJob('pic', 'Generate a realistic photo of Sunset on Goa Beach')">📸 AI Photo Studio</button>
-          <button data-cat="media" onclick="triggerInstantJob('video', 'Make a video about CLUMSY Autonomous Robotics')">🎥 AI Video Maker</button>
-          <button data-cat="code" onclick="triggerInstantJob('ai_tool', 'Create a mind map flowchart of CLUMSY Tri-Node Architecture')">🧠 AI Flowchart</button>
-          <button data-cat="code" onclick="triggerInstantJob('code', 'Write Java code to print My name is Aditya Pratap Singh')">💻 Java/Python Code</button>
-        </div>
-      </div>
-
-      <div class="event-stream-box" id="liveEventStream">
-        <div>[CLUMSY KERNEL] 4-Model Fusion &amp; Multi-Node Bluetooth Mesh active.</div>
+    <!-- System Audio Deck -->
+    <div class="sidebar-section">
+      <h2><span>🎵 System Audio Deck</span></h2>
+      <div style="font-size: 12px; font-weight: 600;" id="nowPlaying">Chill Synth Beats (Offline)</div>
+      <div style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 6px;" id="mediaStatus">Master Audio • Ready</div>
+      <div style="display: flex; gap: 6px;">
+        <button onclick="toggleMedia()">▶ / ⏸ Play</button>
+        <button onclick="nextTrack()">⏭ Next</button>
       </div>
     </div>
 
-    <!-- Right Column: 4-Model Fusion Telemetry & Connected Mesh Map -->
-    <div class="card">
-      <h2><span>🧠</span> 4-Model Fusion Brain (<code>CLUMSY-X1</code>)</h2>
-      <div class="fusion-matrix" id="fusionMatrixPanel">
-        <div class="model-bar-row">
-          <span style="width: 92px;">Qwen 3.5</span>
-          <div class="model-bar-track"><div class="model-bar-fill" id="barQwen" style="width: 25%;"></div></div>
-          <span id="pctQwen" style="width: 34px; text-align: right;">25%</span>
-        </div>
-        <div class="model-bar-row">
-          <span style="width: 92px;">Gemma 4</span>
-          <div class="model-bar-track"><div class="model-bar-fill" id="barGemma" style="width: 25%;"></div></div>
-          <span id="pctGemma" style="width: 34px; text-align: right;">25%</span>
-        </div>
-        <div class="model-bar-row">
-          <span style="width: 92px;">Llama 4</span>
-          <div class="model-bar-track"><div class="model-bar-fill" id="barLlama" style="width: 25%;"></div></div>
-          <span id="pctLlama" style="width: 34px; text-align: right;">25%</span>
-        </div>
-        <div class="model-bar-row" style="margin-bottom: 0;">
-          <span style="width: 92px;">Mistral</span>
-          <div class="model-bar-track"><div class="model-bar-fill" id="barMistral" style="width: 25%;"></div></div>
-          <span id="pctMistral" style="width: 34px; text-align: right;">25%</span>
-        </div>
-      </div>
-
-      <h2><span>🌐</span> Tri-Node Mesh Topology</h2>
+    <!-- Connected Hardware & Offline Nodes -->
+    <div class="sidebar-section">
+      <h2><span>🌐 Connected Nodes</span></h2>
       <div class="device-item" id="deviceAvatar">
         <div class="device-info">
           <div class="device-title">Arduino Uno Bot Avatar</div>
-          <div class="device-sub" id="avatarSub">Virtual + HC-05 BT • D9/D10 PWM • A4/A5 OLED</div>
+          <div class="device-sub" id="avatarSub">HC-05 BT • D9/D10 Servos • 60 FPS Eyes</div>
         </div>
         <div class="status-dot"></div>
       </div>
-
       <div class="device-item" id="devicePhone">
         <div class="device-info">
-          <div class="device-title">Mobile Personal AI Agent</div>
-          <div class="device-sub" id="phoneSub">Laptop Bluetooth Linked • Battery: 87%</div>
+          <div class="device-title">Phone Companion App</div>
+          <div class="device-sub" id="phoneSub">Bluetooth Synced • Always-On Mic</div>
         </div>
         <div class="status-dot"></div>
       </div>
-
       <div class="device-item" id="deviceLaptop">
         <div class="device-info">
-          <div class="device-title">Laptop Master Map (Heart)</div>
-          <div class="device-sub" id="laptopSub">ASAP Job Engine • Code / PPT / Graphics / Audio</div>
+          <div class="device-title">Laptop Master Hub</div>
+          <div class="device-sub" id="laptopSub">Offline Studio • Code / 3D / Media</div>
         </div>
         <div class="status-dot"></div>
       </div>
-
-      <div class="device-item" id="deviceDesktop">
+      <div class="device-item" id="deviceDesktop" style="margin-bottom:0;">
         <div class="device-info">
-          <div class="device-title">Single-Slot RAM Guard</div>
-          <div class="device-sub" id="desktopSub">Ultra-Low RAM (&lt; 850 MB) • 100% Offline</div>
+          <div class="device-title">Offline Neural Guard</div>
+          <div class="device-sub" id="desktopSub">100% Offline • Zero Cloud Dependency</div>
         </div>
         <div class="status-dot"></div>
       </div>
+    </div>
 
-      <div style="margin-top: 14px;">
-        <h2><span>⚡</span> Quick Command Triggers</h2>
-        <div style="display: flex; flex-direction: column; gap: 6px;">
-          <button onclick="sendQuickCommand('phone_check')">📱 Sync Mobile AI Agent &amp; Battery</button>
-          <button onclick="sendQuickCommand('open_spotify')">💻 Launch App on Laptop System</button>
-          <button onclick="sendQuickCommand('center_robot')">🤖 Re-Center Arduino Servos (90°/90°)</button>
-          <button onclick="sendQuickCommand('test_emotions')">🎭 Run Full Bot Emotion Cycle</button>
-          <button onclick="sendQuickCommand('ping_devices')">📡 Ping All Mesh Nodes</button>
+    <div class="event-stream-box" id="liveEventStream">
+      <div>[CLUMSY] Offline Neural Core &amp; Local LLM Connectors ready.</div>
+    </div>
+  </aside>
+
+  <!-- Main Google Gemini Conversation & Studio Stage -->
+  <main class="gemini-main">
+    <!-- Top Bar with Model Selector (CLUMSY Core / Ollama / LM Studio / Jan AI) -->
+    <header class="gemini-topbar">
+      <div class="topbar-left">
+        <button class="icon-btn" onclick="toggleSidebar()" title="Toggle Robot &amp; Hardware Sidebar">☰</button>
+        <div class="model-selector-wrap">
+          <span class="sparkle-icon">✦</span>
+          <select id="llmProviderSelect" onchange="onChangeLLMProvider(this.value)" title="Select Offline Local AI Engine">
+            <option value="auto">CLUMSY 2.0 (Auto Offline + Local LLMs)</option>
+            <option value="clumsy_offline">CLUMSY Offline Core (100% Built-In + GGUF)</option>
+            <option value="ollama">Ollama Local Engine (127.0.0.1:11434)</option>
+            <option value="lmstudio">LM Studio Local Server (127.0.0.1:1234)</option>
+            <option value="jan">Jan AI Local Engine (127.0.0.1:1337)</option>
+          </select>
+        </div>
+        <button class="badge" style="cursor:pointer;" onclick="scanOfflineLLMs()" id="localScanBadge">🟢 Offline Core Active • Scan Local LLMs</button>
+      </div>
+
+      <div class="topbar-right">
+        <span class="badge" id="wsStatusBadge">WS: Live Ready</span>
+        <button class="badge" style="cursor:pointer;" onclick="pairDesktopBluetooth()">🟣 Pair Bluetooth</button>
+        <button class="badge" id="btnInstallDesktopPwa" style="background: var(--gemini-grad); color: #fff; border: none; cursor: pointer;" onclick="installDesktopApp()">⬇ Install App</button>
+        <a class="badge" href="/mobile" target="_blank">📱 Phone Companion</a>
+      </div>
+    </header>
+
+    <!-- Center Scrollable Chat Stream -->
+    <div class="gemini-scroll-area" id="chatScrollArea">
+      <div class="gemini-content-col">
+        <!-- Gemini Shimmer Welcome Hero -->
+        <div class="gemini-hero" id="geminiHero">
+          <h1>Hello, Aditya</h1>
+          <p>How can CLUMSY help you today?</p>
+          <div class="gemini-suggestions">
+            <div class="suggestion-card" onclick="askPreset('Explain quantum mechanics and superposition')">
+              <span>Explain quantum mechanics and how qubits work</span>
+              <small>⚛️</small>
+            </div>
+            <div class="suggestion-card" onclick="askPreset('Write a Python code for Binary Search and Quicksort')">
+              <span>Write &amp; execute Python or Java algorithms offline</span>
+              <small>💻</small>
+            </div>
+            <div class="suggestion-card" onclick="triggerInstantJob('3d_model', 'Create an engineering 3D model of a Skyscraper Building in Blender')">
+              <span>Render an interactive 60 FPS 3D CAD Skyscraper</span>
+              <small>🏢</small>
+            </div>
+            <div class="suggestion-card" onclick="askPreset('How do neural networks and deep learning work?')">
+              <span>Explore how neural networks &amp; offline AI models work</span>
+              <small>✨</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Conversation Messages -->
+        <div class="messages" id="messageList">
+          <div class="msg assistant">
+            <div class="assistant-hdr"><span class="sparkle-icon">✦</span> CLUMSY</div>
+            <div>Hi! I’m <b>CLUMSY</b>, your personal offline-first AI assistant and robot companion. I run <b>100% offline</b> with my built-in Neural Core and also connect directly to your local <b>Ollama</b>, <b>LM Studio</b>, <b>Jan AI</b>, and <b>GGUF</b> models. Ask me anything, write code, solve math, or render 3D models!</div>
+          </div>
+        </div>
+
+        <!-- Live Studio Canvas Output (Gemini Canvas Style) -->
+        <div class="job-studio-box" id="jobStudioOutput">
+          <div class="job-badge">CLUMSY LIVE CANVAS // OFFLINE STUDIO</div>
+          <div style="font-size: 12.5px; color: var(--text-muted);">
+            Interactive outputs (Code + STDOUT, 60 FPS 3D CAD Models, AI Videos, Vector Artwork, Slide Decks &amp; App Launchers) render live here.
+          </div>
         </div>
       </div>
     </div>
-  </div>
+
+    <!-- Bottom Floating Gemini Pill Input Bar -->
+    <div class="gemini-bottom-dock">
+      <div class="gemini-prompt-container">
+        <div class="studio-quick-bar" id="studioActionChips">
+          <button onclick="triggerInstantJob('code', 'Write Java code to print My name is Aditya Pratap Singh')">💻 Code Studio</button>
+          <button onclick="triggerInstantJob('3d_model', 'Create an engineering 3D model of a Skyscraper Building in Blender')">🏢 3D Building</button>
+          <button onclick="triggerInstantJob('3d_model', 'Create an engineering 3D model of a Suspension Bridge in Blender')">🌉 3D Bridge</button>
+          <button onclick="triggerInstantJob('3d_model', 'Render a 3D model of Quadcopter Drone in Blender')">🚁 3D Drone</button>
+          <button onclick="triggerInstantJob('pic', 'Generate a realistic photo of Sunset on Goa Beach')">📸 AI Photo</button>
+          <button onclick="triggerInstantJob('video', 'Make a video about CLUMSY Autonomous Robotics')">🎥 AI Video</button>
+          <button onclick="triggerInstantJob('ppt', 'Create a presentation about Offline AI Systems')">📊 PPT Deck</button>
+          <button onclick="triggerInterplatform('netflix', 'Play Stranger Things on Netflix')">🎬 Netflix</button>
+          <button onclick="triggerInterplatform('gmail', 'Compose email in Gmail')">✉️ Gmail</button>
+          <button onclick="triggerInterplatform('calendar', 'Schedule meeting in Google Calendar')">📅 Calendar</button>
+          <button onclick="triggerInterplatform('notes', 'Take a note: Test CLUMSY with Ollama and LM Studio')">📝 Save Note</button>
+        </div>
+
+        <div class="gemini-pill-bar">
+          <input
+            type="text"
+            id="userInput"
+            placeholder="Ask CLUMSY anything (works 100% offline — math, science, code, 3D, essays)..."
+            onkeydown="if(event.key==='Enter') sendQuery(false)"
+          />
+          <button class="pill-action-btn" id="btnVoiceDictation" onclick="toggleVoiceInput()" title="Always-On Voice Recognition">🎙️ Speak</button>
+          <button class="pill-action-btn primary" onclick="sendQuery(false)">✦ Send</button>
+        </div>
+
+        <div id="liveVoiceTranscriptBar" style="font-size: 11px; color: var(--text-muted); text-align: center; min-height: 15px;">
+          ✦ 100% Offline Ready • Supports Built-In Neural Core, Ollama (:11434), LM Studio (:1234), Jan AI (:1337) &amp; Always-On "Hey Clumsy" Wake Word
+        </div>
+      </div>
+    </div>
+  </main>
 
   <script>
     const leftEye = document.getElementById('leftEye');
@@ -771,12 +855,58 @@
     let activeRecognition = null;
     let isDictating = false;
 
+    function toggleSidebar() {
+      const sb = document.getElementById('geminiSidebar');
+      if (sb) sb.classList.toggle('collapsed');
+    }
+
+    function startNewClumsyChat() {
+      if (window.clumsyBrain) window.clumsyBrain.history = [];
+      const hero = document.getElementById('geminiHero');
+      if (hero) hero.style.display = 'block';
+      messageList.innerHTML = `
+        <div class="msg assistant">
+          <div class="assistant-hdr"><span class="sparkle-icon">✦</span> CLUMSY</div>
+          <div>Started a fresh offline conversation! Ask me anything or pick a Studio tool below.</div>
+        </div>
+      `;
+    }
+
+    function askPreset(text) {
+      const input = document.getElementById('userInput');
+      input.value = text;
+      sendQuery(false);
+    }
+
+    async function onChangeLLMProvider(val) {
+      if (!window.clumsyBrain) return;
+      const info = window.clumsyBrain.setProvider(val);
+      const badge = document.getElementById('localScanBadge');
+      if (badge) badge.textContent = `🟢 ${info.name} Selected`;
+      logStreamEvent('LLM_ENGINE', `Switched to ${info.name} (${info.defaultUrl})`);
+      await scanOfflineLLMs();
+    }
+
+    async function scanOfflineLLMs() {
+      if (!window.clumsyBrain) return;
+      const res = await window.clumsyBrain.probeOfflineEngines();
+      const s = res.status;
+      const detected = ['CLUMSY Core'];
+      if (s.local_hub) detected.push('Local GGUF :8080');
+      if (s.ollama) detected.push(`Ollama (${res.models.ollama.length || 'online'})`);
+      if (s.lmstudio) detected.push('LM Studio :1234');
+      if (s.jan) detected.push('Jan AI :1337');
+      const badge = document.getElementById('localScanBadge');
+      if (badge) {
+        badge.textContent = `🟢 Offline Engines: ${detected.join(' + ')}`;
+      }
+      logStreamEvent('OFFLINE_SCAN', `Active: ${detected.join(', ')}`);
+    }
+
     let deferredDesktopInstall = null;
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredDesktopInstall = e;
-      const btn = document.getElementById('btnInstallDesktopPwa');
-      if (btn) btn.style.display = 'inline-block';
     });
 
     async function installDesktopApp() {
@@ -785,7 +915,7 @@
         await deferredDesktopInstall.userChoice;
         deferredDesktopInstall = null;
       } else {
-        alert("To install CLUMSY on your Laptop:\n1. Click the Install icon (⊕) on the right side of the browser URL address bar, OR\n2. Click the 3 dots (⋮ / ⋯) in Chrome/Edge -> 'Apps' -> 'Install CLUMSY'.");
+        alert("To install CLUMSY for 100% offline desktop use:\n1. Click the Install icon (⊕) in your browser's address bar, OR\n2. Open browser menu (⋮) -> 'Apps' -> 'Install CLUMSY'.");
       }
     }
 
@@ -794,7 +924,7 @@
         if (navigator.bluetooth && navigator.bluetooth.requestDevice) {
           const device = await navigator.bluetooth.requestDevice({ acceptAllDevices: true });
           const dName = device.name || 'Phone-CLUMSY-Node';
-          document.getElementById('btLinkLabel').textContent = `BT: Paired (${dName})`;
+          document.getElementById('btLinkLabel').textContent = `Paired (${dName})`;
           triggerDesktopWakeupShake(() => {
             const msg = `Bluetooth connected to ${dName}! Your phone and laptop are now synced.`;
             appendMessage(msg, 'assistant');
@@ -804,7 +934,7 @@
         }
       } catch (_) {}
       setExpression('happy', 90, 96, true);
-      appendMessage('Bluetooth Mesh active. Open /mobile on your phone and tap "Pair Bluetooth" to link!', 'assistant');
+      appendMessage('Bluetooth ready. Open /mobile on your phone and tap "Pair Bluetooth" to link!', 'assistant');
     }
 
     if ('serviceWorker' in navigator) {
@@ -827,37 +957,10 @@
       liveEventStream.scrollTop = liveEventStream.scrollHeight;
     }
 
-    function updateFusionUI(fusion) {
-      if (!fusion || !fusion.weights) return;
-      const w = fusion.weights;
-      const map = [
-        ['qwen3.5', 'barQwen', 'pctQwen'],
-        ['gemma4', 'barGemma', 'pctGemma'],
-        ['llama4', 'barLlama', 'pctLlama'],
-        ['mistral', 'barMistral', 'pctMistral'],
-      ];
-      for (const [key, barId, pctId] of map) {
-        const pct = Math.round((w[key] || 0.25) * 100);
-        const b = document.getElementById(barId);
-        const p = document.getElementById(pctId);
-        if (b) b.style.width = pct + '%';
-        if (p) p.textContent = pct + '%';
-      }
-      const badge = document.getElementById('activeSpecialistBadge');
-      if (badge && fusion.lead_display) {
-        badge.textContent = `Lead: ${fusion.lead_display}`;
-      }
-      const ramBadge = document.getElementById('ramBadge');
-      if (ramBadge && fusion.active_ram_mb) {
-        ramBadge.textContent = `RAM: ${fusion.active_ram_mb}MB / ${fusion.max_ram_mb || 850}MB`;
-      }
-    }
-
     function renderJobArtifact(artifact) {
       if (!artifact || !jobStudioOutput) return;
       if (artifact.preview_html) {
         jobStudioOutput.innerHTML = artifact.preview_html;
-        // Execute any embedded inline <script> tags inside the preview_html (e.g. 3D Model Viewer & AI Video Canvas)
         jobStudioOutput.querySelectorAll('script').forEach((oldScript) => {
           const newScript = document.createElement('script');
           newScript.textContent = oldScript.textContent;
@@ -867,7 +970,7 @@
       if (artifact.job_type === 'music' && jarvisHUD) {
         jarvisHUD.toggleSynthMusic(true);
         document.getElementById('nowPlaying').textContent = artifact.track || 'CLUMSY Synthwave';
-        document.getElementById('mediaStatus').textContent = 'Playing on Laptop Master Audio';
+        document.getElementById('mediaStatus').textContent = 'Playing on Master Audio';
       }
     }
 
@@ -922,18 +1025,13 @@
                 false
               );
             }
-            if (payload.fusion) updateFusionUI(payload.fusion);
             if (payload.job_artifact) renderJobArtifact(payload.job_artifact);
-            if (payload.auto_open_url) {
-              // The server already opened this natively on the laptop; just log it (avoids a duplicate tab).
-              logStreamEvent('LAPTOP_AUTO_PLAY', payload.auto_open_url);
-            }
             if (payload.response) appendMessage(payload.response, 'assistant');
           } catch (_) {}
         };
         wsConn.onclose = () => {
           wsConn = null;
-          setTimeout(() => connectWebSocket(wsUrl), 2500);
+          setTimeout(() => connectWebSocket(wsUrl), 3000);
         };
       } catch (_) {}
     }
@@ -1012,10 +1110,6 @@
 
       if (viewer3D) {
         viewer3D.setPose(clampedPan, clampedTilt, expr);
-        const fpsEl = document.getElementById('fpsReadout');
-        const lagEl = document.getElementById('lagReadout');
-        if (fpsEl) fpsEl.textContent = `${viewer3D.fps} FPS`;
-        if (lagEl) lagEl.textContent = `${viewer3D.lastPostureLagMs}ms`;
       }
 
       if (expr === 'happy') {
@@ -1039,7 +1133,6 @@
       }
 
       if (syncServer) {
-        logStreamEvent('UNO_SERIAL', `<P${clampedPan},T${clampedTilt},E${expr}>`);
         fetch('/api/robot/telemetry', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1067,14 +1160,15 @@
     }, 4500);
 
     async function refreshStatus() {
+      scanOfflineLLMs();
       try {
         const res = await fetch('/api/status');
+        if (!res.ok) return;
         const data = await res.json();
         const phoneSub = document.getElementById('phoneSub');
         if (phoneSub && data.phone_battery !== undefined) {
-          phoneSub.textContent = `Laptop BT Linked • Battery: ${data.phone_battery}% • ${data.phone_unread || 0} Alerts`;
+          phoneSub.textContent = `BT Linked • Battery: ${data.phone_battery}%`;
         }
-        if (data.fusion) updateFusionUI(data.fusion);
         if (data.telemetry) {
           setExpression(
             data.telemetry.expression || 'idle',
@@ -1093,7 +1187,7 @@
       if (!rawText) return '';
       return String(rawText)
         .replace(/\b(clumzy|klumsy|klumzy|clumsee|clumsie)\b/gi, 'CLUMSY')
-        .replace(/\b(harvis|charvis|jervis|jarves)\b/gi, 'CLUMSY')
+        .replace(/\b(harvis|charvis|jervis|jarves|jarvis)\b/gi, 'CLUMSY')
         .replace(/\b(jeemail|gee\s*mail|g\s+mail|g-mail)\b/gi, 'Gmail')
         .replace(/\b(callender|calender|calandar)\b/gi, 'Calendar')
         .replace(/\b(net\s+flicks|netflex|net\s+flix)\b/gi, 'Netflix')
@@ -1103,21 +1197,6 @@
         .replace(/\b(p\s+p\s+t|power\s+point)\b/gi, 'PPT')
         .replace(/\b(java\s+script)\b/gi, 'JavaScript')
         .trim();
-    }
-
-    function filterStudio(category, btnEl) {
-      if (btnEl) {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        btnEl.classList.add('active');
-      }
-      const chips = document.querySelectorAll('#studioActionChips button');
-      chips.forEach(chip => {
-        if (category === 'all' || chip.getAttribute('data-cat') === category) {
-          chip.style.display = 'inline-block';
-        } else {
-          chip.style.display = 'none';
-        }
-      });
     }
 
     // 50-Second Inactivity Sleep Timer & Wake-Up Shake Sequence
@@ -1132,7 +1211,7 @@
         setExpression('sleeping', 90, 80, true);
         const voiceBar = document.getElementById('liveVoiceTranscriptBar');
         if (voiceBar) {
-          voiceBar.textContent = '💤 CLUMSY is sleeping (no task for 50s). Microphone is active — say "Hey Clumsy" to wake up!';
+          voiceBar.textContent = '💤 CLUMSY is sleeping (50s idle). Microphone is active — say "Hey Clumsy" to wake up!';
         }
       }, DESKTOP_SLEEP_TIMEOUT_MS);
     }
@@ -1158,6 +1237,9 @@
       const text = normalizeVoicePhoneticsJS(rawText);
       if (!text) return;
 
+      const hero = document.getElementById('geminiHero');
+      if (hero) hero.style.display = 'none';
+
       if (isDesktopSleeping) {
         const remainder = text.replace(/^(?:hey|hi|ok|okay|yo)?\s*(?:clumsy|wake\s+up)[\s,!?.:-]*/i, '').trim();
         if (!remainder) {
@@ -1178,124 +1260,43 @@
       appendMessage(text, 'user');
       input.value = '';
 
-      // Instant local check for "thank you" -> random happy / love / wink reaction
-      if (/\b(thank\s*you|thanks|thx|appreciate\s+it)\b/i.test(text)) {
-        const rxPool = ['happy', 'love', 'wink'];
-        const chosenRx = rxPool[Math.floor(Math.random() * rxPool.length)];
-        const replies = {
-          happy: "You're very welcome! Always happy to help you!",
-          love: "Aww, my pleasure! Sending you lots of love!",
-          wink: "Anytime at all! Consider it done with a wink!",
-        };
-        setExpression(chosenRx, 90, 98, true);
-        appendMessage(replies[chosenRx], 'assistant');
-        speakJarvisReply(replies[chosenRx]);
-        logStreamEvent('CLUMSY_EMOTION', `THANK_YOU -> ${chosenRx.toUpperCase()}`);
-        return;
-      }
-
       setExpression('thinking', 105, 115, false);
       if (jarvisHUD) jarvisHUD.playSciFiChime('wake');
-      logStreamEvent(isVoice ? 'VOICE_CMD' : 'USER_CMD', text);
+      logStreamEvent(isVoice ? 'VOICE' : 'PROMPT', text);
 
-      try {
-        const res = await fetch('/api/query', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: text, alternatives: alternatives, voice: isVoice, execute_os: true, source_device: 'laptop_hub' })
-        });
-        if (!res.ok) throw new Error('cloud_mode');
-        const data = await res.json();
-        // If local rule fallback returned a generic placeholder, upgrade via CLUMSY-X1 Smart Brain!
-        if (data.response && data.response.includes('I have processed that and stand ready') && window.clumsyBrain) {
-          throw new Error('upgrade_with_smart_brain');
-        }
-        appendMessage(data.response, 'assistant');
-        if (data.spoken_tts) speakJarvisReply(data.spoken_tts);
-        if (data.fusion) updateFusionUI(data.fusion);
-        if (data.job_artifact) renderJobArtifact(data.job_artifact);
-        if (data.auto_open_url) {
-          logStreamEvent('LAPTOP_AUTO_PLAY', data.auto_open_url);
-        }
-        const t = data.telemetry || {};
-        setExpression(
-          (data.robot_state || 'happy').toLowerCase(),
-          t.pan_deg || 90,
-          t.tilt_deg || 95,
-          false
-        );
-        logStreamEvent('CLUMSY_FUSION', `${data.intent || 'executed'} -> ${data.robot_state || 'HAPPY'}`);
-      } catch (err) {
-        if (window.clumsyBrain) {
-          const smart = await window.clumsyBrain.processSmartQuery(text);
-          appendMessage(smart.response, 'assistant');
-          if (smart.spoken_tts) speakJarvisReply(smart.spoken_tts);
-          if (smart.fusion) updateFusionUI(smart.fusion);
-          if (smart.job_artifact) renderJobArtifact(smart.job_artifact);
-          setExpression((smart.robot_state || 'happy').toLowerCase(), 90, 96, false);
-          logStreamEvent('CLUMSY_AI_BRAIN', `${smart.fusion.lead_specialist.toUpperCase()} -> ${(smart.robot_state || 'HAPPY').toUpperCase()}`);
-        } else {
-          appendMessage(`Processed: "${text}".`, 'assistant');
-          setExpression('happy', 90, 95, false);
-        }
+      if (window.clumsyBrain) {
+        const smart = await window.clumsyBrain.processSmartQuery(text);
+        appendMessage(smart.response, 'assistant', smart.engine);
+        if (smart.spoken_tts) speakJarvisReply(smart.spoken_tts);
+        if (smart.job_artifact) renderJobArtifact(smart.job_artifact);
+        setExpression((smart.robot_state || 'happy').toLowerCase(), 90, 96, false);
+        logStreamEvent('CLUMSY_AI', `${smart.engine || 'Offline Core'} -> ${(smart.robot_state || 'HAPPY').toUpperCase()}`);
       }
     }
 
     async function triggerInterplatform(platform, promptText) {
       setExpression('thinking', 102, 112, false);
       if (jarvisHUD) jarvisHUD.playSciFiChime('exec');
-      try {
-        const res = await fetch('/api/interplatform', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ platform: platform, prompt: promptText, execute_os: true })
-        });
-        if (!res.ok) throw new Error('cloud_mode');
-        const artifact = await res.json();
+      if (window.clumsyBrain) {
+        const artifact = window.clumsyBrain.buildInterplatformArtifact(platform, promptText);
         renderJobArtifact(artifact);
-        const msg = artifact.spoken_summary || `Opened ${platform.toUpperCase()} Hub: ${artifact.title}`;
-        appendMessage(msg, 'assistant');
+        const msg = artifact.spoken_summary || `Opened ${platform.toUpperCase()}: ${artifact.title}`;
+        appendMessage(msg, 'assistant', 'CLUMSY App Hub');
         speakJarvisReply(msg);
-        setExpression('happy', 90, 98, false);
-        logStreamEvent('INTERPLATFORM', `${platform.toUpperCase()} -> ${artifact.action || 'OPEN'}`);
-      } catch (_) {
-        if (window.clumsyBrain) {
-          const artifact = window.clumsyBrain.buildInterplatformArtifact(platform, promptText);
-          renderJobArtifact(artifact);
-          const msg = artifact.spoken_summary || `Opened ${platform.toUpperCase()} Hub: ${artifact.title}`;
-          appendMessage(msg, 'assistant');
-          speakJarvisReply(msg);
-          setExpression('excited', 90, 98, false);
-          logStreamEvent('INTERPLATFORM', `${platform.toUpperCase()} -> ${artifact.action || 'OPEN'}`);
-        }
+        setExpression('excited', 90, 98, false);
       }
     }
 
     async function triggerInstantJob(jobType, promptText) {
       setExpression('thinking', 105, 115, false);
       if (jarvisHUD) jarvisHUD.playSciFiChime('exec');
-      try {
-        const res = await fetch('/api/jobs/execute', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ job_type: jobType, prompt: promptText })
-        });
-        if (!res.ok) throw new Error('cloud_mode');
-        const artifact = await res.json();
+      if (window.clumsyBrain) {
+        const artifact = window.clumsyBrain.buildStudioJobArtifact(jobType, promptText);
         renderJobArtifact(artifact);
-        appendMessage(`Completed ${jobType.toUpperCase()} job (${artifact.execution_time_ms}ms): ${artifact.title}`, 'assistant');
-        setExpression('happy', 90, 98, false);
-        logStreamEvent('JOB_DONE', `${jobType.toUpperCase()} in ${artifact.execution_time_ms}ms`);
-      } catch (_) {
-        if (window.clumsyBrain) {
-          const artifact = window.clumsyBrain.buildStudioJobArtifact(jobType, promptText);
-          renderJobArtifact(artifact);
-          const msg = `Completed ${jobType.toUpperCase()} Studio task (${artifact.execution_time_ms}ms): ${artifact.title}`;
-          appendMessage(msg, 'assistant');
-          speakJarvisReply(`Rendered ${artifact.title} in your Studio.`);
-          setExpression(jobType === 'code' ? 'coding' : 'excited', 90, 98, false);
-          logStreamEvent('JOB_DONE', `${jobType.toUpperCase()} in ${artifact.execution_time_ms}ms`);
-        }
+        const msg = `Rendered **${artifact.title}** in your Studio Canvas (${artifact.execution_time_ms}ms).`;
+        appendMessage(msg, 'assistant', 'CLUMSY Offline Studio');
+        speakJarvisReply(`Rendered ${artifact.title} in your Studio.`);
+        setExpression(jobType === 'code' ? 'coding' : 'excited', 90, 98, false);
       }
     }
 
@@ -1306,22 +1307,33 @@
         .replace(/>/g, '&gt;');
     }
 
-    function appendMessage(text, sender) {
+    function formatMarkdown(raw) {
+      let html = escapeHtml(raw);
+      html = html.replace(
+        /```([a-zA-Z0-9_+]*)\n([\s\S]*?)```/g,
+        (_, lang, code) =>
+          `<div style="margin:10px 0;background:#1e1f20;border:1px solid rgba(168,85,247,0.35);border-radius:12px;padding:12px;"><div style="font-size:10.5px;color:#c084fc;font-weight:700;margin-bottom:6px;">${(lang || 'CODE').toUpperCase()}</div><pre style="font-family:Consolas,monospace;font-size:12.5px;color:#e3e3e3;white-space:pre-wrap;margin:0;">${code.trim()}</pre></div>`
+      );
+      html = html.replace(/^###\s+(.+)$/gm, '<div style="font-size:15px;font-weight:700;color:#fff;margin-top:10px;margin-bottom:4px;">$1</div>');
+      html = html.replace(/\*\*([^*]+)\*\*/g, '<b style="color:#fff;">$1</b>');
+      html = html.replace(/`([^`]+)`/g, '<code style="background:#282a2c;padding:2px 6px;border-radius:5px;font-family:monospace;font-size:12.5px;color:#e9d5ff;">$1</code>');
+      html = html.replace(/\nSTDOUT:/g, '<br><b style="color:#34d399;">STDOUT:</b>');
+      html = html.replace(/\n/g, '<br>');
+      return html;
+    }
+
+    function appendMessage(text, sender, engineLabel) {
       const div = document.createElement('div');
       div.className = `msg ${sender}`;
-      const raw = String(text || '');
-      if (raw.includes('```')) {
-        const formatted = escapeHtml(raw).replace(
-          /```([a-zA-Z0-9_+]*)\n([\s\S]*?)```/g,
-          (_, lang, code) =>
-            `<div style="margin-top:8px;background:#091222;border:1px solid rgba(56,189,248,0.4);border-radius:8px;padding:8px;"><div style="font-size:10px;color:#38bdf8;font-weight:700;margin-bottom:4px;">${(lang || 'CODE').toUpperCase()}</div><pre style="font-family:Consolas,monospace;font-size:12px;color:#e0f2fe;white-space:pre-wrap;margin:0;">${code.trim()}</pre></div>`
-        );
-        div.innerHTML = formatted.replace(/\nSTDOUT:/g, '<br><b style="color:#34d399;">STDOUT:</b>');
+      if (sender === 'assistant') {
+        const badgeText = engineLabel ? `CLUMSY • ${engineLabel}` : 'CLUMSY';
+        div.innerHTML = `<div class="assistant-hdr"><span class="sparkle-icon">✦</span> ${escapeHtml(badgeText)}</div><div>${formatMarkdown(text)}</div>`;
       } else {
-        div.textContent = raw;
+        div.textContent = String(text || '');
       }
       messageList.appendChild(div);
-      messageList.scrollTop = messageList.scrollHeight;
+      const scrollArea = document.getElementById('chatScrollArea');
+      if (scrollArea) scrollArea.scrollTop = scrollArea.scrollHeight;
     }
 
     async function toggleMedia() {
@@ -1333,12 +1345,9 @@
           body: JSON.stringify({ action: playing ? 'play' : 'pause' })
         });
         const data = await res.json();
-        document.getElementById('nowPlaying').textContent = data.track || 'Chill Synth Beats (Local)';
-        document.getElementById('mediaStatus').textContent = playing
-          ? `Playing on System Audio • Vol ${data.volume || 70}%`
-          : 'Paused';
+        document.getElementById('nowPlaying').textContent = data.track || 'Chill Synth Beats (Offline)';
       } catch (_) {}
-      appendMessage(playing ? "Playing synthwave audio on your laptop system." : "Paused system audio.", 'assistant');
+      document.getElementById('mediaStatus').textContent = playing ? 'Playing Offline Synth Audio' : 'Paused';
       setExpression('happy', 90, 95);
     }
 
@@ -1352,52 +1361,10 @@
         });
         const data = await res.json();
         document.getElementById('nowPlaying').textContent = data.track || 'Cyberpunk Night Drive';
-      } catch (_) {}
-      appendMessage("Skipped to next track on system audio.", 'assistant');
-      setExpression('happy', 90, 95);
-    }
-
-    async function sendQuickCommand(type) {
-      if (type === 'phone_check') {
-        document.getElementById('userInput').value = "check my details from my phone";
-        sendQuery(false);
-      } else if (type === 'open_spotify') {
-        document.getElementById('userInput').value = "open spotify on my laptop";
-        sendQuery(false);
-      } else if (type === 'center_robot' || type === 'test_emotions' || type === 'ping_devices') {
-        try {
-          const res = await fetch('/api/quick_action', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ trigger: type })
-          });
-          if (!res.ok) throw new Error('cloud_mode');
-          const data = await res.json();
-          if (type === 'center_robot') {
-            setExpression('idle', 90, 90, false);
-            appendMessage(data.message || "Re-centered Arduino Uno servos to 90°.", 'assistant');
-          } else if (type === 'test_emotions') {
-            appendMessage(`Executed emotion cycle: ${(data.sequence || []).join(' → ')}`, 'assistant');
-            setExpression('idle', 90, 90, false);
-          } else if (type === 'ping_devices') {
-            const summary = (data.devices || []).map(d => `${d.name} (${d.rtt_ms}ms)`).join(', ');
-            appendMessage(`Mesh Ping OK: ${summary}`, 'assistant');
-          }
-          logStreamEvent('QUICK_ACTION', type);
-        } catch (_) {
-          if (type === 'center_robot') {
-            setExpression('idle', 90, 90, false);
-            appendMessage("Re-centered Arduino Uno Pan/Tilt servos to 90°/90°.", 'assistant');
-          } else if (type === 'test_emotions') {
-            const seq = ['happy', 'excited', 'love', 'wink', 'thinking', 'coding', 'surprised', 'idle'];
-            seq.forEach((rx, idx) => setTimeout(() => setExpression(rx, 90, 96, false), idx * 450));
-            appendMessage(`Running live emotion cycle: ${seq.join(' → ')}`, 'assistant');
-          } else if (type === 'ping_devices') {
-            appendMessage("Mesh Ping OK: Arduino Uno Avatar (1.2ms), Phone AI Agent (3.4ms), Laptop Hub (0.4ms)", 'assistant');
-          }
-          logStreamEvent('QUICK_ACTION', type);
-        }
+      } catch (_) {
+        document.getElementById('nowPlaying').textContent = 'Cyberpunk Night Drive (Offline)';
       }
+      setExpression('happy', 90, 95);
     }
 
     let liveMicContext = null;
@@ -1441,7 +1408,7 @@
           try { activeRecognition.stop(); } catch (_) {}
         }
         btn.classList.remove('recording');
-        btn.textContent = '🎙️ Stream Mic: OFF';
+        btn.textContent = '🎙️ Speak';
         setExpression('idle', 90, 90, false);
         return;
       }
@@ -1455,7 +1422,7 @@
       activeRecognition.maxAlternatives = 3;
       isDictating = true;
       btn.classList.add('recording');
-      btn.textContent = '🎙️ Stream Mic: ON (Mute)';
+      btn.textContent = '🎙️ Listening (Mute)';
       setExpression('listening', 90, 105);
 
       const voiceBar = document.getElementById('liveVoiceTranscriptBar');
@@ -1466,7 +1433,6 @@
         const rawTranscript = resultItem[0].transcript.trim();
         const corrected = normalizeVoicePhoneticsJS(rawTranscript);
 
-        // If sleeping: stay asleep until "Hey Clumsy" / "Clumsy" / "Wake up" is spoken
         if (isDesktopSleeping) {
           if (/\b(clumsy|wake\s+up)\b/i.test(corrected)) {
             if (!resultItem.isFinal) {
@@ -1491,7 +1457,7 @@
 
         resetDesktopSleepTimer();
         if (!resultItem.isFinal) {
-          if (voiceBar) voiceBar.textContent = `🎙️ Hearing (Live): "${corrected}"...`;
+          if (voiceBar) voiceBar.textContent = `🎙️ Hearing: "${corrected}"...`;
           return;
         }
         const alts = [];
@@ -1501,14 +1467,13 @@
           }
         }
         if (corrected) {
-          if (voiceBar) voiceBar.textContent = `✅ Voice Recognized: "${corrected}"`;
+          if (voiceBar) voiceBar.textContent = `✅ Recognized: "${corrected}"`;
           document.getElementById('userInput').value = corrected;
           sendQuery(true, alts);
         }
       };
       activeRecognition.onerror = () => {};
       activeRecognition.onend = () => {
-        // Continuous Stream-Flow mode: auto-restart listening unless user muted
         if (isDictating) {
           try { activeRecognition.start(); } catch (_) {}
         }

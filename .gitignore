@@ -10,3 +10,5 @@ models/*.bin
 models/*.onnx
 scratch/
 .deskbot_state.json
+
+.vercel

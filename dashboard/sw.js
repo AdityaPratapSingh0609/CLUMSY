@@ -1,5 +1,5 @@
-const CACHE_NAME = "deskbot-eyes-v3";
-const ASSETS = ["/mobile", "/mobile.html", "/eyeballs.js", "/clumsy_brain.js", "/manifest.json"];
+const CACHE_NAME = "deskbot-eyes-v5";
+const ASSETS = ["/", "/index.html", "/mobile", "/mobile.html", "/eyeballs.js", "/clumsy_brain.js", "/manifest.json"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

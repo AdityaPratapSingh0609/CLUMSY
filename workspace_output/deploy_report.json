@@ -1,7 +1,7 @@
 {
   "ready_for_deploy": true,
   "stages_verified": 22,
-  "preflight_time_ms": 563.06,
+  "preflight_time_ms": 187.0,
   "fusion_model": "JARVIS-X1-Fusion (Qwen3.5 + Gemma4 + Llama4 + Mistral)",
   "local_gguf_ready": true,
   "active_ram_mb": 440,
