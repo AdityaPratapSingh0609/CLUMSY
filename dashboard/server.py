@@ -206,11 +206,43 @@ class DeskbotRequestHandler(SimpleHTTPRequestHandler):
     def log_message(self, format: str, *args: Any) -> None:
         logger.debug(format, *args)
 
+    _STATIC_MIME_MAP = {
+        ".html": "text/html; charset=utf-8",
+        ".js": "application/javascript; charset=utf-8",
+        ".json": "application/json; charset=utf-8",
+        ".css": "text/css; charset=utf-8",
+        ".jpg": "image/jpeg",
+        ".png": "image/png",
+    }
+
+    def _try_serve_static_fast(self, rel_name: str) -> bool:
+        dashboard_dir = os.path.abspath(os.path.dirname(__file__))
+        target = os.path.join(dashboard_dir, rel_name.lstrip("/"))
+        if not os.path.isfile(target):
+            return False
+        ext = os.path.splitext(target)[1].lower()
+        ctype = self._STATIC_MIME_MAP.get(ext, "application/octet-stream")
+        with open(target, "rb") as f:
+            raw = f.read()
+        self.send_response(200)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Content-Length", str(len(raw)))
+        self.end_headers()
+        self.wfile.write(raw)
+        return True
+
     def do_GET(self) -> None:
         clean_path = self.path.split("?", 1)[0]
-        if clean_path in ("/mobile", "/eyes"):
-            self.path = "/mobile.html"
-            return super().do_GET()
+        if clean_path in ("/", "/index.html"):
+            if self._try_serve_static_fast("index.html"):
+                return
+        if clean_path in ("/mobile", "/eyes", "/mobile.html"):
+            if self._try_serve_static_fast("mobile.html"):
+                return
+        if clean_path in ("/manifest.json", "/manifest-desktop.json", "/sw.js", "/eyeballs.js", "/robot3d.js", "/jarvis_hud.js", "/deskbot_render.jpg"):
+            if self._try_serve_static_fast(clean_path.lstrip("/")):
+                return
 
         if clean_path == "/api/status":
             ws_port = ensure_realtime_ws_started()
