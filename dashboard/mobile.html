@@ -13,14 +13,14 @@
   <script src="/eyeballs.js"></script>
   <style>
     :root {
-      --bg: #02050c;
-      --card: rgba(10, 18, 34, 0.90);
-      --border: rgba(56, 189, 248, 0.32);
-      --accent: #38bdf8;
+      --bg: #09090b;
+      --card: rgba(20, 20, 26, 0.90);
+      --border: rgba(255, 255, 255, 0.12);
+      --accent: #c084fc;
       --success: #34d399;
       --danger: #f43f5e;
-      --text: #f8fafc;
-      --muted: #94a3b8;
+      --text: #fafafa;
+      --muted: #a1a1aa;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     html, body {
@@ -38,7 +38,10 @@
       position: fixed;
       inset: 0;
       z-index: 100;
-      background: radial-gradient(circle at 50% 25%, #0c2240 0%, #02050c 75%);
+      background:
+        radial-gradient(circle at 25% 20%, rgba(168, 85, 247, 0.18) 0%, transparent 50%),
+        radial-gradient(circle at 75% 80%, rgba(244, 63, 94, 0.14) 0%, transparent 50%),
+        #09090b;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -60,7 +63,7 @@
       border: 1.5px solid var(--border);
       border-radius: 26px;
       padding: 28px 22px;
-      box-shadow: 0 20px 55px rgba(0, 0, 0, 0.78), inset 0 0 28px rgba(56, 189, 248, 0.10);
+      box-shadow: 0 20px 55px rgba(0, 0, 0, 0.78), inset 0 0 28px rgba(192, 132, 252, 0.08);
       backdrop-filter: blur(18px);
     }
     .pulse-ring {
@@ -68,18 +71,18 @@
       height: 84px;
       border-radius: 50%;
       margin: 0 auto 16px;
-      background: rgba(56, 189, 248, 0.14);
+      background: rgba(168, 85, 247, 0.15);
       border: 2px solid var(--accent);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 36px;
-      box-shadow: 0 0 32px rgba(56, 189, 248, 0.45);
+      box-shadow: 0 0 32px rgba(168, 85, 247, 0.45);
       animation: pulseGlow 2s infinite ease-in-out;
     }
     @keyframes pulseGlow {
-      0%, 100% { transform: scale(1); box-shadow: 0 0 24px rgba(56, 189, 248, 0.38); }
-      50% { transform: scale(1.07); box-shadow: 0 0 42px rgba(56, 189, 248, 0.78); }
+      0%, 100% { transform: scale(1); box-shadow: 0 0 24px rgba(168, 85, 247, 0.38); }
+      50% { transform: scale(1.07); box-shadow: 0 0 42px rgba(244, 63, 94, 0.65); }
     }
     .handshake-title {
       font-size: 21px;
@@ -95,7 +98,7 @@
       margin-bottom: 18px;
     }
     .hub-status-box {
-      background: #050b16;
+      background: #121217;
       border: 1px solid var(--border);
       border-radius: 14px;
       padding: 12px 14px;
@@ -108,22 +111,22 @@
     }
     .connect-btn {
       width: 100%;
-      background: linear-gradient(135deg, #38bdf8, #0284c7);
-      color: #020617;
+      background: linear-gradient(135deg, #8b5cf6, #ec4899);
+      color: #ffffff;
       border: none;
       padding: 14px 18px;
       border-radius: 14px;
       font-size: 15px;
       font-weight: 800;
       cursor: pointer;
-      box-shadow: 0 6px 24px rgba(56, 189, 248, 0.45);
+      box-shadow: 0 6px 24px rgba(168, 85, 247, 0.42);
       margin-bottom: 10px;
     }
     .bt-btn {
       width: 100%;
-      background: rgba(56, 189, 248, 0.12);
-      color: var(--accent);
-      border: 1px solid var(--border);
+      background: rgba(168, 85, 247, 0.14);
+      color: #e9d5ff;
+      border: 1px solid rgba(192, 132, 252, 0.35);
       padding: 11px 16px;
       border-radius: 12px;
       font-size: 13px;
@@ -138,7 +141,7 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      background: radial-gradient(circle at 50% 48%, #071428 0%, #010308 82%);
+      background: radial-gradient(circle at 50% 48%, #13111c 0%, #050507 82%);
     }
 
     #mobileEyeballCanvas {
@@ -157,7 +160,7 @@
       justify-content: space-between;
       align-items: center;
       padding: 14px 16px;
-      background: linear-gradient(to bottom, rgba(2, 5, 12, 0.85), transparent);
+      background: linear-gradient(to bottom, rgba(9, 9, 11, 0.85), transparent);
       gap: 8px;
       flex-wrap: wrap;
     }
@@ -165,7 +168,7 @@
       display: inline-flex;
       align-items: center;
       gap: 7px;
-      background: rgba(11, 21, 40, 0.78);
+      background: rgba(20, 20, 26, 0.82);
       border: 1px solid var(--border);
       padding: 6px 12px;
       border-radius: 999px;
@@ -181,11 +184,11 @@
       box-shadow: 0 0 10px var(--success);
     }
     .dot-live.sleeping {
-      background: #818cf8;
-      box-shadow: 0 0 10px #818cf8;
+      background: #c084fc;
+      box-shadow: 0 0 10px #c084fc;
     }
     .hud-action-btn {
-      background: rgba(15, 23, 42, 0.82);
+      background: rgba(24, 24, 31, 0.85);
       color: var(--text);
       border: 1px solid var(--border);
       padding: 6px 11px;
@@ -196,8 +199,8 @@
       backdrop-filter: blur(10px);
     }
     .hud-action-btn:hover {
-      background: var(--accent);
-      color: #020617;
+      background: linear-gradient(135deg, #8b5cf6, #ec4899);
+      color: #ffffff;
     }
 
     /* Bottom Pure Voice & Caption HUD */
@@ -205,7 +208,7 @@
       position: relative;
       z-index: 10;
       padding: 12px 16px 22px;
-      background: linear-gradient(to top, rgba(2, 5, 12, 0.92) 45%, transparent);
+      background: linear-gradient(to top, rgba(9, 9, 11, 0.92) 45%, transparent);
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -215,12 +218,12 @@
     }
 
     .voice-caption {
-      background: rgba(11, 21, 40, 0.78);
+      background: rgba(20, 20, 26, 0.82);
       border: 1px solid var(--border);
       border-radius: 16px;
       padding: 11px 16px;
       font-size: 13.5px;
-      color: #e2e8f0;
+      color: #f4f4f5;
       min-height: 44px;
       display: flex;
       align-items: center;
@@ -237,7 +240,7 @@
     }
     .control-bar input {
       flex: 1;
-      background: rgba(6, 11, 22, 0.88);
+      background: rgba(18, 18, 23, 0.9);
       border: 1px solid var(--border);
       color: var(--text);
       padding: 11px 14px;
@@ -265,8 +268,8 @@
       border-color: #f43f5e;
     }
     .btn-action {
-      background: var(--accent);
-      color: #020617;
+      background: linear-gradient(135deg, #8b5cf6, #ec4899);
+      color: #ffffff;
       border: none;
       padding: 11px 16px;
       border-radius: 14px;

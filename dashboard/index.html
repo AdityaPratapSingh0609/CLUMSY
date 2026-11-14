@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#050a14" />
+  <meta name="theme-color" content="#09090b" />
   <link rel="manifest" href="/manifest-desktop.json" />
   <title>CLUMSY: your everyday AI — Holographic Command Center</title>
   <script src="/robot3d.js"></script>
@@ -11,29 +11,33 @@
   <script src="/jarvis_hud.js"></script>
   <style>
     :root {
-      --bg: #030712;
-      --card-bg: rgba(13, 20, 36, 0.85);
-      --card-border: rgba(56, 189, 248, 0.28);
-      --accent: #38bdf8;
-      --accent-cyan: #22d3ee;
-      --accent-glow: rgba(56, 189, 248, 0.38);
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
+      --bg: #09090b;
+      --card-bg: rgba(20, 20, 26, 0.86);
+      --card-border: rgba(255, 255, 255, 0.09);
+      --accent: #c084fc;
+      --accent-cyan: #f472b6;
+      --accent-glow: rgba(192, 132, 252, 0.35);
+      --text: #fafafa;
+      --text-muted: #a1a1aa;
       --success: #34d399;
       --warning: #fbbf24;
       --geist-black: #000000;
-      --geist-accents-1: #111111;
-      --geist-border: rgba(255, 255, 255, 0.12);
+      --geist-accents-1: #141418;
+      --geist-border: rgba(255, 255, 255, 0.1);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif; }
     body {
-      background: radial-gradient(circle at 50% 0%, #0d1e38 0%, var(--bg) 68%),
-                  linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
-                  linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
-      background-size: 100% 100%, 36px 36px, 36px 36px;
+      background:
+        radial-gradient(circle at 18% 0%, rgba(168, 85, 247, 0.15) 0%, transparent 45%),
+        radial-gradient(circle at 82% 0%, rgba(244, 63, 94, 0.12) 0%, transparent 45%),
+        radial-gradient(circle at 50% 100%, rgba(16, 185, 129, 0.08) 0%, transparent 50%),
+        linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+        var(--bg);
+      background-size: 100% 100%, 100% 100%, 100% 100%, 36px 36px, 36px 36px, 100% 100%;
       color: var(--text);
-      padding: 20px 24px;
+      padding: 20px 26px;
       min-height: 100vh;
       -webkit-font-smoothing: antialiased;
     }
@@ -49,12 +53,20 @@
       border-bottom: 1px solid var(--card-border);
     }
     .brand { display: flex; align-items: center; gap: 14px; }
-    .brand h1 { font-size: 22px; font-weight: 800; letter-spacing: 1.2px; color: var(--text); }
+    .brand h1 {
+      font-size: 23px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      background: linear-gradient(135deg, #ffffff 0%, #e9d5ff 50%, #fbcfe8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: var(--text);
+    }
     .badge {
-      background: rgba(56, 189, 248, 0.12);
-      color: var(--accent);
+      background: rgba(255, 255, 255, 0.05);
+      color: #e4e4e7;
       border: 1px solid var(--card-border);
-      padding: 5px 12px;
+      padding: 6px 13px;
       border-radius: 9999px;
       font-size: 11px;
       font-weight: 600;
@@ -66,7 +78,8 @@
     }
     .badge:hover {
       border-color: var(--accent);
-      background: rgba(56, 189, 248, 0.2);
+      background: rgba(168, 85, 247, 0.16);
+      color: #ffffff;
     }
 
     /* GSD Phased Execution Ribbon */
@@ -76,11 +89,11 @@
       align-items: center;
       flex-wrap: wrap;
       margin-bottom: 18px;
-      padding: 8px 14px;
-      background: rgba(13, 20, 36, 0.65);
-      border: 1px solid rgba(56, 189, 248, 0.2);
-      border-radius: 12px;
-      backdrop-filter: blur(12px);
+      padding: 9px 14px;
+      background: rgba(20, 20, 26, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      backdrop-filter: blur(14px);
     }
     .gsd-pill {
       font-size: 11px;
@@ -90,12 +103,12 @@
       align-items: center;
       gap: 6px;
       padding: 4px 10px;
-      background: rgba(56, 189, 248, 0.06);
-      border: 1px solid rgba(56, 189, 248, 0.16);
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 8px;
     }
     .gsd-pill b {
-      color: var(--accent);
+      color: #f472b6;
       font-weight: 700;
     }
     .gsd-dot {
@@ -121,15 +134,15 @@
       border: 1px solid transparent;
       color: var(--text-muted);
       font-size: 11px;
-      padding: 3px 8px;
-      border-radius: 6px;
+      padding: 4px 10px;
+      border-radius: 8px;
       cursor: pointer;
       transition: all 0.15s ease;
     }
     .tab-btn.active, .tab-btn:hover {
-      background: rgba(56, 189, 248, 0.15);
-      color: var(--accent);
-      border-color: rgba(56, 189, 248, 0.35);
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.22), rgba(244, 63, 94, 0.22));
+      color: #ffffff;
+      border-color: rgba(192, 132, 252, 0.4);
     }
 
     .grid-layout {
@@ -154,20 +167,20 @@
     .card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 16px;
+      border-radius: 18px;
       padding: 18px;
-      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(16px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(18px);
       transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
     .card:hover {
-      border-color: rgba(56, 189, 248, 0.4);
+      border-color: rgba(192, 132, 252, 0.32);
     }
     .card h2 {
-      font-size: 13px;
+      font-size: 12.5px;
       text-transform: uppercase;
       letter-spacing: 1.2px;
-      color: var(--accent);
+      color: #e4e4e7;
       margin-bottom: 12px;
       display: flex;
       align-items: center;
@@ -181,23 +194,23 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: #060b14;
+      background: #111116;
       border-radius: 16px;
       padding: 16px;
-      border: 1.5px solid var(--card-border);
+      border: 1px solid var(--card-border);
       position: relative;
     }
     .oled-screen {
       width: 268px;
       height: 136px;
-      background: radial-gradient(circle at 50% 50%, #071224 0%, #02040a 85%);
+      background: radial-gradient(circle at 50% 50%, #161324 0%, #070709 85%);
       border-radius: 18px;
-      border: 2px solid rgba(56, 189, 248, 0.35);
+      border: 1.5px solid rgba(192, 132, 252, 0.35);
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      box-shadow: inset 0 0 28px rgba(56, 189, 248, 0.25), 0 0 22px rgba(56, 189, 248, 0.12);
+      box-shadow: inset 0 0 28px rgba(168, 85, 247, 0.18), 0 0 20px rgba(244, 63, 94, 0.1);
       position: relative;
     }
     .oled-meta {
@@ -253,9 +266,9 @@
     .slider-panel {
       width: 100%;
       margin-top: 10px;
-      background: #091222;
+      background: #14141a;
       border: 1px solid var(--card-border);
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 8px 12px;
       display: flex;
       flex-direction: column;
@@ -270,15 +283,15 @@
     }
     .slider-row input[type="range"] {
       flex: 1;
-      accent-color: var(--accent);
+      accent-color: #a855f7;
     }
 
     /* Live Mic Waveform Bar */
     .mic-waveform-box {
       margin-top: 12px;
-      background: #060b14;
+      background: #121217;
       border: 1px solid var(--card-border);
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 8px 12px;
     }
     .wf-bars {
@@ -291,7 +304,7 @@
     }
     .wf-bar {
       flex: 1;
-      background: linear-gradient(to top, #0284c7, #38bdf8);
+      background: linear-gradient(to top, #8b5cf6, #ec4899, #fbbf24);
       border-radius: 3px;
       transition: height 0.08s ease;
     }
@@ -304,18 +317,27 @@
       margin-top: 12px;
     }
     button {
-      background: #17253b;
-      color: var(--text);
-      border: 1px solid var(--card-border);
+      background: #1c1c24;
+      color: #f4f4f5;
+      border: 1px solid rgba(255, 255, 255, 0.1);
       padding: 7px 10px;
-      border-radius: 8px;
+      border-radius: 9px;
       cursor: pointer;
       font-size: 11.5px;
       font-weight: 500;
       transition: all 0.15s ease;
     }
-    button:hover { background: var(--accent); color: #000; }
-    button.primary { background: var(--accent); color: #000; font-weight: 700; }
+    button:hover {
+      background: linear-gradient(135deg, #8b5cf6, #ec4899);
+      color: #ffffff;
+      border-color: transparent;
+    }
+    button.primary {
+      background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+      color: #ffffff;
+      border-color: transparent;
+      font-weight: 700;
+    }
     button.recording { background: #ef4444; color: #fff; border-color: #f87171; }
 
     /* Chat / Voice Console */
@@ -334,13 +356,13 @@
     }
     .msg {
       padding: 10px 14px;
-      border-radius: 12px;
+      border-radius: 13px;
       max-width: 85%;
       line-height: 1.45;
       font-size: 13.5px;
     }
-    .msg.user { background: #0284c7; align-self: flex-end; color: #fff; }
-    .msg.assistant { background: #1e293b; border: 1px solid var(--card-border); align-self: flex-start; }
+    .msg.user { background: linear-gradient(135deg, #7c3aed, #db2777); align-self: flex-end; color: #fff; }
+    .msg.assistant { background: #18181f; border: 1px solid var(--card-border); align-self: flex-start; }
     .input-bar {
       display: flex;
       gap: 8px;
@@ -348,11 +370,11 @@
     }
     .input-bar input {
       flex: 1;
-      background: #060b14;
+      background: #121217;
       border: 1px solid var(--card-border);
       color: var(--text);
       padding: 10px 14px;
-      border-radius: 10px;
+      border-radius: 11px;
       font-size: 13.5px;
       outline: none;
     }
@@ -361,9 +383,9 @@
     /* Live ASAP Job Studio Output Drawer */
     .job-studio-box {
       margin-top: 14px;
-      background: #060b14;
-      border: 1px solid var(--accent);
-      border-radius: 12px;
+      background: #121217;
+      border: 1px solid rgba(192, 132, 252, 0.28);
+      border-radius: 14px;
       padding: 12px;
       min-height: 155px;
       max-height: 220px;
@@ -373,20 +395,20 @@
       display: inline-block;
       font-size: 10px;
       font-family: monospace;
-      color: #000;
-      background: var(--accent);
-      padding: 2px 8px;
-      border-radius: 4px;
+      color: #ffffff;
+      background: linear-gradient(135deg, #8b5cf6, #ec4899);
+      padding: 3px 9px;
+      border-radius: 6px;
       font-weight: 700;
       margin-bottom: 8px;
     }
     .job-code-preview pre, .doc-job-preview pre {
-      background: #0f172a;
+      background: #18181f;
       padding: 10px;
       border-radius: 8px;
       font-family: Consolas, monospace;
       font-size: 11.5px;
-      color: #38bdf8;
+      color: #e9d5ff;
       overflow-x: auto;
     }
     .job-stdout {
@@ -396,7 +418,7 @@
       color: var(--success);
     }
     .ppt-slide {
-      background: #0f172a;
+      background: #18181f;
       border-left: 3px solid var(--accent);
       padding: 8px 12px;
       border-radius: 6px;
@@ -407,7 +429,7 @@
 
     .event-stream-box {
       margin-top: 10px;
-      background: #060b14;
+      background: #121217;
       border: 1px solid var(--card-border);
       border-radius: 10px;
       padding: 8px 10px;
@@ -420,9 +442,9 @@
 
     /* 4-Model Fusion Telemetry Matrix */
     .fusion-matrix {
-      background: #091222;
+      background: #14141a;
       border: 1px solid var(--card-border);
-      border-radius: 12px;
+      border-radius: 14px;
       padding: 12px;
       margin-bottom: 14px;
     }
@@ -431,21 +453,25 @@
       align-items: center;
       justify-content: space-between;
       font-size: 11.5px;
-      margin-bottom: 6px;
+      margin-bottom: 7px;
       gap: 8px;
     }
     .model-bar-track {
       flex: 1;
       height: 7px;
-      background: #1e293b;
+      background: #27272a;
       border-radius: 999px;
       overflow: hidden;
     }
     .model-bar-fill {
       height: 100%;
-      background: linear-gradient(90deg, #0284c7, #38bdf8);
+      background: linear-gradient(90deg, #8b5cf6, #ec4899);
       transition: width 0.25s ease;
     }
+    #barQwen { background: linear-gradient(90deg, #8b5cf6, #c084fc); }
+    #barGemma { background: linear-gradient(90deg, #f43f5e, #fb7185); }
+    #barLlama { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    #barMistral { background: linear-gradient(90deg, #10b981, #34d399); }
 
     /* Device List */
     .device-item {
@@ -453,9 +479,9 @@
       align-items: center;
       justify-content: space-between;
       padding: 10px 12px;
-      background: #091222;
+      background: #14141a;
       border: 1px solid var(--card-border);
-      border-radius: 10px;
+      border-radius: 12px;
       margin-bottom: 8px;
     }
     .device-info { display: flex; flex-direction: column; gap: 2px; }
@@ -476,18 +502,15 @@
       <canvas id="arcReactorCanvas" width="64" height="64"></canvas>
       <div>
         <h1>CLUMSY // YOUR EVERYDAY AI</h1>
-        <p style="font-size: 12px; color: var(--text-muted);">
-          4-Model Local AI Matrix (<code>Qwen 3.5 + Gemma 4 + Llama 4 + Mistral</code>) • Arduino Uno Bot • Laptop Hub • Mobile Companion
-        </p>
       </div>
     </div>
     <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
       <span class="badge" id="wsStatusBadge">WS: Live Ready</span>
-      <span class="badge" id="tokenPoolBadge" style="border-color: #a855f7; color: #d8b4fe;">Tokens: Unlimited (Local)</span>
+      <span class="badge" id="tokenPoolBadge" style="border-color: rgba(168,85,247,0.4); color: #e9d5ff;">Tokens: Unlimited (Local)</span>
       <span class="badge" id="ramBadge">RAM: 48MB / 850MB</span>
-      <span class="badge" id="vercelBadge" style="border-color: rgba(255,255,255,0.22); color: #fff; background: rgba(0,0,0,0.65);">▲ Vercel Live</span>
-      <button class="badge" style="background: rgba(56, 189, 248, 0.18); color: #38bdf8; font-weight: 700; cursor: pointer;" onclick="pairDesktopBluetooth()">🔵 Pair Bluetooth</button>
-      <button class="badge" id="btnInstallDesktopPwa" style="display: inline-flex; background: #38bdf8; color: #000; font-weight: 700; cursor: pointer; border: none;" onclick="installDesktopApp()">⬇ Install App</button>
+      <span class="badge" id="vercelBadge" style="border-color: rgba(255,255,255,0.2); color: #fff; background: rgba(255,255,255,0.06);">▲ Vercel Live</span>
+      <button class="badge" style="background: rgba(168, 85, 247, 0.16); color: #e9d5ff; border-color: rgba(168, 85, 247, 0.38); font-weight: 700; cursor: pointer;" onclick="pairDesktopBluetooth()">🟣 Pair Bluetooth</button>
+      <button class="badge" id="btnInstallDesktopPwa" style="display: inline-flex; background: linear-gradient(135deg, #8b5cf6, #ec4899); color: #fff; font-weight: 700; cursor: pointer; border: none;" onclick="installDesktopApp()">⬇ Install App</button>
       <a class="badge" href="/mobile" target="_blank">📱 Open Mobile AI Agent</a>
     </div>
   </header>
@@ -529,7 +552,7 @@
       </div>
 
       <!-- 3D Interactive Robot Viewer -->
-      <div id="view3D" style="display: none; height: 185px; width: 100%; border-radius: 16px; overflow: hidden; background: #080d1a; border: 2px solid var(--card-border); position: relative;">
+      <div id="view3D" style="display: none; height: 185px; width: 100%; border-radius: 16px; overflow: hidden; background: #111116; border: 1px solid var(--card-border); position: relative;">
         <canvas id="canvas3D" style="width: 100%; height: 100%; display: block;"></canvas>
         <div style="position: absolute; top: 8px; right: 10px; font-size: 10px; color: var(--accent); font-family: monospace;">
           <span id="fpsReadout">60 FPS</span> • <span id="lagReadout">0.2ms</span>
@@ -540,7 +563,7 @@
       </div>
 
       <!-- Studio 3D Concept Render View -->
-      <div id="viewPhoto" style="display: none; height: 185px; width: 100%; border-radius: 16px; overflow: hidden; background: #080d1a; border: 2px solid var(--card-border); position: relative;">
+      <div id="viewPhoto" style="display: none; height: 185px; width: 100%; border-radius: 16px; overflow: hidden; background: #111116; border: 1px solid var(--card-border); position: relative;">
         <img src="/deskbot_render.jpg" alt="DESKBOT Studio Render" style="width: 100%; height: 100%; object-fit: cover;" />
       </div>
 
@@ -582,7 +605,7 @@
 
       <div style="margin-top: 14px;">
         <h2><span>🎵</span> System Audio &amp; Song Deck</h2>
-        <div style="background: #091222; border-radius: 10px; padding: 10px 12px; border: 1px solid var(--card-border);">
+        <div style="background: #14141a; border-radius: 12px; padding: 10px 12px; border: 1px solid var(--card-border);">
           <div style="font-size: 12.5px; font-weight: 600;" id="nowPlaying">Chill Synth Beats (Local)</div>
           <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;" id="mediaStatus">Laptop Master Audio • Ready</div>
           <div style="display: flex; gap: 6px;">

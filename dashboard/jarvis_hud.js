@@ -122,41 +122,42 @@
 
       ctx.clearRect(0, 0, w, h);
 
-      // Outer segmented ring
+      // Outer segmented ring (Warm Violet)
       ctx.save();
       ctx.translate(cx, cy);
       ctx.rotate(this.angle);
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.85)';
-      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = 'rgba(168, 85, 247, 0.88)';
+      ctx.lineWidth = 2.4;
       for (let i = 0; i < 6; i++) {
         ctx.beginPath();
-        ctx.arc(0, 0, 28, (i * Math.PI) / 3, (i * Math.PI) / 3 + 0.35);
+        ctx.arc(0, 0, 26, (i * Math.PI) / 3, (i * Math.PI) / 3 + 0.38);
         ctx.stroke();
       }
       ctx.restore();
 
-      // Counter-rotating inner ring
+      // Counter-rotating inner ring (Rose / Amber)
       ctx.save();
       ctx.translate(cx, cy);
       ctx.rotate(-this.angle * 1.4);
-      ctx.strokeStyle = 'rgba(34, 211, 238, 0.75)';
+      ctx.strokeStyle = 'rgba(244, 114, 182, 0.82)';
       ctx.lineWidth = 2;
       for (let i = 0; i < 4; i++) {
         ctx.beginPath();
-        ctx.arc(0, 0, 19, (i * Math.PI) / 2, (i * Math.PI) / 2 + 0.55);
+        ctx.arc(0, 0, 18, (i * Math.PI) / 2, (i * Math.PI) / 2 + 0.55);
         ctx.stroke();
       }
       ctx.restore();
 
-      // Glowing core pulse
-      const coreRadius = 9 + Math.sin(this.angle * 3) * 2.5 * this.energy;
-      const grad = ctx.createRadialGradient(cx, cy, 1, cx, cy, coreRadius * 1.8);
+      // Glowing core pulse (White -> Violet -> Rose)
+      const coreRadius = 8.5 + Math.sin(this.angle * 3) * 2.5 * this.energy;
+      const grad = ctx.createRadialGradient(cx, cy, 1, cx, cy, coreRadius * 1.9);
       grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(0.5, '#38bdf8');
-      grad.addColorStop(1, 'rgba(56, 189, 248, 0)');
+      grad.addColorStop(0.45, '#c084fc');
+      grad.addColorStop(0.8, 'rgba(236, 72, 153, 0.45)');
+      grad.addColorStop(1, 'rgba(168, 85, 247, 0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.arc(cx, cy, coreRadius * 1.8, 0, Math.PI * 2);
+      ctx.arc(cx, cy, coreRadius * 1.9, 0, Math.PI * 2);
       ctx.fill();
     }
   }
