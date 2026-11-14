@@ -48,6 +48,7 @@ from core.llm_fusion import JarvisFusionModel
 from core.mesh.device_manager import DeviceMeshManager
 from core.mesh.transport import MeshEnvelope
 from core.robot_bridge import RobotBridge
+from core.voice.hardware_mic import hardware_mic_daemon
 from core.voice.voice_commander import normalize_voice_transcript
 from dashboard.realtime_ws import DashboardRealtimeHub
 from plugins import interplatform_hub, media_player
@@ -315,6 +316,17 @@ class DeskbotRequestHandler(SimpleHTTPRequestHandler):
             self._send_json(200, phone_bridge.get_battery_info())
         elif clean_path == "/api/mesh/phone/notifications":
             self._send_json(200, phone_bridge.get_notifications_info())
+        elif clean_path == "/api/voice/poll":
+            since_id = -1
+            if "?" in self.path:
+                qs = self.path.split("?", 1)[1]
+                for part in qs.split("&"):
+                    if part.startswith("since="):
+                        try:
+                            since_id = int(part.split("=", 1)[1])
+                        except ValueError:
+                            since_id = -1
+            self._send_json(200, hardware_mic_daemon.poll_since(since_id))
         else:
             super().do_GET()
 
@@ -533,6 +545,7 @@ class DeskbotRequestHandler(SimpleHTTPRequestHandler):
 
 def run_server(port: int = 8080, host: str = "0.0.0.0") -> None:
     ws_port = ensure_realtime_ws_started(9121)
+    hardware_mic_daemon.start()
     lan_ip = get_local_lan_ip()
     httpd = ThreadingHTTPServer((host, port), DeskbotRequestHandler)
     logger.info("🚀 DESKBOT // J.A.R.V.I.S. Laptop Hub running at http://127.0.0.1:%d", port)

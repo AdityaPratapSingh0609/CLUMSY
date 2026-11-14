@@ -265,6 +265,12 @@
       justify-content: space-between;
       position: relative;
       overflow: hidden;
+      background:
+        radial-gradient(circle at 20% 15%, rgba(99, 102, 241, 0.11) 0%, transparent 45%),
+        radial-gradient(circle at 82% 25%, rgba(168, 85, 247, 0.12) 0%, transparent 48%),
+        radial-gradient(circle at 50% 88%, rgba(244, 63, 94, 0.09) 0%, transparent 50%),
+        var(--bg);
+      transition: background 0.6s ease;
     }
 
     /* Gemini Top Header Bar */
@@ -276,11 +282,15 @@
       border-bottom: 1px solid var(--border);
       gap: 12px;
       flex-wrap: wrap;
+      backdrop-filter: blur(16px);
+      background: rgba(19, 19, 20, 0.75);
+      z-index: 10;
     }
     .topbar-left {
       display: flex;
       align-items: center;
       gap: 12px;
+      flex-wrap: wrap;
     }
     .icon-btn {
       background: transparent;
@@ -295,27 +305,30 @@
       font-size: 16px;
       cursor: pointer;
     }
-    .model-selector-wrap {
+    .omni-model-pill {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      padding: 6px 14px;
+      gap: 9px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(168, 85, 247, 0.2), rgba(244, 63, 94, 0.18));
+      border: 1px solid rgba(192, 132, 252, 0.42);
+      padding: 7px 16px;
       border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #f5d0fe;
+      box-shadow: 0 4px 20px rgba(168, 85, 247, 0.2);
     }
-    .model-selector-wrap select {
-      background: transparent;
-      color: var(--text);
-      border: none;
-      font-size: 13.5px;
-      font-weight: 600;
-      outline: none;
-      cursor: pointer;
+    .omni-dot-row {
+      display: inline-flex;
+      gap: 3px;
+      align-items: center;
     }
-    .model-selector-wrap select option {
-      background: #1e1f20;
-      color: #e3e3e3;
+    .omni-dot-row span {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #34d399;
+      box-shadow: 0 0 6px #34d399;
     }
 
     .topbar-right {
@@ -384,21 +397,24 @@
       margin-top: 16px;
     }
     .suggestion-card {
-      background: var(--surface);
+      background: rgba(30, 31, 32, 0.78);
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 14px;
+      border-radius: 18px;
+      padding: 15px;
       cursor: pointer;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      min-height: 108px;
-      transition: background 0.18s ease, border-color 0.18s ease;
+      min-height: 112px;
+      backdrop-filter: blur(12px);
+      transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease, border-color 0.2s ease, box-shadow 0.22s ease;
       text-align: left;
     }
     .suggestion-card:hover {
       background: var(--surface-hover);
-      border-color: rgba(168, 85, 247, 0.4);
+      border-color: rgba(168, 85, 247, 0.5);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45), 0 0 20px rgba(168, 85, 247, 0.14);
     }
     .suggestion-card span {
       font-size: 12.5px;
@@ -419,10 +435,15 @@
       gap: 18px;
       width: 100%;
     }
+    @keyframes msgSpringIn {
+      0% { opacity: 0; transform: translateY(10px) scale(0.98); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
     .msg {
-      line-height: 1.6;
+      line-height: 1.62;
       font-size: 15px;
       color: var(--text);
+      animation: msgSpringIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .msg.user {
       align-self: flex-end;
@@ -733,21 +754,18 @@
 
   <!-- Main Google Gemini Conversation & Studio Stage -->
   <main class="gemini-main">
-    <!-- Top Bar with Model Selector (CLUMSY Core / Ollama / LM Studio / Jan AI) -->
+    <!-- Top Bar with Unified 7-Model Omni Badge -->
     <header class="gemini-topbar">
       <div class="topbar-left">
         <button class="icon-btn" onclick="toggleSidebar()" title="Toggle Robot &amp; Hardware Sidebar">☰</button>
-        <div class="model-selector-wrap">
+        <div class="omni-model-pill" title="All 7 Models Combined: Qwen-3.5 + Gemma-4 + Llama-4 + Mistral + Ollama + LM Studio + Jan AI">
           <span class="sparkle-icon">✦</span>
-          <select id="llmProviderSelect" onchange="onChangeLLMProvider(this.value)" title="Select Offline Local AI Engine">
-            <option value="auto">CLUMSY 2.0 (Auto Offline + Local LLMs)</option>
-            <option value="clumsy_offline">CLUMSY Offline Core (100% Built-In + GGUF)</option>
-            <option value="ollama">Ollama Local Engine (127.0.0.1:11434)</option>
-            <option value="lmstudio">LM Studio Local Server (127.0.0.1:1234)</option>
-            <option value="jan">Jan AI Local Engine (127.0.0.1:1337)</option>
-          </select>
+          <span>CLUMSY-7X Omni</span>
+          <span class="omni-dot-row">
+            <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          </span>
         </div>
-        <button class="badge" style="cursor:pointer;" onclick="scanOfflineLLMs()" id="localScanBadge">🟢 Offline Core Active • Scan Local LLMs</button>
+        <button class="badge" style="cursor:pointer;" onclick="scanOfflineLLMs()" id="localScanBadge">🟢 7-Model Unified Core Active</button>
       </div>
 
       <div class="topbar-right">
@@ -788,8 +806,8 @@
         <!-- Conversation Messages -->
         <div class="messages" id="messageList">
           <div class="msg assistant">
-            <div class="assistant-hdr"><span class="sparkle-icon">✦</span> CLUMSY</div>
-            <div>Hi! I’m <b>CLUMSY</b>, your personal offline-first AI. I run <b>100% offline</b> with my built-in Neural Core and also connect directly to your local <b>Ollama</b>, <b>LM Studio</b>, <b>Jan AI</b>, and <b>GGUF</b> models. Ask me anything — science, coding, math, essays, or reasoning!</div>
+            <div class="assistant-hdr"><span class="sparkle-icon">✦</span> CLUMSY-7X Omni</div>
+            <div>Hi! I’m <b>CLUMSY-7X Omni</b> — your unified <b>7-Model AI</b> combining <b>Qwen-3.5</b>, <b>Gemma-4</b>, <b>Llama-4</b>, <b>Mistral</b>, <b>Ollama</b>, <b>LM Studio</b>, and <b>Jan AI</b> into one brain. Speak naturally or ask me anything — science, coding, math, essays, or reasoning!</div>
           </div>
         </div>
 
@@ -805,7 +823,7 @@
           <input
             type="text"
             id="userInput"
-            placeholder="Ask CLUMSY anything (100% offline — science, coding, math, essays, reasoning)..."
+            placeholder="Speak or ask CLUMSY-7X Omni anything (science, coding, math, essays, reasoning)..."
             onkeydown="if(event.key==='Enter') sendQuery(false)"
           />
           <button class="pill-action-btn" id="btnVoiceDictation" onclick="toggleVoiceInput()" title="Always-On Voice Recognition">🎙️ Speak</button>
@@ -813,7 +831,7 @@
         </div>
 
         <div id="liveVoiceTranscriptBar" style="font-size: 11px; color: var(--text-muted); text-align: center; min-height: 15px;">
-          ✦ CLUMSY Offline AI • Built-In Neural Core + Ollama (:11434) + LM Studio (:1234) + Jan AI (:1337)
+          ✦ CLUMSY-7X Omni • All 7 Neural Models Combined • Click "🎙️ Speak" or say "Hey Clumsy"
         </div>
       </div>
     </div>
@@ -884,29 +902,16 @@
       sendQuery(false);
     }
 
-    async function onChangeLLMProvider(val) {
-      if (!window.clumsyBrain) return;
-      const info = window.clumsyBrain.setProvider(val);
-      const badge = document.getElementById('localScanBadge');
-      if (badge) badge.textContent = `🟢 ${info.name} Selected`;
-      logStreamEvent('LLM_ENGINE', `Switched to ${info.name} (${info.defaultUrl})`);
-      await scanOfflineLLMs();
-    }
-
     async function scanOfflineLLMs() {
       if (!window.clumsyBrain) return;
       const res = await window.clumsyBrain.probeOfflineEngines();
       const s = res.status;
-      const detected = ['CLUMSY Core'];
-      if (s.local_hub) detected.push('Local GGUF :8080');
-      if (s.ollama) detected.push(`Ollama (${res.models.ollama.length || 'online'})`);
-      if (s.lmstudio) detected.push('LM Studio :1234');
-      if (s.jan) detected.push('Jan AI :1337');
+      const activeCount = 4 + (s.ollama ? 1 : 0) + (s.lmstudio ? 1 : 0) + (s.jan ? 1 : 0);
       const badge = document.getElementById('localScanBadge');
       if (badge) {
-        badge.textContent = `🟢 Offline Engines: ${detected.join(' + ')}`;
+        badge.textContent = `🟢 CLUMSY-7X Omni • 7-Model Fusion Active (${activeCount}/7 Local Cores Linked)`;
       }
-      logStreamEvent('OFFLINE_SCAN', `Active: ${detected.join(', ')}`);
+      logStreamEvent('CLUMSY_7X_OMNI', 'Unified 7-Model Fusion Core Ready');
     }
 
     let deferredDesktopInstall = null;
@@ -1322,12 +1327,23 @@
         .replace(/>/g, '&gt;');
     }
 
+    function copyDesktopCode(btn) {
+      const box = btn && btn.parentElement && btn.parentElement.parentElement;
+      if (!box) return;
+      const pre = box.querySelector('pre');
+      if (pre && navigator.clipboard) {
+        navigator.clipboard.writeText(pre.innerText).catch(() => {});
+      }
+      btn.textContent = '✓ Copied';
+      setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+    }
+
     function formatMarkdown(raw) {
       let html = escapeHtml(raw);
       html = html.replace(
         /```([a-zA-Z0-9_+]*)\n([\s\S]*?)```/g,
         (_, lang, code) =>
-          `<div style="margin:10px 0;background:#1e1f20;border:1px solid rgba(168,85,247,0.35);border-radius:12px;padding:12px;"><div style="font-size:10.5px;color:#c084fc;font-weight:700;margin-bottom:6px;">${(lang || 'CODE').toUpperCase()}</div><pre style="font-family:Consolas,monospace;font-size:12.5px;color:#e3e3e3;white-space:pre-wrap;margin:0;">${code.trim()}</pre></div>`
+          `<div style="margin:10px 0;background:#18191b;border:1px solid rgba(168,85,247,0.38);border-radius:14px;padding:12px;"><div style="display:flex;justify-content:space-between;align-items:center;font-size:10.5px;color:#c084fc;font-weight:700;margin-bottom:6px;"><span>${(lang || 'CODE').toUpperCase()}</span><button onclick="copyDesktopCode(this)" style="font-size:10px;padding:2px 8px;border-radius:6px;">Copy</button></div><pre style="font-family:Consolas,monospace;font-size:12.5px;color:#e3e3e3;white-space:pre-wrap;margin:0;">${code.trim()}</pre></div>`
       );
       html = html.replace(/^###\s+(.+)$/gm, '<div style="font-size:15px;font-weight:700;color:#fff;margin-top:10px;margin-bottom:4px;">$1</div>');
       html = html.replace(/\*\*([^*]+)\*\*/g, '<b style="color:#fff;">$1</b>');
@@ -1341,7 +1357,7 @@
       const div = document.createElement('div');
       div.className = `msg ${sender}`;
       if (sender === 'assistant') {
-        const badgeText = engineLabel ? `CLUMSY • ${engineLabel}` : 'CLUMSY';
+        const badgeText = engineLabel ? `${engineLabel}` : 'CLUMSY-7X Omni';
         div.innerHTML = `<div class="assistant-hdr"><span class="sparkle-icon">✦</span> ${escapeHtml(badgeText)}</div><div>${formatMarkdown(text)}</div>`;
       } else {
         div.textContent = String(text || '');
@@ -1411,14 +1427,83 @@
       } catch (_) {}
     }
 
-    function toggleVoiceInput() {
-      const btn = document.getElementById('btnVoiceDictation');
-      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-        alert("Speech Recognition API is not supported in this browser. Please type your query.");
+    let desktopInterimTimer = null;
+    let desktopInterimText = '';
+    let desktopHwMicSeq = -1;
+
+    function processDesktopSpeechTranscript(rawTranscript, isFinal, alts = null) {
+      if (isSpeakingDesktopTTS) return;
+      const corrected = normalizeVoicePhoneticsJS(rawTranscript);
+      if (!corrected) return;
+      const voiceBar = document.getElementById('liveVoiceTranscriptBar');
+
+      if (eyeballEngine && !isDesktopSleeping) {
+        eyeballEngine.setAudioLevel(isFinal ? 0.25 : 0.8);
+      }
+      if (jarvisHUD && !isDesktopSleeping) {
+        jarvisHUD.setActivity('listening', isFinal ? 0.35 : 0.85);
+      }
+
+      if (isDesktopSleeping) {
+        if (/\b(clumsy|wake\s+up)\b/i.test(corrected)) {
+          if (desktopInterimTimer) {
+            clearTimeout(desktopInterimTimer);
+            desktopInterimTimer = null;
+          }
+          desktopInterimText = '';
+          const remainder = corrected.replace(/^(?:hey|hi|ok|okay|yo)?\s*(?:clumsy|wake\s+up)[\s,!?.:-]*/i, '').trim();
+          triggerDesktopWakeupShake(() => {
+            if (remainder && isFinal) {
+              document.getElementById('userInput').value = remainder;
+              sendQuery(true);
+            } else {
+              const msg = "I'm wide awake and ready! How can I help you?";
+              appendMessage(msg, 'assistant');
+              speakJarvisReply(msg);
+            }
+          });
+        }
         return;
       }
+
+      resetDesktopSleepTimer();
+      if (!isFinal) {
+        desktopInterimText = corrected;
+        if (voiceBar) voiceBar.textContent = `🎙️ Hearing: "${corrected}"...`;
+        document.getElementById('userInput').value = corrected;
+        if (desktopInterimTimer) clearTimeout(desktopInterimTimer);
+        desktopInterimTimer = setTimeout(() => {
+          const pending = desktopInterimText.trim();
+          desktopInterimText = '';
+          if (pending && !isSpeakingDesktopTTS) {
+            if (voiceBar) voiceBar.textContent = `✅ Recognized: "${pending}"`;
+            document.getElementById('userInput').value = pending;
+            sendQuery(true, [pending]);
+          }
+        }, 1300);
+        return;
+      }
+
+      if (desktopInterimTimer) {
+        clearTimeout(desktopInterimTimer);
+        desktopInterimTimer = null;
+      }
+      desktopInterimText = '';
+      if (voiceBar) voiceBar.textContent = `✅ Recognized: "${corrected}"`;
+      document.getElementById('userInput').value = corrected;
+      sendQuery(true, alts || [corrected]);
+    }
+
+    function toggleVoiceInput() {
+      const btn = document.getElementById('btnVoiceDictation');
+      const voiceBar = document.getElementById('liveVoiceTranscriptBar');
       if (isDictating) {
         isDictating = false;
+        if (desktopInterimTimer) {
+          clearTimeout(desktopInterimTimer);
+          desktopInterimTimer = null;
+        }
+        desktopInterimText = '';
         if (activeRecognition) {
           try { activeRecognition.stop(); } catch (_) {}
         }
@@ -1428,73 +1513,74 @@
         return;
       }
 
-      startLiveMicAnalyzer();
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      activeRecognition = new SpeechRecognition();
-      activeRecognition.lang = 'en-US';
-      activeRecognition.continuous = true;
-      activeRecognition.interimResults = true;
-      activeRecognition.maxAlternatives = 3;
       isDictating = true;
       btn.classList.add('recording');
       btn.textContent = '🎙️ Listening (Mute)';
       setExpression('listening', 90, 105);
+      if (voiceBar) voiceBar.textContent = '🎙️ Microphone active — speak naturally or say "Hey Clumsy"...';
 
-      const voiceBar = document.getElementById('liveVoiceTranscriptBar');
-      activeRecognition.onresult = (event) => {
-        if (isSpeakingDesktopTTS) return;
-        const lastIdx = event.results.length - 1;
-        const resultItem = event.results[lastIdx];
-        const rawTranscript = resultItem[0].transcript.trim();
-        const corrected = normalizeVoicePhoneticsJS(rawTranscript);
+      if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        activeRecognition = new SpeechRecognition();
+        activeRecognition.lang = 'en-US';
+        activeRecognition.continuous = true;
+        activeRecognition.interimResults = true;
+        activeRecognition.maxAlternatives = 3;
 
-        if (isDesktopSleeping) {
-          if (/\b(clumsy|wake\s+up)\b/i.test(corrected)) {
-            if (!resultItem.isFinal) {
-              triggerDesktopWakeupShake();
-              if (voiceBar) voiceBar.textContent = '✨ Waking up! "Hey Clumsy" heard...';
-              return;
+        activeRecognition.onresult = (event) => {
+          if (isSpeakingDesktopTTS) return;
+          const lastIdx = event.results.length - 1;
+          const resultItem = event.results[lastIdx];
+          if (!resultItem || !resultItem[0]) return;
+          const rawTranscript = resultItem[0].transcript.trim();
+          const alts = [];
+          for (let i = 0; i < resultItem.length; i++) {
+            if (resultItem[i] && resultItem[i].transcript) {
+              alts.push(resultItem[i].transcript.trim());
             }
-            const remainder = corrected.replace(/^(?:hey|hi|ok|okay|yo)?\s*(?:clumsy|wake\s+up)[\s,!?.:-]*/i, '').trim();
-            triggerDesktopWakeupShake(() => {
-              if (remainder) {
-                document.getElementById('userInput').value = remainder;
-                sendQuery(true);
-              } else {
-                const msg = "I'm wide awake and ready! How can I help you?";
-                appendMessage(msg, 'assistant');
-                speakJarvisReply(msg);
+          }
+          processDesktopSpeechTranscript(rawTranscript, resultItem.isFinal, alts);
+        };
+        activeRecognition.onerror = () => {};
+        activeRecognition.onend = () => {
+          if (isDictating) {
+            setTimeout(() => {
+              if (isDictating) {
+                try { activeRecognition.start(); } catch (_) {}
               }
-            });
+            }, 250);
           }
-          return;
-        }
-
-        resetDesktopSleepTimer();
-        if (!resultItem.isFinal) {
-          if (voiceBar) voiceBar.textContent = `🎙️ Hearing: "${corrected}"...`;
-          return;
-        }
-        const alts = [];
-        for (let i = 0; i < resultItem.length; i++) {
-          if (resultItem[i] && resultItem[i].transcript) {
-            alts.push(resultItem[i].transcript.trim());
-          }
-        }
-        if (corrected) {
-          if (voiceBar) voiceBar.textContent = `✅ Recognized: "${corrected}"`;
-          document.getElementById('userInput').value = corrected;
-          sendQuery(true, alts);
-        }
-      };
-      activeRecognition.onerror = () => {};
-      activeRecognition.onend = () => {
-        if (isDictating) {
-          try { activeRecognition.start(); } catch (_) {}
-        }
-      };
-      try { activeRecognition.start(); } catch (_) {}
+        };
+        try { activeRecognition.start(); } catch (_) {}
+      }
     }
+
+    // Poll native Windows Offline Hardware Mic (/api/voice/poll) so voice works even in Electron WebView!
+    async function pollDesktopHardwareMic() {
+      if (isSpeakingDesktopTTS) return;
+      try {
+        const c = new AbortController();
+        const t = setTimeout(() => c.abort(), 850);
+        const res = await fetch(`/api/voice/poll?since=${desktopHwMicSeq}`, { signal: c.signal });
+        clearTimeout(t);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (typeof data.latest_id === 'number') {
+          if (desktopHwMicSeq < 0) {
+            desktopHwMicSeq = data.latest_id;
+            return;
+          }
+          desktopHwMicSeq = data.latest_id;
+        }
+        if (Array.isArray(data.items) && data.items.length > 0) {
+          const newest = data.items[data.items.length - 1];
+          if (newest && newest.transcript) {
+            processDesktopSpeechTranscript(newest.transcript, true, [newest.transcript]);
+          }
+        }
+      } catch (_) {}
+    }
+    setInterval(pollDesktopHardwareMic, 950);
 
     resetDesktopSleepTimer();
     refreshStatus();

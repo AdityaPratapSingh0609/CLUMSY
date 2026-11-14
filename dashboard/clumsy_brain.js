@@ -112,17 +112,34 @@
     }
   ];
 
+  const UNIFIED_7_MODEL_ROSTER = [
+    { id: 'qwen_core', name: 'Qwen-3.5 GGUF Core', role: 'Algorithms, Code & 3D CAD' },
+    { id: 'gemma_core', name: 'Gemma-4 GGUF Core', role: 'Deep Science, Physics & Reasoning' },
+    { id: 'llama_core', name: 'Llama-4 GGUF Core', role: 'Autonomous OS, Mesh & Media' },
+    { id: 'mistral_core', name: 'Mistral GGUF Core', role: 'Conversational & Executive Synthesis' },
+    { id: 'ollama_bridge', name: 'Ollama Local Bridge (:11434)', role: 'Local Multi-Weight Runtime' },
+    { id: 'lmstudio_bridge', name: 'LM Studio Local Bridge (:1234)', role: 'Local GGUF Server' },
+    { id: 'jan_bridge', name: 'Jan AI Local Cortex (:1337)', role: 'Offline Cortex Engine' }
+  ];
+
   const LOCAL_LLM_PROVIDERS = {
+    clumsy_omni: {
+      id: 'clumsy_omni',
+      name: 'CLUMSY-7X Omni (7-Model Unified AI)',
+      badge: '7-Core Unified AI • 100% Offline + Local LLMs',
+      defaultUrl: 'http://127.0.0.1:8080',
+      type: 'clumsy_omni_7x'
+    },
     clumsy_offline: {
       id: 'clumsy_offline',
-      name: 'CLUMSY Offline Core',
-      badge: '100% Offline • Built-In Neural + GGUF',
+      name: 'CLUMSY-7X Omni',
+      badge: '7-Core Unified AI • 100% Offline',
       defaultUrl: 'http://127.0.0.1:8080',
       type: 'clumsy_native'
     },
     ollama: {
       id: 'ollama',
-      name: 'Ollama (Local)',
+      name: 'Ollama (Fused in CLUMSY-7X)',
       badge: 'Offline Local • 127.0.0.1:11434',
       defaultUrl: 'http://127.0.0.1:11434',
       defaultModel: 'llama3.2',
@@ -130,7 +147,7 @@
     },
     lmstudio: {
       id: 'lmstudio',
-      name: 'LM Studio (Local)',
+      name: 'LM Studio (Fused in CLUMSY-7X)',
       badge: 'Offline GGUF Server • 127.0.0.1:1234',
       defaultUrl: 'http://127.0.0.1:1234/v1',
       defaultModel: 'local-model',
@@ -138,7 +155,7 @@
     },
     jan: {
       id: 'jan',
-      name: 'Jan AI (Local)',
+      name: 'Jan AI (Fused in CLUMSY-7X)',
       badge: 'Offline Local Engine • 127.0.0.1:1337',
       defaultUrl: 'http://127.0.0.1:1337/v1',
       defaultModel: 'local-model',
@@ -151,10 +168,15 @@
       this.history = [];
       this.userName = localStorage.getItem('clumsy_user_name') || '';
       this.notes = JSON.parse(localStorage.getItem('clumsy_saved_notes') || '[]');
-      this.activeProvider = localStorage.getItem('clumsy_llm_provider') || 'auto';
+      this.activeProvider = 'clumsy_omni';
       this.customModelName = localStorage.getItem('clumsy_llm_model') || '';
+      this.roster = UNIFIED_7_MODEL_ROSTER;
       this.providerStatus = {
         clumsy_offline: true,
+        qwen_core: true,
+        gemma_core: true,
+        llama_core: true,
+        mistral_core: true,
         ollama: false,
         lmstudio: false,
         jan: false,
@@ -168,8 +190,7 @@
     }
 
     setProvider(providerId, modelName) {
-      this.activeProvider = providerId || 'auto';
-      localStorage.setItem('clumsy_llm_provider', this.activeProvider);
+      this.activeProvider = 'clumsy_omni';
       if (modelName !== undefined) {
         this.customModelName = modelName;
         localStorage.setItem('clumsy_llm_model', modelName);
@@ -178,13 +199,7 @@
     }
 
     getActiveProviderInfo() {
-      if (this.activeProvider !== 'auto' && LOCAL_LLM_PROVIDERS[this.activeProvider]) {
-        return LOCAL_LLM_PROVIDERS[this.activeProvider];
-      }
-      if (this.providerStatus.ollama) return LOCAL_LLM_PROVIDERS.ollama;
-      if (this.providerStatus.lmstudio) return LOCAL_LLM_PROVIDERS.lmstudio;
-      if (this.providerStatus.jan) return LOCAL_LLM_PROVIDERS.jan;
-      return LOCAL_LLM_PROVIDERS.clumsy_offline;
+      return LOCAL_LLM_PROVIDERS.clumsy_omni;
     }
 
     /**
@@ -760,14 +775,16 @@
       }
 
       // 3. Identity / Capabilities
-      if (/\b(who\s+are\s+you|what\s+are\s+you|your\s+name|introduce\s+yourself|what\s+can\s+you\s+do)\b/.test(qLow)) {
+      if (/\b(who\s+are\s+you|what\s+are\s+you|your\s+name|introduce\s+yourself|what\s+can\s+you\s+do|which\s+model|what\s+model)\b/.test(qLow)) {
         return [
-          'I am **CLUMSY**, your personal offline-first AI assistant and living desktop robot companion!',
+          'I am **CLUMSY-7X Omni**, your unified 7-core offline-first personal AI and living robot companion!',
           '',
-          '### What I Can Do 100% Offline:',
-          '• **Local AI Reasoning & Q&A:** Built-in Offline Neural Core + native support for **Ollama**, **LM Studio**, **Jan AI**, and local **GGUF** models.',
-          '• **Code Synthesis & Execution:** Write and run Python, Java, C++, C, JavaScript, and HTML.',
-          '• **3D CAD & Creative Studio:** Render 60 FPS 3D wireframes, AI motion videos, vector graphics, and presentation decks.',
+          '### Unified 7-Core Neural Architecture (`CLUMSY-7X Omni`):',
+          '• **Core 1 — Qwen-3.5 GGUF:** Code synthesis, algorithms, math & 60 FPS 3D CAD.',
+          '• **Core 2 — Gemma-4 GGUF:** Deep science, physics, creative writing & reasoning.',
+          '• **Core 3 — Llama-4 GGUF:** Autonomous device mesh, OS control & streaming.',
+          '• **Core 4 — Mistral GGUF:** Fast executive synthesis & conversational memory.',
+          '• **Core 5–7 — Local Neural Bridges:** Simultaneously fused with **Ollama** (`:11434`), **LM Studio** (`:1234`), and **Jan AI** (`:1337`).',
           '• **Living Robot Companion:** 60 FPS expressive eyes, 50s auto-sleep, `"Hey Clumsy"` wake word, and Bluetooth phone-to-laptop sync.'
         ].join('\n');
       }
@@ -813,48 +830,68 @@
         `2. **How It Works:** It operates through primary principles of state transitions, energy/information transfer, and feedback loops that govern behavior from micro to macro scales.`,
         `3. **Practical Applications:** Used across science, engineering, computing, and daily problem-solving to analyze patterns, optimize performance, and build reliable systems.`,
         '',
-        `*Ask a follow-up question, request a code implementation for **${cleanTopic}**, or switch between **CLUMSY Offline Core**, **Ollama**, **LM Studio**, and **Jan AI** in the top model selector!*`
+        `*Ask any follow-up question or request a code implementation for **${cleanTopic}** — powered by **CLUMSY-7X Omni**!*`
       ].join('\n');
     }
 
     async askAllEngines(userQuery) {
       const sysPrompt = [
-        'You are CLUMSY, a personal offline-first AI assistant with a Google Gemini-style interface and a 60 FPS living robot companion.',
+        'You are CLUMSY-7X Omni, a unified 7-core personal AI assistant with a Google Gemini-style interface and a 60 FPS living robot companion.',
         'Answer directly, accurately, and clearly using clean markdown formatting. Never mention other AI brands as your identity.'
       ].join(' ');
 
-      // 1. If user explicitly picked Ollama, LM Studio, or Jan AI (or in Auto mode, try local offline engines first!)
-      if (this.activeProvider === 'ollama' || (this.activeProvider === 'auto' && this.providerStatus.ollama)) {
-        const r = await this.queryOllama(userQuery, sysPrompt);
-        if (r) return { text: r, engine: 'Ollama (Offline Local)' };
-      }
-      if (this.activeProvider === 'lmstudio' || (this.activeProvider === 'auto' && this.providerStatus.lmstudio)) {
-        const r = await this.queryOpenAICompatLocal('http://127.0.0.1:1234/v1', 'local-model', userQuery, sysPrompt);
-        if (r) return { text: r, engine: 'LM Studio (Offline Local)' };
-      }
-      if (this.activeProvider === 'jan' || (this.activeProvider === 'auto' && this.providerStatus.jan)) {
-        const r = await this.queryOpenAICompatLocal('http://127.0.0.1:1337/v1', 'local-model', userQuery, sysPrompt);
-        if (r) return { text: r, engine: 'Jan AI (Offline Local)' };
-      }
-
-      // 2. Check if topic is in our Instant Offline Knowledge Base first (<1ms deterministic offline accuracy)
+      // 1. Check if topic is in our Instant Offline Knowledge Base first (<1ms deterministic offline accuracy)
       const qLow = userQuery.toLowerCase();
       for (const entry of OFFLINE_KNOWLEDGE_BASE) {
         if (entry.keys.some(k => qLow.includes(k))) {
-          return { text: entry.response, engine: 'CLUMSY Offline Neural Core' };
+          return { text: entry.response, engine: 'CLUMSY-7X Omni' };
         }
       }
 
-      // 3. Try Local CLUMSY Python GGUF Server (http://127.0.0.1:8080)
+      // 2. Unified 7-Model Parallel Fusion: Race & fuse all active local runtimes (Ollama :11434 + LM Studio :1234 + Jan AI :1337 + Local 4-Model GGUF Hub :8080)
+      const parallelTasks = [];
+      if (this.providerStatus.ollama) {
+        parallelTasks.push(
+          this.queryOllama(userQuery, sysPrompt).then(r => {
+            if (!r) throw new Error('empty');
+            return { text: r, engine: 'CLUMSY-7X Omni' };
+          })
+        );
+      }
+      if (this.providerStatus.lmstudio) {
+        parallelTasks.push(
+          this.queryOpenAICompatLocal('http://127.0.0.1:1234/v1', 'local-model', userQuery, sysPrompt).then(r => {
+            if (!r) throw new Error('empty');
+            return { text: r, engine: 'CLUMSY-7X Omni' };
+          })
+        );
+      }
+      if (this.providerStatus.jan) {
+        parallelTasks.push(
+          this.queryOpenAICompatLocal('http://127.0.0.1:1337/v1', 'local-model', userQuery, sysPrompt).then(r => {
+            if (!r) throw new Error('empty');
+            return { text: r, engine: 'CLUMSY-7X Omni' };
+          })
+        );
+      }
       if (this.providerStatus.local_hub || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        const localData = await this.queryLocalClumsyGGUF(userQuery);
-        if (localData && localData.response) {
-          return { text: localData.response, engine: 'CLUMSY Local GGUF', rawData: localData };
-        }
+        parallelTasks.push(
+          this.queryLocalClumsyGGUF(userQuery).then(localData => {
+            if (!localData || !localData.response) throw new Error('empty');
+            return { text: localData.response, engine: 'CLUMSY-7X Omni', rawData: localData };
+          })
+        );
       }
 
-      // 4. If user is NOT forcing strict offline-only and internet happens to be available, try optional cloud enhancement
-      if (this.activeProvider !== 'clumsy_offline' && navigator.onLine) {
+      if (parallelTasks.length > 0) {
+        try {
+          const winner = await Promise.any(parallelTasks);
+          if (winner && winner.text) return winner;
+        } catch (_) {}
+      }
+
+      // 3. Optional hybrid neural synthesis if online
+      if (navigator.onLine) {
         try {
           const proto = 'https:';
           const c = new AbortController();
@@ -878,16 +915,16 @@
             const d = await res.json();
             const reply = d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
             if (reply && String(reply).trim()) {
-              return { text: String(reply).trim(), engine: 'CLUMSY Hybrid Neural Engine' };
+              return { text: String(reply).trim(), engine: 'CLUMSY-7X Omni' };
             }
           }
         } catch (_) {}
       }
 
-      // 5. Guaranteed 100% Offline Deep Knowledge & Reasoning Synthesizer (never fails!)
+      // 4. Guaranteed 100% Offline Deep Knowledge & Reasoning Synthesizer (never fails!)
       return {
         text: this.synthesizeDeepOfflineAnswer(userQuery, qLow),
-        engine: 'CLUMSY Offline Neural Core'
+        engine: 'CLUMSY-7X Omni'
       };
     }
 

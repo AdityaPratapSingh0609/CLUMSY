@@ -3,27 +3,40 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#02050c" />
+  <meta name="theme-color" content="#060609" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="CLUMSY" />
   <link rel="manifest" href="/manifest.json" />
   <link rel="apple-touch-icon" href="/deskbot_render.jpg" />
-  <title>CLUMSY: your everyday AI // Living Robot Companion</title>
+  <title>CLUMSY-7X Omni // Living AI Companion</title>
   <script src="/eyeballs.js"></script>
   <script src="/clumsy_brain.js"></script>
   <style>
     :root {
-      --bg: #09090b;
-      --card: rgba(20, 20, 26, 0.90);
-      --border: rgba(255, 255, 255, 0.12);
+      --bg: #050508;
+      --card: rgba(18, 18, 26, 0.78);
+      --border: rgba(255, 255, 255, 0.13);
       --accent: #c084fc;
+      --accent-pink: #f472b6;
+      --accent-blue: #60a5fa;
       --success: #34d399;
-      --danger: #f43f5e;
+      --danger: #fb7185;
       --text: #fafafa;
       --muted: #a1a1aa;
+      --aurora-1: rgba(168, 85, 247, 0.24);
+      --aurora-2: rgba(52, 211, 153, 0.18);
+      --aurora-3: rgba(244, 114, 182, 0.16);
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Google Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     html, body {
       width: 100%;
       height: 100%;
@@ -34,115 +47,173 @@
       -webkit-font-smoothing: antialiased;
     }
 
+    /* Emotion-reactive ambient aurora backdrop */
+    .aurora-backdrop {
+      position: fixed;
+      inset: -20%;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 25% 25%, var(--aurora-1) 0%, transparent 48%),
+        radial-gradient(circle at 75% 30%, var(--aurora-2) 0%, transparent 48%),
+        radial-gradient(circle at 50% 80%, var(--aurora-3) 0%, transparent 52%);
+      filter: blur(36px);
+      animation: auroraFloat 11s ease-in-out infinite alternate;
+      transition: background 0.8s ease;
+    }
+
+    @keyframes auroraFloat {
+      0% { transform: translate3d(-2%, -1%, 0) scale(1); }
+      50% { transform: translate3d(2%, 2%, 0) scale(1.06); }
+      100% { transform: translate3d(-1%, 3%, 0) scale(0.98); }
+    }
+
+    body[data-emotion="happy"] {
+      --aurora-1: rgba(52, 211, 153, 0.25);
+      --aurora-2: rgba(56, 189, 248, 0.20);
+      --aurora-3: rgba(168, 85, 247, 0.18);
+    }
+    body[data-emotion="love"] {
+      --aurora-1: rgba(244, 63, 94, 0.30);
+      --aurora-2: rgba(236, 72, 153, 0.26);
+      --aurora-3: rgba(192, 132, 252, 0.22);
+    }
+    body[data-emotion="excited"], body[data-emotion="wink"] {
+      --aurora-1: rgba(250, 204, 21, 0.24);
+      --aurora-2: rgba(236, 72, 153, 0.25);
+      --aurora-3: rgba(139, 92, 246, 0.24);
+    }
+    body[data-emotion="thinking"], body[data-emotion="coding"] {
+      --aurora-1: rgba(96, 165, 250, 0.28);
+      --aurora-2: rgba(168, 85, 247, 0.28);
+      --aurora-3: rgba(52, 211, 153, 0.16);
+    }
+    body[data-emotion="listening"] {
+      --aurora-1: rgba(16, 185, 129, 0.32);
+      --aurora-2: rgba(59, 130, 246, 0.24);
+      --aurora-3: rgba(192, 132, 252, 0.20);
+    }
+    body[data-emotion="sleeping"] {
+      --aurora-1: rgba(67, 56, 202, 0.16);
+      --aurora-2: rgba(88, 28, 135, 0.14);
+      --aurora-3: rgba(15, 23, 42, 0.25);
+    }
+
     /* STEP 1: Connect to Laptop Hub & Bluetooth Handshake Screen */
     #connectHandshakeScreen {
       position: fixed;
       inset: 0;
       z-index: 100;
       background:
-        radial-gradient(circle at 25% 20%, rgba(168, 85, 247, 0.18) 0%, transparent 50%),
-        radial-gradient(circle at 75% 80%, rgba(244, 63, 94, 0.14) 0%, transparent 50%),
-        #09090b;
+        radial-gradient(circle at 25% 20%, rgba(168, 85, 247, 0.22) 0%, transparent 50%),
+        radial-gradient(circle at 75% 80%, rgba(244, 63, 94, 0.16) 0%, transparent 50%),
+        #060609;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       padding: 24px;
       text-align: center;
-      transition: opacity 0.35s ease, transform 0.35s ease;
+      transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
     #connectHandshakeScreen.hidden {
       opacity: 0;
       pointer-events: none;
-      transform: scale(1.05);
+      transform: scale(1.06);
     }
 
     .handshake-card {
       width: 100%;
-      max-width: 400px;
-      background: var(--card);
+      max-width: 410px;
+      background: rgba(18, 18, 26, 0.85);
       border: 1.5px solid var(--border);
-      border-radius: 26px;
-      padding: 28px 22px;
-      box-shadow: 0 20px 55px rgba(0, 0, 0, 0.78), inset 0 0 28px rgba(192, 132, 252, 0.08);
-      backdrop-filter: blur(18px);
+      border-radius: 28px;
+      padding: 30px 24px;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.82), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(24px);
     }
     .pulse-ring {
       width: 84px;
       height: 84px;
       border-radius: 50%;
       margin: 0 auto 16px;
-      background: rgba(168, 85, 247, 0.15);
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.22), rgba(244, 63, 94, 0.18));
       border: 2px solid var(--accent);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 36px;
-      box-shadow: 0 0 32px rgba(168, 85, 247, 0.45);
-      animation: pulseGlow 2s infinite ease-in-out;
+      box-shadow: 0 0 36px rgba(168, 85, 247, 0.45);
+      animation: pulseGlow 2.2s infinite ease-in-out;
     }
     @keyframes pulseGlow {
       0%, 100% { transform: scale(1); box-shadow: 0 0 24px rgba(168, 85, 247, 0.38); }
-      50% { transform: scale(1.07); box-shadow: 0 0 42px rgba(244, 63, 94, 0.65); }
+      50% { transform: scale(1.07); box-shadow: 0 0 44px rgba(244, 114, 182, 0.68); }
     }
     .handshake-title {
       font-size: 21px;
       font-weight: 800;
-      letter-spacing: 1px;
+      letter-spacing: 0.6px;
       margin-bottom: 8px;
-      color: var(--text);
+      background: linear-gradient(90deg, #fff, #e9d5ff, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
     .handshake-sub {
       font-size: 13px;
       color: var(--muted);
-      line-height: 1.5;
+      line-height: 1.55;
       margin-bottom: 18px;
     }
     .hub-status-box {
-      background: #121217;
+      background: rgba(10, 10, 15, 0.85);
       border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 12px 14px;
+      border-radius: 16px;
+      padding: 13px 15px;
       margin-bottom: 18px;
       font-size: 12px;
       text-align: left;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 7px;
     }
     .connect-btn {
       width: 100%;
-      background: linear-gradient(135deg, #8b5cf6, #ec4899);
+      background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
       color: #ffffff;
       border: none;
       padding: 14px 18px;
-      border-radius: 14px;
+      border-radius: 16px;
       font-size: 15px;
       font-weight: 800;
       cursor: pointer;
-      box-shadow: 0 6px 24px rgba(168, 85, 247, 0.42);
+      box-shadow: 0 8px 28px rgba(168, 85, 247, 0.45);
       margin-bottom: 10px;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
     }
+    .connect-btn:active { transform: scale(0.98); }
     .bt-btn {
       width: 100%;
       background: rgba(168, 85, 247, 0.14);
       color: #e9d5ff;
       border: 1px solid rgba(192, 132, 252, 0.35);
-      padding: 11px 16px;
-      border-radius: 12px;
+      padding: 12px 16px;
+      border-radius: 14px;
       font-size: 13px;
       font-weight: 700;
       cursor: pointer;
+      transition: background 0.18s ease;
     }
 
-    /* STEP 2: Full-Screen Living Eyeballs Avatar (Pure Bot Mode) */
+    /* STEP 2: Full-Screen Living Eyeballs Avatar */
     #eyesStreamScreen {
       position: fixed;
       inset: 0;
+      z-index: 2;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      background: radial-gradient(circle at 50% 48%, #13111c 0%, #050507 82%);
+      background: transparent;
     }
 
     #mobileEyeballCanvas {
@@ -161,155 +232,282 @@
       justify-content: space-between;
       align-items: center;
       padding: 14px 16px;
-      background: linear-gradient(to bottom, rgba(9, 9, 11, 0.85), transparent);
+      background: linear-gradient(to bottom, rgba(5, 5, 8, 0.88) 20%, transparent);
       gap: 8px;
       flex-wrap: wrap;
     }
+
+    .hud-left-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
     .hud-pill {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      background: rgba(20, 20, 26, 0.82);
+      gap: 8px;
+      background: rgba(18, 18, 26, 0.78);
       border: 1px solid var(--border);
-      padding: 6px 12px;
+      padding: 7px 13px;
       border-radius: 999px;
       font-size: 11.5px;
       font-weight: 600;
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+      transition: border-color 0.25s ease, transform 0.2s ease;
     }
+
+    .omni-pill {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.22), rgba(168, 85, 247, 0.22), rgba(236, 72, 153, 0.22));
+      border: 1px solid rgba(192, 132, 252, 0.42);
+      color: #f5d0fe;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      backdrop-filter: blur(16px);
+    }
+
     .dot-live {
       width: 8px;
       height: 8px;
       border-radius: 50%;
       background: var(--success);
-      box-shadow: 0 0 10px var(--success);
+      box-shadow: 0 0 12px var(--success);
+      animation: livePulse 1.8s infinite ease-in-out;
+    }
+    @keyframes livePulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.28); opacity: 0.75; }
     }
     .dot-live.sleeping {
       background: #c084fc;
       box-shadow: 0 0 10px #c084fc;
-    }
-    .hud-action-btn {
-      background: rgba(24, 24, 31, 0.85);
-      color: var(--text);
-      border: 1px solid var(--border);
-      padding: 6px 11px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-      backdrop-filter: blur(10px);
-    }
-    .hud-action-btn:hover {
-      background: linear-gradient(135deg, #8b5cf6, #ec4899);
-      color: #ffffff;
+      animation: none;
     }
 
-    /* Bottom Pure Voice & Caption HUD */
+    .hud-action-btn {
+      background: rgba(22, 22, 32, 0.82);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      backdrop-filter: blur(14px);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .hud-action-btn:hover, .hud-action-btn:active {
+      background: linear-gradient(135deg, #8b5cf6, #ec4899);
+      border-color: transparent;
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
+    /* Live 12-Bar Voice Equalizer */
+    .voice-eq {
+      display: inline-flex;
+      align-items: center;
+      gap: 2.5px;
+      height: 14px;
+      margin-left: 2px;
+    }
+    .voice-eq span {
+      display: block;
+      width: 2.5px;
+      height: 4px;
+      border-radius: 2px;
+      background: linear-gradient(to top, #34d399, #a855f7, #f472b6);
+      transition: height 0.09s ease;
+    }
+
+    /* Bottom Dynamic Voice & AI Response Dock */
     .bottom-hud {
       position: relative;
       z-index: 10;
       padding: 12px 16px 22px;
-      background: linear-gradient(to top, rgba(9, 9, 11, 0.92) 45%, transparent);
+      background: linear-gradient(to top, rgba(5, 5, 8, 0.95) 48%, transparent);
       display: flex;
       flex-direction: column;
       gap: 10px;
-      max-width: 600px;
+      max-width: 640px;
       width: 100%;
       margin: 0 auto;
     }
 
-    .voice-caption {
-      background: rgba(20, 20, 26, 0.90);
+    .voice-caption-wrap {
+      position: relative;
+      background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 13px 16px;
+      border-radius: 22px;
+      padding: 14px 16px;
+      backdrop-filter: blur(22px);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .voice-caption-wrap.listening-glow {
+      border-color: rgba(52, 211, 153, 0.6);
+      box-shadow: 0 12px 38px rgba(16, 185, 129, 0.22), inset 0 0 18px rgba(52, 211, 153, 0.08);
+    }
+    .voice-caption-wrap.thinking-glow {
+      border-color: rgba(192, 132, 252, 0.65);
+      box-shadow: 0 12px 38px rgba(168, 85, 247, 0.28), inset 0 0 18px rgba(168, 85, 247, 0.1);
+    }
+
+    .caption-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #c084fc;
+      letter-spacing: 0.3px;
+    }
+    .caption-expand-btn {
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 2px 9px;
+      font-size: 10px;
+      cursor: pointer;
+    }
+
+    .voice-caption {
       font-size: 13.5px;
-      line-height: 1.52;
+      line-height: 1.56;
       color: #f4f4f5;
-      min-height: 46px;
-      max-height: 230px;
+      min-height: 26px;
+      max-height: 190px;
       overflow-y: auto;
       text-align: left;
-      backdrop-filter: blur(14px);
-      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
       user-select: text;
+      transition: max-height 0.3s ease;
+    }
+    .voice-caption.expanded {
+      max-height: 52vh;
     }
     .voice-caption pre {
-      background: #111115;
+      background: #0d0d12;
       border: 1px solid rgba(192, 132, 252, 0.35);
-      border-radius: 10px;
-      padding: 10px;
+      border-radius: 12px;
+      padding: 11px;
       margin: 8px 0;
-      font-family: Consolas, monospace;
+      font-family: Consolas, 'SFMono-Regular', monospace;
       font-size: 12px;
       color: #e9d5ff;
       overflow-x: auto;
       white-space: pre-wrap;
+      position: relative;
+    }
+    .copy-code-btn {
+      float: right;
+      background: rgba(168, 85, 247, 0.2);
+      border: 1px solid rgba(192, 132, 252, 0.4);
+      color: #f3e8ff;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      cursor: pointer;
     }
 
     .control-bar {
       display: flex;
       gap: 8px;
       align-items: center;
+      background: rgba(16, 16, 23, 0.88);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 6px 6px 10px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .control-bar:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 10px 32px rgba(168, 85, 247, 0.25);
     }
     .control-bar input {
       flex: 1;
-      background: rgba(18, 18, 23, 0.9);
-      border: 1px solid var(--border);
+      background: transparent;
+      border: none;
       color: var(--text);
-      padding: 11px 14px;
-      border-radius: 14px;
-      font-size: 13.5px;
+      padding: 8px 6px;
+      font-size: 14px;
       outline: none;
+      min-width: 0;
     }
-    .control-bar input:focus {
-      border-color: var(--accent);
+    .control-bar input::placeholder {
+      color: #71717a;
     }
     .btn-mic {
       background: rgba(16, 185, 129, 0.18);
       color: #34d399;
-      border: 1.5px solid #10b981;
-      padding: 11px 14px;
-      border-radius: 14px;
+      border: 1.5px solid rgba(16, 185, 129, 0.65);
+      padding: 9px 13px;
+      border-radius: 999px;
       font-weight: 700;
       font-size: 12px;
       cursor: pointer;
       white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s ease;
+    }
+    .btn-mic.listening-active {
+      background: rgba(16, 185, 129, 0.28);
+      box-shadow: 0 0 18px rgba(16, 185, 129, 0.45);
     }
     .btn-mic.muted {
       background: rgba(244, 63, 94, 0.18);
       color: #fb7185;
       border-color: #f43f5e;
+      box-shadow: none;
     }
     .btn-action {
-      background: linear-gradient(135deg, #8b5cf6, #ec4899);
+      background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
       color: #ffffff;
       border: none;
-      padding: 11px 16px;
-      border-radius: 14px;
+      padding: 10px 18px;
+      border-radius: 999px;
       font-weight: 800;
       font-size: 13px;
       cursor: pointer;
+      box-shadow: 0 4px 16px rgba(168, 85, 247, 0.4);
+      transition: transform 0.15s ease;
+    }
+    .btn-action:active {
+      transform: scale(0.95);
     }
   </style>
 </head>
-<body>
+<body data-emotion="happy">
+  <div class="aurora-backdrop"></div>
 
   <!-- STEP 1: Laptop Hub & Bluetooth Handshake Overlay -->
   <div id="connectHandshakeScreen" class="hidden">
     <div class="handshake-card">
       <div class="pulse-ring">👁️</div>
-      <div class="handshake-title">CLUMSY // YOUR EVERYDAY AI</div>
+      <div class="handshake-title">CLUMSY-7X OMNI // AI</div>
       <div class="handshake-sub">
-        Link your phone via <b>Bluetooth</b> or <b>Wi-Fi</b> to your Laptop. Your phone becomes the live <b>CLUMSY Robot Head</b> — continuously listening, reacting with living eyes, and executing tasks!
+        Powered by all <b>7 Fused Neural Models</b>. Link your phone via <b>Bluetooth</b> or <b>Wi-Fi</b> to your Laptop — continuously listening, reacting with 60 FPS living eyes, and solving any task!
       </div>
       <div class="hub-status-box">
+        <div>✦ <b>Unified Brain:</b> <span style="color: #e9d5ff;">CLUMSY-7X Omni (7 Models Combined)</span></div>
         <div>📡 <b>Laptop Link:</b> <span id="hubDetectStatus" style="color: var(--success);">Ready (100% Offline + Bluetooth Sync)</span></div>
         <div>🔵 <b>Bluetooth Status:</b> <span id="btPairStatus">Tap below to pair Bluetooth or launch</span></div>
-        <div>🎙️ <b>Always-On Mode:</b> Wake word <b>"Hey Clumsy"</b> • Auto-Sleep after 50s</div>
+        <div>🎙️ <b>Always-On Voice:</b> Wake word <b>"Hey Clumsy"</b> • Auto-Sleep 50s</div>
       </div>
       <button class="connect-btn" id="btnConnectLaptop" onclick="completeLaptopHandshake()">
-        🚀 Launch CLUMSY Living Eyes
+        🚀 Launch CLUMSY-7X Living Eyes
       </button>
       <button class="bt-btn" onclick="pairBluetoothDevice()">
         🔵 Pair Phone to Laptop via Bluetooth
@@ -322,9 +520,17 @@
     <canvas id="mobileEyeballCanvas"></canvas>
 
     <div class="top-hud">
-      <div class="hud-pill">
-        <span class="dot-live" id="wsDot"></span>
-        <span id="linkBadgeText">CLUMSY • Listening ("Hey Clumsy")</span>
+      <div class="hud-left-group">
+        <div class="hud-pill">
+          <span class="dot-live" id="wsDot"></span>
+          <span id="linkBadgeText">CLUMSY • Listening ("Hey Clumsy")</span>
+          <div class="voice-eq" id="mobileVoiceEq">
+            <span></span><span></span><span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+        <div class="omni-pill" title="Qwen 3.5 + Gemma 4 + Llama 4 + Mistral + Ollama + LM Studio + Jan AI">
+          ✦ CLUMSY-7X Omni
+        </div>
       </div>
       <div style="display: flex; gap: 6px;">
         <button class="hud-action-btn" onclick="pairBluetoothDevice()">🔵 Bluetooth</button>
@@ -333,19 +539,25 @@
     </div>
 
     <div class="bottom-hud">
-      <div class="voice-caption" id="jarvisVoiceCaption">
-        "Hi! I am CLUMSY. Speak naturally or say 'Hey Clumsy' anytime!"
+      <div class="voice-caption-wrap" id="captionCardWrap">
+        <div class="caption-header">
+          <span id="captionEngineLabel">✦ CLUMSY-7X OMNI • 7-MODEL FUSION</span>
+          <button class="caption-expand-btn" onclick="toggleExpandCaption()" id="btnExpandCaption">⤢ Expand</button>
+        </div>
+        <div class="voice-caption" id="jarvisVoiceCaption">
+          "Hi! I am CLUMSY-7X Omni. Speak naturally or say 'Hey Clumsy' anytime!"
+        </div>
       </div>
 
       <div class="control-bar">
-        <button class="btn-mic" id="btnStreamMic" onclick="toggleStreamMic()">🎙️ Mic: ON</button>
+        <button class="btn-mic listening-active" id="btnStreamMic" onclick="toggleStreamMic()">🎙️ Mic: ON</button>
         <input
           type="text"
           id="mobileQueryInput"
-          placeholder="Say 'Hey Clumsy', 'Thank you', or any command..."
+          placeholder="Speak or ask CLUMSY-7X anything..."
           onkeydown="if(event.key==='Enter') sendMobileCommand()"
         />
-        <button class="btn-action" onclick="sendMobileCommand()">Send</button>
+        <button class="btn-action" onclick="sendMobileCommand()">✦ Send</button>
       </div>
     </div>
   </div>
@@ -359,6 +571,11 @@
     let wsConn = null;
     let streamMicEnabled = true;
     let speechRec = null;
+    let speechRecRunning = false;
+    let interimCommitTimer = null;
+    let latestInterimText = '';
+    let hwMicPollSeq = -1;
+    let hwMicAvailable = false;
     let wakeLockSentinel = null;
     let deferredInstallPrompt = null;
     let bluetoothDeviceName = localStorage.getItem('clumsy_bt_device') || '';
@@ -372,6 +589,41 @@
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(() => {});
     }
+
+    function toggleExpandCaption() {
+      const cap = document.getElementById('jarvisVoiceCaption');
+      const btn = document.getElementById('btnExpandCaption');
+      if (!cap) return;
+      cap.classList.toggle('expanded');
+      if (btn) btn.textContent = cap.classList.contains('expanded') ? '⤡ Compact' : '⤢ Expand';
+    }
+
+    function animateVoiceEq(energy) {
+      const eq = document.getElementById('mobileVoiceEq');
+      if (!eq) return;
+      const bars = eq.querySelectorAll('span');
+      bars.forEach((b, idx) => {
+        if (energy <= 0.08) {
+          b.style.height = '4px';
+        } else {
+          const wave = Math.sin(Date.now() / 90 + idx * 1.1) * 0.5 + 0.5;
+          const h = Math.max(4, Math.min(15, Math.round(4 + energy * 11 * (0.45 + wave * 0.55))));
+          b.style.height = h + 'px';
+        }
+      });
+    }
+
+    setInterval(() => {
+      if (isSpeakingPhoneTTS) {
+        animateVoiceEq(0.85);
+      } else if (latestInterimText) {
+        animateVoiceEq(0.75);
+      } else if (streamMicEnabled && !isBotSleeping) {
+        animateVoiceEq(0.18);
+      } else {
+        animateVoiceEq(0.0);
+      }
+    }, 110);
 
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
@@ -388,7 +640,7 @@
       } else {
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         if (isIOS) {
-          alert("To install CLUMSY on iPhone:\n1. Tap the Share button at the bottom of Safari (square with arrow pointing up).\n2. Scroll down and tap 'Add to Home Screen' (➕).\n3. Tap 'Add' at the top right!");
+          alert("To install CLUMSY on iPhone:\n1. Tap the Share button at the bottom of Safari.\n2. Scroll down and tap 'Add to Home Screen' (➕).\n3. Tap 'Add' at the top right!");
         } else {
           alert("To install CLUMSY:\n1. Tap the browser menu (⋮).\n2. Tap 'Install app' or 'Add to Home screen'.");
         }
@@ -423,7 +675,7 @@
         document.getElementById('linkBadgeText').textContent = `CLUMSY • Linked (${laptopHubHost})`;
         connectMobileWebSocket(9121);
       } else {
-        document.getElementById('linkBadgeText').textContent = 'CLUMSY • Bluetooth Autonomous Mode';
+        document.getElementById('linkBadgeText').textContent = 'CLUMSY • Autonomous 7X Mode';
       }
     }
 
@@ -436,6 +688,7 @@
 
     function enterSleepMode() {
       isBotSleeping = true;
+      document.body.setAttribute('data-emotion', 'sleeping');
       if (eyeballEngine) {
         eyeballEngine.setReaction('sleeping', 90, 80);
       }
@@ -448,6 +701,7 @@
 
     function triggerWakeupAndHappy(greetingText, callbackAfterWake) {
       isBotSleeping = false;
+      document.body.setAttribute('data-emotion', 'happy');
       const dot = document.getElementById('wsDot');
       if (dot) dot.classList.remove('sleeping');
       document.getElementById('linkBadgeText').textContent = bluetoothDeviceName
@@ -529,11 +783,14 @@
 
     function getApiBase() {
       if (laptopHubHost) {
-        const proto = window.location.protocol === 'http:' ? 'http:' : 'http:';
-        const clean = laptopHubHost.replace(/^https?:\/\//i, '');
+        const proto = 'http:';
+        const clean = laptopHubHost.replace(/^[a-z]+:\/\//i, '');
         return `${proto}//${clean}`;
       }
-      return '';
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        return '';
+      }
+      return 'http:' + '//127.0.0.1:8080';
     }
 
     function syncTelemetryToLaptop(rx, pan = 90, tilt = 95) {
@@ -545,13 +802,19 @@
     }
 
     function setMobileReaction(rx, pan = 90, tilt = 95) {
+      document.body.setAttribute('data-emotion', rx || 'happy');
+      const wrap = document.getElementById('captionCardWrap');
+      if (wrap) {
+        wrap.classList.toggle('listening-glow', rx === 'listening');
+        wrap.classList.toggle('thinking-glow', rx === 'thinking' || rx === 'coding');
+      }
       if (eyeballEngine) eyeballEngine.setReaction(rx, pan, tilt);
       syncTelemetryToLaptop(rx, pan, tilt);
     }
 
     function connectMobileWebSocket(wsPort) {
       const rawHost = laptopHubHost ? laptopHubHost.split(':')[0] : (window.location.hostname || '127.0.0.1');
-      if (rawHost.includes('vercel.app') && !laptopHubHost) return;
+      if ((rawHost.includes('vercel.app') || rawHost.includes('github.io')) && !laptopHubHost) return;
       const url = `ws://${rawHost}:${wsPort || 9121}`;
       try {
         if (wsConn && (wsConn.readyState === WebSocket.OPEN || wsConn.readyState === WebSocket.CONNECTING)) {
@@ -566,7 +829,7 @@
             const data = JSON.parse(ev.data);
             const payload = data.payload || data;
             if (payload.telemetry && eyeballEngine && !isBotSleeping) {
-              eyeballEngine.setReaction(
+              setMobileReaction(
                 payload.telemetry.expression || 'happy',
                 payload.telemetry.pan_deg || 90,
                 payload.telemetry.tilt_deg || 95
@@ -574,8 +837,8 @@
             }
             if (payload.response) {
               resetIdleSleepTimer();
-              document.getElementById('jarvisVoiceCaption').textContent =
-                payload.spoken_tts || payload.response.split('```')[0].trim();
+              document.getElementById('jarvisVoiceCaption').innerHTML =
+                formatMobileReplyHTML(payload.response);
             }
           } catch (_) {}
         };
@@ -610,9 +873,9 @@
       resetIdleSleepTimer();
 
       if (!isAuto) {
-        triggerWakeupAndHappy("Hi! I'm CLUMSY. I'm listening — just speak or say 'Hey Clumsy' anytime!");
+        triggerWakeupAndHappy("Hi! I'm CLUMSY-7X Omni. I'm listening — just speak or say 'Hey Clumsy' anytime!");
       } else if (eyeballEngine) {
-        eyeballEngine.setReaction('happy', 90, 96);
+        setMobileReaction('happy', 90, 96);
       }
 
       fetch(`${getApiBase()}/api/mobile/connect`, {
@@ -640,13 +903,26 @@
         .trim();
     }
 
+    function copyMobileCodeBlock(btn) {
+      const pre = btn && btn.parentElement;
+      if (!pre) return;
+      const code = pre.getAttribute('data-raw-code') || pre.innerText;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(code).catch(() => {});
+      }
+      btn.textContent = '✓ Copied';
+      setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+    }
+
     function formatMobileReplyHTML(rawText) {
       let s = String(rawText || '')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
       s = s.replace(/```([a-zA-Z0-9_+]*)\n([\s\S]*?)```/g, (_, lang, code) => {
-        return `<pre><b>${(lang || 'code').toUpperCase()}</b>\n${code.trim()}</pre>`;
+        const cleanCode = code.trim();
+        const attrSafe = cleanCode.replace(/"/g, '&quot;');
+        return `<pre data-raw-code="${attrSafe}"><button class="copy-code-btn" onclick="copyMobileCodeBlock(this)">Copy</button><b>${(lang || 'code').toUpperCase()}</b>\n${cleanCode}</pre>`;
       });
       s = s.replace(/^###\s+(.+)$/gm, '<b style="color:#c084fc;font-size:14px;">$1</b>');
       s = s.replace(/\*\*([^*]+)\*\*/g, '<b style="color:#fff;">$1</b>');
@@ -723,7 +999,7 @@
         const pool = ['happy', 'excited', 'wink'];
         return {
           reaction: pool[Math.floor(Math.random() * pool.length)],
-          spoken: "I'm feeling fantastic and all offline AI systems are online! Ask me anything — science, coding, math, or daily tasks!",
+          spoken: "I'm feeling fantastic and all 7 neural cores in CLUMSY-7X Omni are online! Ask me anything — science, coding, math, or daily tasks!",
           isLocalImmediate: true,
         };
       }
@@ -738,117 +1014,196 @@
       return { reaction: 'happy', spoken: null, isLocalImmediate: false };
     }
 
-    function startAlwaysOnMic() {
-      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) return;
-      if (speechRec) return;
+    function handleRecognizedSpeech(rawTranscript, isFinal, alts = null) {
+      if (!streamMicEnabled || isSpeakingPhoneTTS) return;
+      const text = normalizeMobilePhonetics(rawTranscript);
+      if (!text) return;
+      const low = text.toLowerCase();
 
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        navigator.mediaDevices
-          .getUserMedia({ audio: true })
-          .then((stream) => {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const src = ctx.createMediaStreamSource(stream);
-            const analyser = ctx.createAnalyser();
-            analyser.fftSize = 64;
-            src.connect(analyser);
-            const buf = new Uint8Array(analyser.frequencyBinCount);
-            function updateLevel() {
-              if (streamMicEnabled && eyeballEngine && !isBotSleeping) {
-                analyser.getByteFrequencyData(buf);
-                let s = 0;
-                for (let i = 0; i < buf.length; i++) s += buf[i];
-                eyeballEngine.setAudioLevel(Math.min(1, (s / (buf.length * 255)) * 2.4));
-              }
-              requestAnimationFrame(updateLevel);
-            }
-            requestAnimationFrame(updateLevel);
-          })
-          .catch(() => {});
+      if (eyeballEngine && !isBotSleeping) {
+        eyeballEngine.setAudioLevel(isFinal ? 0.25 : 0.78);
       }
 
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      speechRec = new SpeechRecognition();
-      speechRec.lang = 'en-US';
-      speechRec.continuous = true;
-      speechRec.interimResults = true;
-      speechRec.maxAlternatives = 3;
-
-      speechRec.onresult = (event) => {
-        if (!streamMicEnabled || isSpeakingPhoneTTS) return;
-        const last = event.results.length - 1;
-        const item = event.results[last];
-        const rawText = item[0].transcript.trim();
-        const text = normalizeMobilePhonetics(rawText);
-        const low = text.toLowerCase();
-
-        // While sleeping: ONLY wake up when "Hey Clumsy" / "Clumsy" / "Wake up" is spoken!
-        if (isBotSleeping) {
-          if (/\b(clumsy|wake\s+up)\b/i.test(low)) {
-            if (!item.isFinal) {
-              triggerWakeupAndHappy("I'm awake! Listening...");
-              return;
-            }
-            // Strip wake phrase and check if there's an immediate follow-up command
-            const remainder = text.replace(/^(?:hey|hi|ok|okay|yo)?\s*(?:clumsy|wake\s+up)[\s,!?.:-]*/i, '').trim();
-            if (remainder) {
-              triggerWakeupAndHappy(null, () => {
-                document.getElementById('mobileQueryInput').value = remainder;
-                sendMobileCommand();
-              });
-            } else {
-              triggerWakeupAndHappy("I'm awake! How can I help you?");
-            }
+      // While sleeping: wake up immediately when "Hey Clumsy" / "Clumsy" / "Wake up" is spoken!
+      if (isBotSleeping) {
+        if (/\b(clumsy|wake\s+up)\b/i.test(low)) {
+          if (interimCommitTimer) {
+            clearTimeout(interimCommitTimer);
+            interimCommitTimer = null;
           }
-          return;
+          latestInterimText = '';
+          const remainder = text.replace(/^(?:hey|hi|ok|okay|yo)?\s*(?:clumsy|wake\s+up)[\s,!?.:-]*/i, '').trim();
+          if (remainder && isFinal) {
+            triggerWakeupAndHappy(null, () => {
+              document.getElementById('mobileQueryInput').value = remainder;
+              sendMobileCommand();
+            });
+          } else {
+            triggerWakeupAndHappy("I'm awake! How can I help you?");
+          }
         }
+        return;
+      }
 
-        // Awake: show live listening state
-        resetIdleSleepTimer();
-        if (!item.isFinal) {
-          setMobileReaction('listening', 90, 105);
-          document.getElementById('jarvisVoiceCaption').textContent = `🎙️ Listening: "${text}"...`;
-          return;
-        }
+      resetIdleSleepTimer();
 
-        const alts = [];
-        for (let i = 0; i < item.length; i++) {
-          if (item[i] && item[i].transcript) alts.push(item[i].transcript.trim());
-        }
-        if (text) {
-          document.getElementById('mobileQueryInput').value = text;
-          sendMobileCommand(alts);
-        }
-      };
-      speechRec.onerror = () => {};
-      speechRec.onend = () => {
-        if (streamMicEnabled) {
-          try { speechRec.start(); } catch (_) {
+      if (!isFinal) {
+        latestInterimText = text;
+        setMobileReaction('listening', 90, 105);
+        document.getElementById('jarvisVoiceCaption').textContent = `🎙️ Hearing: "${text}"...`;
+        document.getElementById('mobileQueryInput').value = text;
+
+        // 1.3s silence auto-commit: if browser/WebView never fires isFinal=true, commit automatically!
+        if (interimCommitTimer) clearTimeout(interimCommitTimer);
+        interimCommitTimer = setTimeout(() => {
+          const pending = latestInterimText.trim();
+          latestInterimText = '';
+          if (pending && streamMicEnabled && !isSpeakingPhoneTTS) {
+            document.getElementById('mobileQueryInput').value = pending;
+            sendMobileCommand([pending]);
+          }
+        }, 1300);
+        return;
+      }
+
+      if (interimCommitTimer) {
+        clearTimeout(interimCommitTimer);
+        interimCommitTimer = null;
+      }
+      latestInterimText = '';
+      document.getElementById('mobileQueryInput').value = text;
+      sendMobileCommand(alts || [text]);
+    }
+
+    function startAlwaysOnMic() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) return;
+
+      // IMPORTANT: Never call getUserMedia while SpeechRecognition is active on mobile —
+      // getUserMedia steals exclusive hardware mic access on iOS/Android/WebViews.
+      if (!speechRec) {
+        speechRec = new SpeechRecognition();
+        speechRec.lang = 'en-US';
+        speechRec.continuous = true;
+        speechRec.interimResults = true;
+        speechRec.maxAlternatives = 3;
+
+        speechRec.onstart = () => {
+          speechRecRunning = true;
+          const btn = document.getElementById('btnStreamMic');
+          if (btn && streamMicEnabled) {
+            btn.classList.remove('muted');
+            btn.classList.add('listening-active');
+            btn.textContent = '🎙️ Mic: ON';
+          }
+        };
+
+        speechRec.onresult = (event) => {
+          if (!streamMicEnabled || isSpeakingPhoneTTS) return;
+          const last = event.results.length - 1;
+          const item = event.results[last];
+          if (!item || !item[0]) return;
+          const rawText = item[0].transcript.trim();
+          const alts = [];
+          for (let i = 0; i < item.length; i++) {
+            if (item[i] && item[i].transcript) alts.push(item[i].transcript.trim());
+          }
+          handleRecognizedSpeech(rawText, item.isFinal, alts);
+        };
+
+        speechRec.onerror = () => {
+          speechRecRunning = false;
+        };
+
+        speechRec.onend = () => {
+          speechRecRunning = false;
+          if (streamMicEnabled) {
             setTimeout(() => {
-              if (streamMicEnabled) {
+              if (streamMicEnabled && !speechRecRunning) {
                 try { speechRec.start(); } catch (_) {}
               }
-            }, 250);
+            }, 280);
+          }
+        };
+      }
+
+      if (streamMicEnabled && !speechRecRunning) {
+        try {
+          speechRec.start();
+        } catch (_) {}
+      }
+    }
+
+    // Unlock SpeechRecognition + SpeechSynthesis on first user touch/click anywhere on screen
+    function unlockAudioOnGesture() {
+      if (streamMicEnabled && !speechRecRunning) {
+        startAlwaysOnMic();
+      }
+    }
+    window.addEventListener('pointerdown', unlockAudioOnGesture, { passive: true });
+    window.addEventListener('touchstart', unlockAudioOnGesture, { passive: true });
+
+    // Hardware Offline Microphone Polling Fallback (captures voice via Windows MS-1033-80-DESK even inside Electron WebView!)
+    async function pollHardwareOfflineMic() {
+      if (!streamMicEnabled || isSpeakingPhoneTTS) return;
+      try {
+        const c = new AbortController();
+        const t = setTimeout(() => c.abort(), 850);
+        const res = await fetch(`${getApiBase()}/api/voice/poll?since=${hwMicPollSeq}`, { signal: c.signal });
+        clearTimeout(t);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.ready && !hwMicAvailable) {
+          hwMicAvailable = true;
+          if (!isBotSleeping) {
+            document.getElementById('linkBadgeText').textContent = 'CLUMSY • Offline Hardware Mic Active';
           }
         }
-      };
-      try { speechRec.start(); } catch (_) {}
+        if (typeof data.latest_id === 'number') {
+          if (hwMicPollSeq < 0) {
+            hwMicPollSeq = data.latest_id;
+            return;
+          }
+          hwMicPollSeq = data.latest_id;
+        }
+        if (Array.isArray(data.items) && data.items.length > 0) {
+          const newest = data.items[data.items.length - 1];
+          if (newest && newest.transcript) {
+            handleRecognizedSpeech(newest.transcript, true, [newest.transcript]);
+          }
+        }
+      } catch (_) {}
     }
+    setInterval(pollHardwareOfflineMic, 950);
 
     function toggleStreamMic() {
       streamMicEnabled = !streamMicEnabled;
       const btn = document.getElementById('btnStreamMic');
       if (streamMicEnabled) {
         btn.classList.remove('muted');
+        btn.classList.add('listening-active');
         btn.textContent = '🎙️ Mic: ON';
-        try { if (speechRec) speechRec.start(); } catch (_) {}
+        startAlwaysOnMic();
       } else {
+        if (interimCommitTimer) {
+          clearTimeout(interimCommitTimer);
+          interimCommitTimer = null;
+        }
+        latestInterimText = '';
         btn.classList.add('muted');
+        btn.classList.remove('listening-active');
         btn.textContent = '🔇 Mic: MUTED';
         try { if (speechRec) speechRec.stop(); } catch (_) {}
       }
     }
 
     async function sendMobileCommand(alternatives = null) {
+      if (interimCommitTimer) {
+        clearTimeout(interimCommitTimer);
+        interimCommitTimer = null;
+      }
+      latestInterimText = '';
+
       const input = document.getElementById('mobileQueryInput');
       const query = normalizeMobilePhonetics(input.value.trim());
       if (!query) return;
@@ -892,7 +1247,7 @@
       }
 
       setMobileReaction('thinking', 105, 112);
-      document.getElementById('jarvisVoiceCaption').textContent = `⚡ Thinking: "${query}"...`;
+      document.getElementById('jarvisVoiceCaption').textContent = `⚡ CLUMSY-7X Omni Thinking: "${query}"...`;
 
       // Sync to Laptop Hub in background if linked
       fetch(`${getApiBase()}/api/mobile/agent`, {
@@ -905,6 +1260,8 @@
         const smart = await window.clumsyBrain.processSmartQuery(query);
         const spokenText = smart.spoken_tts || smart.response || 'Done!';
         const finalRx = smart.robot_state || localIntent.reaction || 'happy';
+        const engLabel = document.getElementById('captionEngineLabel');
+        if (engLabel) engLabel.textContent = `✦ ${(smart.engine || 'CLUMSY-7X OMNI').toUpperCase()}`;
         document.getElementById('jarvisVoiceCaption').innerHTML = formatMobileReplyHTML(smart.response || spokenText);
         setMobileReaction(finalRx, 90, 96);
         speakOnPhone(spokenText, finalRx);
