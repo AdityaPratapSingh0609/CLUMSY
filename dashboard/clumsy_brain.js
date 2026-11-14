@@ -834,13 +834,61 @@
       ].join('\n');
     }
 
+    async queryOnlineCloudOmni(userQuery, sysPrompt) {
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) return null;
+      const proto = 'https:';
+      // 1. Primary OpenAI-compatible reasoning endpoint
+      try {
+        const c = new AbortController();
+        const t = setTimeout(() => c.abort(), 9500);
+        const res = await fetch(`${proto}//text.pollinations.ai/openai`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'openai',
+            messages: [
+              { role: 'system', content: sysPrompt },
+              ...this.history.slice(-6),
+              { role: 'user', content: userQuery }
+            ],
+            temperature: 0.35
+          }),
+          signal: c.signal
+        });
+        clearTimeout(t);
+        if (res.ok) {
+          const d = await res.json();
+          const reply = d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
+          if (reply && String(reply).trim()) {
+            return String(reply).trim();
+          }
+        }
+      } catch (_) {}
+
+      // 2. Fast GET streaming fallback endpoint
+      try {
+        const c2 = new AbortController();
+        const t2 = setTimeout(() => c2.abort(), 7500);
+        const url = `${proto}//text.pollinations.ai/${encodeURIComponent(userQuery)}?model=openai&system=${encodeURIComponent(sysPrompt)}`;
+        const res2 = await fetch(url, { signal: c2.signal });
+        clearTimeout(t2);
+        if (res2.ok) {
+          const txt = await res2.text();
+          if (txt && txt.trim() && !txt.trim().startsWith('<!DOCTYPE')) {
+            return txt.trim();
+          }
+        }
+      } catch (_) {}
+      return null;
+    }
+
     async askAllEngines(userQuery) {
       const sysPrompt = [
         'You are CLUMSY-7X Omni, a unified 7-core personal AI assistant with a Google Gemini-style interface and a 60 FPS living robot companion.',
         'Answer directly, accurately, and clearly using clean markdown formatting. Never mention other AI brands as your identity.'
       ].join(' ');
 
-      // 1. Check if topic is in our Instant Offline Knowledge Base first (<1ms deterministic offline accuracy)
+      // 1. Check if topic is in our Instant Offline Knowledge Base first (<1ms deterministic accuracy)
       const qLow = userQuery.toLowerCase();
       for (const entry of OFFLINE_KNOWLEDGE_BASE) {
         if (entry.keys.some(k => qLow.includes(k))) {
@@ -848,7 +896,7 @@
         }
       }
 
-      // 2. Unified 7-Model Parallel Fusion: Race & fuse all active local runtimes (Ollama :11434 + LM Studio :1234 + Jan AI :1337 + Local 4-Model GGUF Hub :8080)
+      // 2. Unified 7-Model Parallel Fusion (Local Ollama :11434 + LM Studio :1234 + Jan AI :1337 + Online Cloud Omni)
       const parallelTasks = [];
       if (this.providerStatus.ollama) {
         parallelTasks.push(
@@ -874,11 +922,11 @@
           })
         );
       }
-      if (this.providerStatus.local_hub || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      if (typeof navigator === 'undefined' || navigator.onLine !== false) {
         parallelTasks.push(
-          this.queryLocalClumsyGGUF(userQuery).then(localData => {
-            if (!localData || !localData.response) throw new Error('empty');
-            return { text: localData.response, engine: 'CLUMSY-7X Omni', rawData: localData };
+          this.queryOnlineCloudOmni(userQuery, sysPrompt).then(r => {
+            if (!r) throw new Error('empty');
+            return { text: r, engine: 'CLUMSY-7X Omni' };
           })
         );
       }
@@ -890,35 +938,12 @@
         } catch (_) {}
       }
 
-      // 3. Optional hybrid neural synthesis if online
-      if (navigator.onLine) {
-        try {
-          const proto = 'https:';
-          const c = new AbortController();
-          const t = setTimeout(() => c.abort(), 5500);
-          const res = await fetch(`${proto}//text.pollinations.ai/openai`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              model: 'openai',
-              messages: [
-                { role: 'system', content: sysPrompt },
-                ...this.history.slice(-6),
-                { role: 'user', content: userQuery }
-              ],
-              temperature: 0.35
-            }),
-            signal: c.signal
-          });
-          clearTimeout(t);
-          if (res.ok) {
-            const d = await res.json();
-            const reply = d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
-            if (reply && String(reply).trim()) {
-              return { text: String(reply).trim(), engine: 'CLUMSY-7X Omni' };
-            }
-          }
-        } catch (_) {}
+      // 3. Fallback to Local 4-Model GGUF Hub (:8080) when offline
+      if (this.providerStatus.local_hub || (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))) {
+        const localData = await this.queryLocalClumsyGGUF(userQuery);
+        if (localData && localData.response) {
+          return { text: localData.response, engine: 'CLUMSY-7X Omni', rawData: localData };
+        }
       }
 
       // 4. Guaranteed 100% Offline Deep Knowledge & Reasoning Synthesizer (never fails!)

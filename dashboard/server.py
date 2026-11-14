@@ -544,6 +544,7 @@ class DeskbotRequestHandler(SimpleHTTPRequestHandler):
 
 
 def run_server(port: int = 8080, host: str = "0.0.0.0") -> None:
+    os.environ.setdefault("CLUMSY_LIVE_LLM", "1")
     ws_port = ensure_realtime_ws_started(9121)
     hardware_mic_daemon.start()
     lan_ip = get_local_lan_ip()
