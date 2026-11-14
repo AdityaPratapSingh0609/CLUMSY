@@ -11,9 +11,9 @@
   <script src="/jarvis_hud.js"></script>
   <style>
     :root {
-      --bg: #050a14;
-      --card-bg: rgba(15, 23, 42, 0.88);
-      --card-border: rgba(56, 189, 248, 0.32);
+      --bg: #030712;
+      --card-bg: rgba(13, 20, 36, 0.85);
+      --card-border: rgba(56, 189, 248, 0.28);
       --accent: #38bdf8;
       --accent-cyan: #22d3ee;
       --accent-glow: rgba(56, 189, 248, 0.38);
@@ -21,14 +21,21 @@
       --text-muted: #94a3b8;
       --success: #34d399;
       --warning: #fbbf24;
+      --geist-black: #000000;
+      --geist-accents-1: #111111;
+      --geist-border: rgba(255, 255, 255, 0.12);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif; }
     body {
-      background: radial-gradient(circle at 50% 0%, #0c1f38 0%, var(--bg) 72%);
+      background: radial-gradient(circle at 50% 0%, #0d1e38 0%, var(--bg) 68%),
+                  linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+                  linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+      background-size: 100% 100%, 36px 36px, 36px 36px;
       color: var(--text);
       padding: 20px 24px;
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
 
     header {
@@ -37,21 +44,92 @@
       align-items: center;
       flex-wrap: wrap;
       gap: 12px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       padding-bottom: 14px;
       border-bottom: 1px solid var(--card-border);
     }
     .brand { display: flex; align-items: center; gap: 14px; }
-    .brand h1 { font-size: 23px; font-weight: 800; letter-spacing: 1.2px; color: var(--text); }
+    .brand h1 { font-size: 22px; font-weight: 800; letter-spacing: 1.2px; color: var(--text); }
     .badge {
-      background: rgba(56, 189, 248, 0.14);
+      background: rgba(56, 189, 248, 0.12);
       color: var(--accent);
-      border: 1px solid var(--accent);
-      padding: 4px 10px;
+      border: 1px solid var(--card-border);
+      padding: 5px 12px;
       border-radius: 9999px;
       font-size: 11px;
       font-weight: 600;
       text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .badge:hover {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.2);
+    }
+
+    /* GSD Phased Execution Ribbon */
+    .gsd-ribbon {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+      padding: 8px 14px;
+      background: rgba(13, 20, 36, 0.65);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 12px;
+      backdrop-filter: blur(12px);
+    }
+    .gsd-pill {
+      font-size: 11px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: rgba(56, 189, 248, 0.06);
+      border: 1px solid rgba(56, 189, 248, 0.16);
+      border-radius: 8px;
+    }
+    .gsd-pill b {
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .gsd-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+      display: inline-block;
+    }
+
+    /* Studio category tabs */
+    .studio-tabs {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 6px;
+    }
+    .tab-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .tab-btn.active, .tab-btn:hover {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent);
+      border-color: rgba(56, 189, 248, 0.35);
     }
 
     .grid-layout {
@@ -78,7 +156,12 @@
       border: 1px solid var(--card-border);
       border-radius: 16px;
       padding: 18px;
-      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45), inset 0 0 20px rgba(56, 189, 248, 0.05);
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(16px);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover {
+      border-color: rgba(56, 189, 248, 0.4);
     }
     .card h2 {
       font-size: 13px;
@@ -392,9 +475,9 @@
     <div class="brand">
       <canvas id="arcReactorCanvas" width="64" height="64"></canvas>
       <div>
-        <h1>DESKBOT // J.A.R.V.I.S. FUSION HUB</h1>
+        <h1>CLUMSY // YOUR EVERYDAY AI</h1>
         <p style="font-size: 12px; color: var(--text-muted);">
-          4-Model Local AI (`Qwen 3.5 + Gemma 4 + Llama 4 + Mistral`) • Arduino Uno Bot • Laptop Hub • Mobile Agent
+          4-Model Local AI Matrix (<code>Qwen 3.5 + Gemma 4 + Llama 4 + Mistral</code>) • Arduino Uno Bot • Laptop Hub • Mobile Companion
         </p>
       </div>
     </div>
@@ -402,10 +485,20 @@
       <span class="badge" id="wsStatusBadge">WS: Live Ready</span>
       <span class="badge" id="tokenPoolBadge" style="border-color: #a855f7; color: #d8b4fe;">Tokens: Unlimited (Local)</span>
       <span class="badge" id="ramBadge">RAM: 48MB / 850MB</span>
+      <span class="badge" id="vercelBadge" style="border-color: rgba(255,255,255,0.22); color: #fff; background: rgba(0,0,0,0.65);">▲ Vercel Ready</span>
       <button class="badge" id="btnInstallDesktopPwa" style="display: none; background: #38bdf8; color: #000; font-weight: 700; cursor: pointer; border: none;" onclick="installDesktopApp()">⬇ Install App</button>
       <a class="badge" href="/mobile" target="_blank">📱 Open Mobile AI Agent</a>
     </div>
   </header>
+
+  <!-- GSD Phased Execution & Milestone Telemetry Ribbon -->
+  <div class="gsd-ribbon">
+    <div class="gsd-pill"><span class="gsd-dot"></span> <b>STATUS</b> ONLINE</div>
+    <div class="gsd-pill"><b>GOAL</b> Everyday Autonomous AI &amp; Desktop Hardware Robot</div>
+    <div class="gsd-pill"><b>GSD PIPELINE</b> Plan &rarr; 4-Model Fusion &rarr; System Action</div>
+    <div class="gsd-pill"><b>HARDWARE</b> Arduino Uno • Pan/Tilt Servos • 60 FPS Eyes</div>
+    <div class="gsd-pill"><b>MESH SYNC</b> Zero-Lag Tri-Node Network</div>
+  </div>
 
   <div class="grid-layout">
     <!-- Left Column: Robot Hardware Avatar (Arduino Uno + 2D OLED + 3D Viewer + Live Mic) -->
@@ -499,60 +592,70 @@
       </div>
     </div>
 
-    <!-- Center Column: JARVIS Voice & Universal ASAP Job Studio -->
+    <!-- Center Column: CLUMSY Voice & Universal ASAP Job Studio -->
     <div class="card">
       <h2>
-        <span>⚡ J.A.R.V.I.S. Master Orchestrator</span>
+        <span>⚡ CLUMSY Master Orchestrator</span>
         <span style="font-size: 11px; color: var(--text-muted);" id="activeSpecialistBadge">Lead: Mistral + Qwen 3.5</span>
       </h2>
       <div class="chat-container">
         <div class="messages" id="messageList">
           <div class="msg assistant">
-            Good day! I am running on your <b>JARVIS-X1 4-Model Fusion Engine</b> (Qwen 3.5 + Google Gemma 4 + Meta Llama 4 + Mistral). Ask me to <b>write code</b>, <b>make a PPT presentation</b>, <b>create a graphic</b>, <b>play a song on your system</b>, or <b>check your phone</b>!
+            Good day! I am <b>CLUMSY: your everyday AI</b>, running on your <b>4-Model Fusion Engine</b> (Qwen 3.5 + Google Gemma 4 + Meta Llama 4 + Mistral). Ask me to <b>write code</b>, <b>render 3D models in Blender</b>, <b>create graphics or videos</b>, <b>play songs</b>, or <b>automate your system</b>!
           </div>
         </div>
         <div class="input-bar">
-          <input type="text" id="userInput" placeholder="Speak or type to JARVIS ('open Gmail & send email', 'schedule meeting in Calendar', 'render 3D model in Blender', 'play Stranger Things on Netflix')..." onkeydown="if(event.key==='Enter') sendQuery(false)" />
-          <button class="primary" onclick="sendQuery(false)">Execute</button>
+          <input type="text" id="userInput" placeholder="Speak or type to CLUMSY ('open Gmail & send email', 'write Java quicksort', 'render 3D model in Blender', 'play Netflix')..." onkeydown="if(event.key==='Enter') sendQuery(false)" />
+          <button class="primary" onclick="sendQuery(false)">Execute ↵</button>
           <button id="btnVoiceDictation" onclick="toggleVoiceInput()" title="Hands-Free Voice Recognition Toggle">🎙️ Speak</button>
         </div>
         <div id="liveVoiceTranscriptBar" style="margin-top: 6px; font-size: 11px; color: var(--accent-cyan); font-family: monospace; min-height: 16px;">
-          🎙️ Voice Engine Ready: Say "Open Gmail", "Schedule Calendar meeting", "Save Note", "Play on Netflix", "Search Amazon", "Render 3D Model in Blender", "Make AI Video", or "Create AI Pic".
+          🎙️ Voice Engine Ready: Say "Hey Clumsy", "Open Gmail", "Schedule Calendar meeting", "Save Note", "Play on Netflix", "Render 3D Model in Blender", "Make AI Video", or "Create AI Pic".
         </div>
       </div>
 
       <!-- Instant ASAP Job Studio Output Preview -->
       <div class="job-studio-box" id="jobStudioOutput" style="max-height: 295px;">
-        <div class="job-badge">LAPTOP ASAP JOB &amp; CREATIVE AI STUDIO // READY</div>
-        <div style="font-size: 12.5px; color: var(--text-muted);">
+        <div class="job-badge">CLUMSY EVERYDAY AI // CREATIVE &amp; EXECUTION STUDIO</div>
+        <div style="font-size: 12px; color: var(--text-muted);">
           Every voice or text command renders live here: <b>Interplatform Hub</b> (Gmail, Calendar, Notes, Netflix, Amazon), <b>3D Model &amp; Blender Studio</b>, <b>AI Video Maker</b>, <b>AI Pic &amp; Graphic Creator</b>, <b>Code</b>, <b>PPT</b>, and <b>AI Flowcharts</b>.
         </div>
-        <div style="display: flex; gap: 6px; margin-top: 9px; flex-wrap: wrap;">
-          <button onclick="triggerInterplatform('netflix', 'Play Stranger Things on Netflix')">🎬 Netflix</button>
-          <button onclick="triggerInterplatform('prime_video', 'Play The Boys on Amazon Prime Video')">📺 Prime Video</button>
-          <button onclick="triggerInterplatform('hotstar', 'Play Marvel Avengers on Disney+ Hotstar')">🌟 Hotstar</button>
-          <button onclick="triggerInterplatform('gmail', 'Compose email in Gmail about JARVIS Launch')">✉️ Gmail</button>
-          <button onclick="triggerInterplatform('calendar', 'Schedule meeting JARVIS Review in Google Calendar tomorrow at 10am')">📅 Calendar</button>
-          <button onclick="triggerInterplatform('notes', 'Take a note: Upgrade Deskbot 3D Blender pipeline')">📝 Notes</button>
-          <button onclick="triggerInterplatform('amazon', 'Search Arduino Servo Kit on Amazon')">🛒 Amazon</button>
-          <button onclick="triggerInstantJob('3d_model', 'Create an engineering 3D model of a Skyscraper Building in Blender')">🏢 3D Building</button>
-          <button onclick="triggerInstantJob('3d_model', 'Create an engineering 3D model of a Suspension Bridge in Blender')">🌉 3D Bridge</button>
-          <button onclick="triggerInstantJob('3d_model', 'Render a 3D model of Quadcopter Drone in Blender')">🚁 3D Drone</button>
-          <button onclick="triggerInstantJob('pic', 'Generate a realistic photo of Sunset on Goa Beach')">📸 AI Photo Studio</button>
-          <button onclick="triggerInstantJob('video', 'Make a video about JARVIS Autonomous Robotics')">🎥 AI Video Maker</button>
-          <button onclick="triggerInstantJob('ai_tool', 'Create a mind map flowchart of JARVIS Tri-Node Architecture')">🧠 AI Flowchart</button>
-          <button onclick="triggerInstantJob('code', 'Write Java code to print My name is Aditya Pratap Singh')">💻 Java/Python Code</button>
+
+        <!-- Vercel-Style Filter Tabs -->
+        <div class="studio-tabs">
+          <button class="tab-btn active" onclick="filterStudio('all', this)">All (14)</button>
+          <button class="tab-btn" onclick="filterStudio('apps', this)">Apps &amp; Hub</button>
+          <button class="tab-btn" onclick="filterStudio('3d', this)">3D &amp; CAD</button>
+          <button class="tab-btn" onclick="filterStudio('media', this)">Media &amp; Video</button>
+          <button class="tab-btn" onclick="filterStudio('code', this)">Code &amp; Docs</button>
+        </div>
+
+        <div style="display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap;" id="studioActionChips">
+          <button data-cat="apps" onclick="triggerInterplatform('netflix', 'Play Stranger Things on Netflix')">🎬 Netflix</button>
+          <button data-cat="apps" onclick="triggerInterplatform('prime_video', 'Play The Boys on Amazon Prime Video')">📺 Prime Video</button>
+          <button data-cat="apps" onclick="triggerInterplatform('hotstar', 'Play Marvel Avengers on Disney+ Hotstar')">🌟 Hotstar</button>
+          <button data-cat="apps" onclick="triggerInterplatform('gmail', 'Compose email in Gmail about CLUMSY Launch')">✉️ Gmail</button>
+          <button data-cat="apps" onclick="triggerInterplatform('calendar', 'Schedule meeting CLUMSY Review in Google Calendar tomorrow at 10am')">📅 Calendar</button>
+          <button data-cat="apps" onclick="triggerInterplatform('notes', 'Take a note: Upgrade Deskbot 3D Blender pipeline')">📝 Notes</button>
+          <button data-cat="apps" onclick="triggerInterplatform('amazon', 'Search Arduino Servo Kit on Amazon')">🛒 Amazon</button>
+          <button data-cat="3d" onclick="triggerInstantJob('3d_model', 'Create an engineering 3D model of a Skyscraper Building in Blender')">🏢 3D Building</button>
+          <button data-cat="3d" onclick="triggerInstantJob('3d_model', 'Create an engineering 3D model of a Suspension Bridge in Blender')">🌉 3D Bridge</button>
+          <button data-cat="3d" onclick="triggerInstantJob('3d_model', 'Render a 3D model of Quadcopter Drone in Blender')">🚁 3D Drone</button>
+          <button data-cat="media" onclick="triggerInstantJob('pic', 'Generate a realistic photo of Sunset on Goa Beach')">📸 AI Photo Studio</button>
+          <button data-cat="media" onclick="triggerInstantJob('video', 'Make a video about CLUMSY Autonomous Robotics')">🎥 AI Video Maker</button>
+          <button data-cat="code" onclick="triggerInstantJob('ai_tool', 'Create a mind map flowchart of CLUMSY Tri-Node Architecture')">🧠 AI Flowchart</button>
+          <button data-cat="code" onclick="triggerInstantJob('code', 'Write Java code to print My name is Aditya Pratap Singh')">💻 Java/Python Code</button>
         </div>
       </div>
 
       <div class="event-stream-box" id="liveEventStream">
-        <div>[JARVIS KERNEL] 4-Model Fusion &amp; Multi-Node Bluetooth Mesh active.</div>
+        <div>[CLUMSY KERNEL] 4-Model Fusion &amp; Multi-Node Bluetooth Mesh active.</div>
       </div>
     </div>
 
     <!-- Right Column: 4-Model Fusion Telemetry & Connected Mesh Map -->
     <div class="card">
-      <h2><span>🧠</span> 4-Model Fusion Brain (`JARVIS-X1`)</h2>
+      <h2><span>🧠</span> 4-Model Fusion Brain (<code>CLUMSY-X1</code>)</h2>
       <div class="fusion-matrix" id="fusionMatrixPanel">
         <div class="model-bar-row">
           <span style="width: 92px;">Qwen 3.5</span>
@@ -722,7 +825,7 @@
       }
       if (artifact.job_type === 'music' && jarvisHUD) {
         jarvisHUD.toggleSynthMusic(true);
-        document.getElementById('nowPlaying').textContent = artifact.track || 'JARVIS Synthwave';
+        document.getElementById('nowPlaying').textContent = artifact.track || 'CLUMSY Synthwave';
         document.getElementById('mediaStatus').textContent = 'Playing on Laptop Master Audio';
       }
     }
@@ -743,6 +846,8 @@
         window.speechSynthesis.speak(utter);
       } catch (_) {}
     }
+    const speakClumsyReply = speakJarvisReply;
+    window.speakClumsyReply = speakJarvisReply;
 
     function connectWebSocket(wsUrl) {
       try {
@@ -938,7 +1043,8 @@
     function normalizeVoicePhoneticsJS(rawText) {
       if (!rawText) return '';
       return String(rawText)
-        .replace(/\b(harvis|charvis|jervis|jarves)\b/gi, 'JARVIS')
+        .replace(/\b(clumzy|klumsy|klumzy|clumsee|clumsie)\b/gi, 'CLUMSY')
+        .replace(/\b(harvis|charvis|jervis|jarves)\b/gi, 'CLUMSY')
         .replace(/\b(jeemail|gee\s*mail|g\s+mail|g-mail)\b/gi, 'Gmail')
         .replace(/\b(callender|calender|calandar)\b/gi, 'Calendar')
         .replace(/\b(net\s+flicks|netflex|net\s+flix)\b/gi, 'Netflix')
@@ -948,6 +1054,21 @@
         .replace(/\b(p\s+p\s+t|power\s+point)\b/gi, 'PPT')
         .replace(/\b(java\s+script)\b/gi, 'JavaScript')
         .trim();
+    }
+
+    function filterStudio(category, btnEl) {
+      if (btnEl) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btnEl.classList.add('active');
+      }
+      const chips = document.querySelectorAll('#studioActionChips button');
+      chips.forEach(chip => {
+        if (category === 'all' || chip.getAttribute('data-cat') === category) {
+          chip.style.display = 'inline-block';
+        } else {
+          chip.style.display = 'none';
+        }
+      });
     }
 
     async function sendQuery(isVoice = false, alternatives = null) {
@@ -983,7 +1104,7 @@
           t.tilt_deg || 95,
           false
         );
-        logStreamEvent('JARVIS_FUSION', `${data.intent || 'executed'} -> ${data.robot_state || 'HAPPY'}`);
+        logStreamEvent('CLUMSY_FUSION', `${data.intent || 'executed'} -> ${data.robot_state || 'HAPPY'}`);
       } catch (err) {
         appendMessage(`Executed offline: "${text}".`, 'assistant');
         setExpression('happy', 90, 95, false);

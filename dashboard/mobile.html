@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <link rel="manifest" href="/manifest.json" />
-  <title>J.A.R.V.I.S. MOBILE AGENT // Deskbot Eyes Stream-Flow App</title>
+  <title>CLUMSY: your everyday AI // Mobile Companion</title>
   <script src="/eyeballs.js"></script>
   <style>
     :root {
@@ -285,9 +285,9 @@
   <div id="connectHandshakeScreen">
     <div class="handshake-card">
       <div class="pulse-ring">👁️</div>
-      <div class="handshake-title">DESKBOT EYES // STREAM-FLOW</div>
+      <div class="handshake-title">CLUMSY // DESKBOT EYES</div>
       <div class="handshake-sub">
-        Connect your phone to the <b>J.A.R.V.I.S. Laptop Hub</b>. Once recognized, your phone transforms into your live <b>Deskbot Eyeballs</b> with always-on microphone &amp; speaker streaming.
+        Connect your phone to the <b>CLUMSY Laptop Hub</b>. Once recognized, your phone transforms into your live <b>Deskbot Eyeballs</b> with always-on microphone &amp; speaker streaming.
       </div>
       <div class="hub-status-box">
         <div>📡 <b>Laptop Hub Status:</b> <span id="hubDetectStatus" style="color: var(--success);">Detecting Laptop Hub...</span></div>
@@ -307,7 +307,7 @@
     <div class="top-hud">
       <div class="hud-pill">
         <span class="dot-live" id="wsDot"></span>
-        <span id="linkBadgeText">Deskbot Eyes • Linked to Laptop Hub</span>
+        <span id="linkBadgeText">CLUMSY Eyes • Linked to Laptop Hub</span>
       </div>
       <div style="display: flex; gap: 6px;">
         <button class="rx-btn" onclick="toggleDrawer()">📋 Studio / Notes</button>
@@ -317,7 +317,7 @@
 
     <div class="bottom-hud">
       <div class="voice-caption" id="jarvisVoiceCaption">
-        "At your service, sir. Deskbot Eyes are online and listening continuously."
+        "At your service, sir. CLUMSY is online and listening continuously."
       </div>
 
       <div class="reaction-strip" style="margin-bottom: 2px;">
@@ -330,7 +330,7 @@
         <button class="rx-btn" onclick="quickMobileVoiceCmd('Create an engineering 3D model of a Skyscraper Building in Blender')">🏢 3D Building</button>
         <button class="rx-btn" onclick="quickMobileVoiceCmd('Create an engineering 3D model of a Suspension Bridge in Blender')">🌉 3D Bridge</button>
         <button class="rx-btn" onclick="quickMobileVoiceCmd('Generate a realistic photo of Sunset on Goa Beach')">📸 AI Photo</button>
-        <button class="rx-btn" onclick="quickMobileVoiceCmd('Make a video about JARVIS Robotics')">🎥 AI Video</button>
+        <button class="rx-btn" onclick="quickMobileVoiceCmd('Make a video about CLUMSY Robotics')">🎥 AI Video</button>
       </div>
 
       <div class="reaction-strip">
@@ -351,7 +351,7 @@
         <input
           type="text"
           id="mobileQueryInput"
-          placeholder="Say anything or type to J.A.R.V.I.S. (opens on Laptop & Phone)..."
+          placeholder="Say anything or type to CLUMSY (opens on Laptop & Phone)..."
           onkeydown="if(event.key==='Enter') sendMobileCommand()"
         />
         <button class="btn-action" onclick="sendMobileCommand()">Send</button>
@@ -362,11 +362,11 @@
   <!-- Slide-Up Studio & Personal Agent Notes Drawer -->
   <div id="agentDrawer">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-      <h3 style="font-size: 14px; color: var(--accent);">⚡ J.A.R.V.I.S. MOBILE AGENT &amp; LAPTOP OUTPUT</h3>
+      <h3 style="font-size: 14px; color: var(--accent);">⚡ CLUMSY MOBILE AGENT &amp; LAPTOP OUTPUT</h3>
       <button class="rx-btn" onclick="toggleDrawer()">✕ Close</button>
     </div>
     <div id="drawerJobOutput" class="drawer-code" style="font-size: 12.5px; color: var(--muted); margin-bottom: 12px;">
-      Ask J.A.R.V.I.S. to write Java/Python/C++ code, create a PPT presentation, play a song, or open any app on your laptop!
+      Ask CLUMSY to write Java/Python/C++ code, create a PPT presentation, play a song, or open any app on your laptop!
     </div>
     <h4 style="font-size: 12px; color: var(--accent); margin-bottom: 6px;">📌 Synced Personal Notes &amp; Reminders</h4>
     <div id="mobileNotesList" style="font-size: 12.5px; display: flex; flex-direction: column; gap: 6px;"></div>
@@ -624,7 +624,8 @@
     function normalizeMobilePhonetics(rawText) {
       if (!rawText) return '';
       return String(rawText)
-        .replace(/\b(harvis|charvis|jervis|jarves)\b/gi, 'JARVIS')
+        .replace(/\b(clumzy|klumsy|klumzy|clumsee|clumsie)\b/gi, 'CLUMSY')
+        .replace(/\b(harvis|charvis|jervis|jarves)\b/gi, 'CLUMSY')
         .replace(/\b(jeemail|gee\s*mail|g\s+mail|g-mail)\b/gi, 'Gmail')
         .replace(/\b(callender|calender|calandar)\b/gi, 'Calendar')
         .replace(/\b(net\s+flicks|netflex|net\s+flix)\b/gi, 'Netflix')

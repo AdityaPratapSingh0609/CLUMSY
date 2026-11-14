@@ -30,7 +30,8 @@ import re
 from typing import Any, Dict, List, Optional, Tuple
 
 PHONETIC_REPLACEMENTS: Tuple[Tuple[str, str], ...] = (
-    (r"\b(?:harvis|charvis|jervis|jarves|j\.a\.r\.v\.i\.s\.)\b", "jarvis"),
+    (r"\b(?:clumzy|klumsy|klumzy|clumsee|clumsie)\b", "clumsy"),
+    (r"\b(?:harvis|charvis|jervis|jarves|j\.a\.r\.v\.i\.s\.)\b", "clumsy"),
     (r"\b(?:jeemail|gee\s*mail|g\s+mail|g-mail|jimail)\b", "gmail"),
     (r"\b(?:callender|calender|calandar|challenger\s+app|kalandar)\b", "calendar"),
     (r"\b(?:net\s+flicks|netflex|netflx|net\s+flix)\b", "netflix"),
@@ -100,9 +101,9 @@ def apply_phonetic_corrections(text: str) -> str:
 
 
 def strip_wake_prefix(text: str) -> str:
-    """Remove leading wake-word prefixes ('hey jarvis', 'ok jarvis', 'jarvis,') if followed by a command."""
+    """Remove leading wake-word prefixes ('hey clumsy', 'hey jarvis', 'ok clumsy', 'clumsy,') if followed by a command."""
     cleaned = re.sub(
-        r"^(?:hey|hi|ok|okay|yo|hello)?\s*(?:jarvis|deskbot)[\s,:.\-]+",
+        r"^(?:hey|hi|ok|okay|yo|hello)?\s*(?:jarvis|clumsy|deskbot)[\s,:.\-]+",
         "",
         text.strip(),
         flags=re.IGNORECASE,
