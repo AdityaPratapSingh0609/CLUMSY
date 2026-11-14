@@ -892,10 +892,13 @@
     async queryOnlineCloudOmni(userQuery, sysPrompt) {
       if (typeof navigator !== 'undefined' && navigator.onLine === false) return null;
       const proto = 'https:';
-      // 1. Primary OpenAI-fast endpoint
+      // Start Wikipedia Live Knowledge Graph fetch in parallel so we never wait 8+ seconds if Pollinations is slow or rate-limited!
+      const wikiPromise = this.queryWikipediaKnowledge(userQuery);
+
+      // 1. Primary OpenAI-fast endpoint (with tight 3.5s fast-path timeout)
       try {
         const c = new AbortController();
-        const t = setTimeout(() => c.abort(), 8500);
+        const t = setTimeout(() => c.abort(), 3500);
         const res = await fetch(`${proto}//text.pollinations.ai/openai`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -920,14 +923,14 @@
         }
       } catch (_) {}
 
-      // 2. Wikipedia Live Knowledge Graph Fallback (Zero rate-limit, full CORS, 6.8M+ articles!)
-      const wikiReply = await this.queryWikipediaKnowledge(userQuery);
+      // 2. Instant parallel Wikipedia Live Knowledge Graph result (already resolved in ~400ms!)
+      const wikiReply = await wikiPromise;
       if (wikiReply) return wikiReply;
 
       // 3. Secondary GET streaming endpoint
       try {
         const c2 = new AbortController();
-        const t2 = setTimeout(() => c2.abort(), 6500);
+        const t2 = setTimeout(() => c2.abort(), 4500);
         const url = `${proto}//text.pollinations.ai/${encodeURIComponent(userQuery)}?model=openai-fast&system=${encodeURIComponent(sysPrompt)}`;
         const res2 = await fetch(url, { signal: c2.signal });
         clearTimeout(t2);
