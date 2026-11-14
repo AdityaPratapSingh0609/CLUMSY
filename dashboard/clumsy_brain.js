@@ -774,10 +774,17 @@
     /**
      * Synthesizes a rich, intelligent offline response for ANY topic without needing internet
      */
+    _matchesKnowledgeEntry(qLow, entry) {
+      return entry.keys.some(k => {
+        const escaped = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        return new RegExp(`\\b${escaped}\\b`, 'i').test(qLow);
+      });
+    }
+
     synthesizeDeepOfflineAnswer(query, qLow) {
       // 1. Check curated deep science / CS / engineering knowledge base
       for (const entry of OFFLINE_KNOWLEDGE_BASE) {
-        if (entry.keys.some(k => qLow.includes(k))) {
+        if (this._matchesKnowledgeEntry(qLow, entry)) {
           return entry.response;
         }
       }
@@ -943,7 +950,7 @@
       // 1. Check if topic is in our Instant Offline Knowledge Base first (<1ms deterministic accuracy)
       const qLow = userQuery.toLowerCase();
       for (const entry of OFFLINE_KNOWLEDGE_BASE) {
-        if (entry.keys.some(k => qLow.includes(k))) {
+        if (this._matchesKnowledgeEntry(qLow, entry)) {
           return { text: entry.response, engine: 'CLUMSY-7X Omni' };
         }
       }
