@@ -363,7 +363,7 @@ class JarvisFusionModel:
             song_name = user_query.strip()
             for prefix in ("play song", "play music", "play", "put on"):
                 if q_low.startswith(prefix):
-                    song_name = user_query[len(prefix) :].strip() or "JARVIS Synthwave Mix"
+                    song_name = user_query[len(prefix) :].strip() or "CLUMSY Synthwave Mix"
                     break
             tool_call = {
                 "tool": "media_player",
@@ -371,6 +371,29 @@ class JarvisFusionModel:
             }
             spoken = f"Playing '{song_name}' on your system audio deck now, sir."
             expr = "happy"
+            servo = {"pan": clamp_servo(90), "tilt": clamp_servo(98)}
+        elif any(k in q_low for k in ("thank you", "thanks", "thx", "appreciate it", "grateful")):
+            import random
+            expr = random.choice(["happy", "love", "wink"])
+            replies = {
+                "happy": "You're very welcome, sir! Always happy to help you.",
+                "love": "My pleasure, sir! Always here for you with full heart.",
+                "wink": "Anytime at all, sir! Consider it done with a wink.",
+            }
+            spoken = replies[expr]
+            servo = {"pan": clamp_servo(88 if expr == "wink" else 90), "tilt": clamp_servo(98)}
+        elif any(k in q_low for k in ("i love you", "love you", "you are awesome", "you're the best", "good job", "well done", "good bot")):
+            import random
+            expr = random.choice(["love", "wink", "happy", "excited"])
+            spoken = "Thank you so much, sir! I love being your everyday AI companion."
+            servo = {"pan": clamp_servo(90), "tilt": clamp_servo(100)}
+        elif any(k in q_low for k in ("go to sleep", "sleep mode", "goodnight", "good night", "sleep now")):
+            expr = "sleeping"
+            spoken = "Entering sleep mode now, sir. My microphone stays active — just say 'Hey Clumsy' to wake me up."
+            servo = {"pan": clamp_servo(90), "tilt": clamp_servo(80)}
+        elif q_low in ("hey clumsy", "clumsy", "wake up", "hey jarvis", "jarvis"):
+            expr = "happy"
+            spoken = "I'm wide awake and ready, sir! What can I do for you?"
             servo = {"pan": clamp_servo(90), "tilt": clamp_servo(98)}
 
         # Record conversation turn in rolling memory (cap at 20 messages)

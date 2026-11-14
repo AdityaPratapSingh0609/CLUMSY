@@ -1071,14 +1071,80 @@
       });
     }
 
+    // 50-Second Inactivity Sleep Timer & Wake-Up Shake Sequence
+    const DESKTOP_SLEEP_TIMEOUT_MS = 50000;
+    let desktopSleepTimer = null;
+    let isDesktopSleeping = false;
+
+    function resetDesktopSleepTimer() {
+      if (desktopSleepTimer) clearTimeout(desktopSleepTimer);
+      desktopSleepTimer = setTimeout(() => {
+        isDesktopSleeping = true;
+        setExpression('sleeping', 90, 80, true);
+        const voiceBar = document.getElementById('liveVoiceTranscriptBar');
+        if (voiceBar) {
+          voiceBar.textContent = '💤 CLUMSY is sleeping (no task for 50s). Microphone is active — say "Hey Clumsy" to wake up!';
+        }
+      }, DESKTOP_SLEEP_TIMEOUT_MS);
+    }
+
+    function triggerDesktopWakeupShake(callback) {
+      isDesktopSleeping = false;
+      resetDesktopSleepTimer();
+      if (jarvisHUD) jarvisHUD.playSciFiChime('wake');
+      if (eyeballEngine && typeof eyeballEngine.triggerWakeupShake === 'function') {
+        eyeballEngine.triggerWakeupShake(() => {
+          setExpression('happy', 90, 96, true);
+          if (typeof callback === 'function') callback();
+        });
+      } else {
+        setExpression('happy', 90, 96, true);
+        if (typeof callback === 'function') callback();
+      }
+    }
+
     async function sendQuery(isVoice = false, alternatives = null) {
       const input = document.getElementById('userInput');
       const rawText = input.value.trim();
       const text = normalizeVoicePhoneticsJS(rawText);
       if (!text) return;
 
+      if (isDesktopSleeping) {
+        const remainder = text.replace(/^(?:hey|hi|ok|okay|yo)?\s*(?:clumsy|wake\s+up)[\s,!?.:-]*/i, '').trim();
+        if (!remainder) {
+          input.value = '';
+          appendMessage(text, 'user');
+          triggerDesktopWakeupShake(() => {
+            const msg = "I'm wide awake and ready! How can I help you?";
+            appendMessage(msg, 'assistant');
+            speakJarvisReply(msg);
+          });
+          return;
+        }
+        triggerDesktopWakeupShake();
+      } else {
+        resetDesktopSleepTimer();
+      }
+
       appendMessage(text, 'user');
       input.value = '';
+
+      // Instant local check for "thank you" -> random happy / love / wink reaction
+      if (/\b(thank\s*you|thanks|thx|appreciate\s+it)\b/i.test(text)) {
+        const rxPool = ['happy', 'love', 'wink'];
+        const chosenRx = rxPool[Math.floor(Math.random() * rxPool.length)];
+        const replies = {
+          happy: "You're very welcome! Always happy to help you!",
+          love: "Aww, my pleasure! Sending you lots of love!",
+          wink: "Anytime at all! Consider it done with a wink!",
+        };
+        setExpression(chosenRx, 90, 98, true);
+        appendMessage(replies[chosenRx], 'assistant');
+        speakJarvisReply(replies[chosenRx]);
+        logStreamEvent('CLUMSY_EMOTION', `THANK_YOU -> ${chosenRx.toUpperCase()}`);
+        return;
+      }
+
       setExpression('thinking', 105, 115, false);
       if (jarvisHUD) jarvisHUD.playSciFiChime('wake');
       logStreamEvent(isVoice ? 'VOICE_CMD' : 'USER_CMD', text);
@@ -1299,6 +1365,31 @@
         const resultItem = event.results[lastIdx];
         const rawTranscript = resultItem[0].transcript.trim();
         const corrected = normalizeVoicePhoneticsJS(rawTranscript);
+
+        // If sleeping: stay asleep until "Hey Clumsy" / "Clumsy" / "Wake up" is spoken
+        if (isDesktopSleeping) {
+          if (/\b(clumsy|wake\s+up)\b/i.test(corrected)) {
+            if (!resultItem.isFinal) {
+              triggerDesktopWakeupShake();
+              if (voiceBar) voiceBar.textContent = '✨ Waking up! "Hey Clumsy" heard...';
+              return;
+            }
+            const remainder = corrected.replace(/^(?:hey|hi|ok|okay|yo)?\s*(?:clumsy|wake\s+up)[\s,!?.:-]*/i, '').trim();
+            triggerDesktopWakeupShake(() => {
+              if (remainder) {
+                document.getElementById('userInput').value = remainder;
+                sendQuery(true);
+              } else {
+                const msg = "I'm wide awake and ready! How can I help you?";
+                appendMessage(msg, 'assistant');
+                speakJarvisReply(msg);
+              }
+            });
+          }
+          return;
+        }
+
+        resetDesktopSleepTimer();
         if (!resultItem.isFinal) {
           if (voiceBar) voiceBar.textContent = `🎙️ Hearing (Live): "${corrected}"...`;
           return;
@@ -1325,6 +1416,7 @@
       try { activeRecognition.start(); } catch (_) {}
     }
 
+    resetDesktopSleepTimer();
     refreshStatus();
   </script>
 </body>

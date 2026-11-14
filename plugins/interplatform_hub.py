@@ -29,8 +29,17 @@ import webbrowser
 
 from core.tool_router import ToolRegistry, ToolSpec
 
-OUTPUT_DIR = Path("workspace_output/interplatform")
-OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+import tempfile
+
+if os.environ.get("VERCEL"):
+    OUTPUT_DIR = Path(tempfile.gettempdir()) / "workspace_output" / "interplatform"
+else:
+    OUTPUT_DIR = Path("workspace_output/interplatform")
+try:
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+except OSError:
+    OUTPUT_DIR = Path(tempfile.gettempdir()) / "workspace_output" / "interplatform"
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 NOTES_FILE = OUTPUT_DIR / "jarvis_notes.json"
 CALENDAR_FILE = OUTPUT_DIR / "jarvis_calendar.json"

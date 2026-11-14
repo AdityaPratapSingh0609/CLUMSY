@@ -1,0 +1,6 @@
+models/*.gguf
+workspace_output/
+tests/
+__pycache__/
+*.pyc
+.git/

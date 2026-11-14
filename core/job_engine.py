@@ -113,9 +113,19 @@ class UniversalJobEngine:
     """Executes multi-modal jobs (Code, PPT, Graphics, Music, Docs) ASAP on the laptop."""
 
     def __init__(self, output_root: str | Path = "workspace_output") -> None:
-        self.output_root = Path(output_root)
-        for sub in ("code", "presentations", "graphics", "documents", "models_3d", "videos", "interplatform", "ai_tools"):
-            (self.output_root / sub).mkdir(parents=True, exist_ok=True)
+        import os
+        import tempfile
+        if str(output_root) == "workspace_output" and os.environ.get("VERCEL"):
+            self.output_root = Path(tempfile.gettempdir()) / "workspace_output"
+        else:
+            self.output_root = Path(output_root)
+        try:
+            for sub in ("code", "presentations", "graphics", "documents", "models_3d", "videos", "interplatform", "ai_tools"):
+                (self.output_root / sub).mkdir(parents=True, exist_ok=True)
+        except OSError:
+            self.output_root = Path(tempfile.gettempdir()) / "workspace_output"
+            for sub in ("code", "presentations", "graphics", "documents", "models_3d", "videos", "interplatform", "ai_tools"):
+                (self.output_root / sub).mkdir(parents=True, exist_ok=True)
         self.creative_studio = CreativeAIStudio(output_root=self.output_root)
         self.jobs: List[Dict[str, Any]] = []
 

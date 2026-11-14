@@ -245,20 +245,40 @@
     sleepy: {
       irisColor: "#818cf8",
       irisCore: "#312e81",
-      glowColor: "rgba(129, 140, 248, 0.48)",
-      scleraRim: "rgba(129, 140, 248, 0.35)",
+      glowColor: "rgba(129, 140, 248, 0.42)",
+      scleraRim: "rgba(129, 140, 248, 0.30)",
       browColor: "#a5b4fc",
-      pupilScale: 0.88,
-      upperLidL: 0.64,
-      upperLidR: 0.64,
-      lowerLidL: 0.12,
-      lowerLidR: 0.12,
-      lowerSmile: 0.0,
+      pupilScale: 0.82,
+      upperLidL: 0.92,
+      upperLidR: 0.92,
+      lowerLidL: 0.25,
+      lowerLidR: 0.25,
+      lowerSmile: 0.2,
       browAngleL: 6,
       browAngleR: -6,
-      browOffsetY: 5,
+      browOffsetY: 7,
       gazeBiasX: 0,
       gazeBiasY: 6,
+      isSleeping: true,
+    },
+    sleeping: {
+      irisColor: "#6366f1",
+      irisCore: "#1e1b4b",
+      glowColor: "rgba(99, 102, 241, 0.35)",
+      scleraRim: "rgba(129, 140, 248, 0.25)",
+      browColor: "#818cf8",
+      pupilScale: 0.78,
+      upperLidL: 0.94,
+      upperLidR: 0.94,
+      lowerLidL: 0.28,
+      lowerLidR: 0.28,
+      lowerSmile: 0.25,
+      browAngleL: 8,
+      browAngleR: -8,
+      browOffsetY: 8,
+      gazeBiasX: 0,
+      gazeBiasY: 8,
+      isSleeping: true,
     },
     blink: {
       irisColor: "#38bdf8",
@@ -382,12 +402,48 @@
       this.blinkStart = performance.now();
     }
 
+    triggerWakeupShake(onComplete) {
+      this.isWakeupShaking = true;
+      this.wakeupShakeStart = performance.now();
+      this.wakeupCallback = typeof onComplete === "function" ? onComplete : null;
+      this.reaction = "surprised";
+      this.triggerBlink();
+    }
+
     _updatePhysics(now) {
       const preset = REACTION_PRESETS[this.reaction] || REACTION_PRESETS.idle;
 
+      // Wake-up eye shake sequence (shake -> happy animation)
+      this.shakeOffsetX = 0;
+      this.shakeOffsetY = 0;
+      if (this.isWakeupShaking) {
+        const elapsed = now - (this.wakeupShakeStart || now);
+        const duration = 560;
+        if (elapsed >= duration) {
+          this.isWakeupShaking = false;
+          this.reaction = "happy";
+          if (this.wakeupCallback) {
+            const cb = this.wakeupCallback;
+            this.wakeupCallback = null;
+            cb();
+          }
+        } else {
+          const decay = 1 - elapsed / duration;
+          this.shakeOffsetX = Math.sin(elapsed * 0.068) * 18 * decay;
+          this.shakeOffsetY = Math.cos(elapsed * 0.095) * 6 * decay;
+          if (elapsed > 260 && this.reaction !== "happy") {
+            this.reaction = "happy";
+          }
+        }
+      }
+
       // Autonomous micro-saccades
       if (now >= this.nextSaccadeAt) {
-        if (preset.codeScan) {
+        if (preset.isSleeping) {
+          this.saccadeX = 0;
+          this.saccadeY = Math.sin(now * 0.002) * 2.0;
+          this.nextSaccadeAt = now + 500;
+        } else if (preset.codeScan) {
           // Rapid horizontal scanning like reading lines of code
           this.saccadeX = ((Math.floor(now / 260) % 5) - 2) * 5.5;
           this.saccadeY = Math.sin(now * 0.004) * 2.5;
@@ -399,8 +455,8 @@
         }
       }
 
-      // Spontaneous natural blinking
-      if (!this.isBlinking && now >= this.nextBlinkAt) {
+      // Spontaneous natural blinking (paused while sleeping)
+      if (!preset.isSleeping && !this.isBlinking && now >= this.nextBlinkAt) {
         this.triggerBlink();
         // Occasional double blink
         const doubleBlink = Math.random() < 0.22;
@@ -687,6 +743,21 @@
       ctx.restore();
     }
 
+    _drawSleepZzz(ctx, rightCx, cy, radius, now) {
+      ctx.save();
+      ctx.fillStyle = "rgba(165, 180, 252, 0.78)";
+      ctx.font = `bold ${Math.max(12, Math.round(radius * 0.28))}px 'Segoe UI', sans-serif`;
+      for (let i = 0; i < 3; i++) {
+        const phase = ((now * 0.00055 + i * 0.33) % 1);
+        const zx = rightCx + radius * 0.45 + phase * radius * 0.65 + Math.sin(phase * 6 + i) * 6;
+        const zy = cy - radius * 0.65 - phase * radius * 1.1;
+        const alpha = Math.sin(phase * Math.PI) * 0.85;
+        ctx.globalAlpha = Math.max(0, alpha);
+        ctx.fillText(i === 2 ? "Z" : "z", zx, zy);
+      }
+      ctx.restore();
+    }
+
     _animate(now) {
       if (this.ctx && this.canvas) {
         this._updatePhysics(now);
@@ -696,14 +767,21 @@
         ctx.clearRect(0, 0, this.width, this.height);
 
         const preset = REACTION_PRESETS[this.reaction] || REACTION_PRESETS.idle;
-        const cy = this.height * 0.54;
+        const shakeX = this.shakeOffsetX || 0;
+        const shakeY = this.shakeOffsetY || 0;
+        const sleepBreathY = preset.isSleeping ? Math.sin(now * 0.0022) * 4 : 0;
+        const cy = this.height * 0.54 + shakeY + sleepBreathY;
         const radius = Math.min(this.width * 0.19, this.height * 0.34);
         const spacing = Math.max(radius * 2.55, this.width * 0.44);
-        const leftCx = this.width / 2 - spacing / 2;
-        const rightCx = this.width / 2 + spacing / 2;
+        const leftCx = this.width / 2 - spacing / 2 + shakeX;
+        const rightCx = this.width / 2 + spacing / 2 + shakeX;
 
         this._drawSingleEyeball(ctx, leftCx, cy, radius, false, now, preset);
         this._drawSingleEyeball(ctx, rightCx, cy, radius, true, now, preset);
+
+        if (preset.isSleeping) {
+          this._drawSleepZzz(ctx, rightCx, cy, radius, now);
+        }
 
         ctx.restore();
       }

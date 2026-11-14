@@ -132,6 +132,8 @@ _ws_lock = threading.Lock()
 
 def ensure_realtime_ws_started(preferred_port: int = 9121) -> int:
     """Ensure the full-duplex WebSocket server is running on a background thread (Bug Fix #5)."""
+    if os.environ.get("VERCEL"):
+        return preferred_port
     global _ws_loop, _ws_thread
     with _ws_lock:
         if realtime_hub.port and realtime_hub.port > 0 and _ws_loop is not None:
@@ -179,9 +181,20 @@ class DeskbotRequestHandler(SimpleHTTPRequestHandler):
         self.send_response(status_code)
         self.send_header("Content-Type", "application/json")
         self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+        self.send_header("Access-Control-Allow-Private-Network", "true")
         self.send_header("Content-Length", str(len(raw)))
         self.end_headers()
         self.wfile.write(raw)
+
+    def do_OPTIONS(self) -> None:
+        self.send_response(204)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+        self.send_header("Access-Control-Allow-Private-Network", "true")
+        self.end_headers()
 
     def _read_json_body(self) -> Dict[str, Any]:
         content_length = int(self.headers.get("Content-Length", 0))
