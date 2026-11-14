@@ -11,7 +11,7 @@
   <link rel="apple-touch-icon" href="/deskbot_render.jpg" />
   <title>CLUMSY-7X Omni // Living AI Companion</title>
   <script src="/eyeballs.js"></script>
-  <script src="/clumsy_brain.js"></script>
+  <script src="/clumsy_brain.js?v=11"></script>
   <style>
     :root {
       --bg: #050508;
@@ -1097,6 +1097,7 @@
     let speechRecStarting = false;
     let lastMicStartMs = 0;
     let hasUserTappedScreen = false;
+    let webSpeechNetworkBlocked = false;
 
     async function requestPhoneMicPermissionAndStart() {
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -1141,7 +1142,7 @@
           '⚠️ Voice recognition requires Safari on iPhone or Chrome on Android.';
         return;
       }
-      if (!streamMicEnabled || isSpeakingPhoneTTS) return;
+      if (!streamMicEnabled || isSpeakingPhoneTTS || webSpeechNetworkBlocked) return;
       const now = Date.now();
       if ((speechRecRunning || speechRecStarting) && !forceFresh) return;
       // Prevent duplicate touchend + click events within 650ms from aborting an in-flight start()
@@ -1215,6 +1216,12 @@
         speechRecStarting = false;
         speechRecRunning = false;
         const errCode = ev && ev.error ? String(ev.error) : '';
+        if (errCode === 'network') {
+          // Brave Browser / Electron WebView blocks Google Web Speech network API — switch to Local Hardware Mic (/api/voice/poll)
+          webSpeechNetworkBlocked = true;
+          updateMicButtonUI('listening');
+          return;
+        }
         if (errCode === 'not-allowed' || errCode === 'service-not-allowed') {
           updateMicButtonUI('tap_needed');
           if (hasUserTappedScreen && !micPermissionPrimed) {
@@ -1226,9 +1233,9 @@
           return;
         }
         // For 'no-speech' or 'aborted' or transient errors, auto-restart smoothly
-        if (streamMicEnabled && !isSpeakingPhoneTTS && (hasUserTappedScreen || !isMobileBrowser)) {
+        if (streamMicEnabled && !isSpeakingPhoneTTS && !webSpeechNetworkBlocked && (hasUserTappedScreen || !isMobileBrowser)) {
           micRestartTimer = setTimeout(() => {
-            if (streamMicEnabled && !isSpeakingPhoneTTS) startAlwaysOnMic(true);
+            if (streamMicEnabled && !isSpeakingPhoneTTS && !webSpeechNetworkBlocked) startAlwaysOnMic(true);
           }, 380);
         }
       };
@@ -1249,13 +1256,13 @@
             sendMobileCommand([pending]);
           }
         }
-        if (streamMicEnabled && !isSpeakingPhoneTTS) {
+        if (streamMicEnabled && !isSpeakingPhoneTTS && !webSpeechNetworkBlocked) {
           micRestartTimer = setTimeout(() => {
-            if (streamMicEnabled && !isSpeakingPhoneTTS && !speechRecRunning && !speechRecStarting) {
+            if (streamMicEnabled && !isSpeakingPhoneTTS && !speechRecRunning && !speechRecStarting && !webSpeechNetworkBlocked) {
               startAlwaysOnMic(true);
             }
           }, isIOSDevice ? 220 : 300);
-        } else {
+        } else if (!streamMicEnabled) {
           updateMicButtonUI('idle');
         }
       };
@@ -1279,20 +1286,21 @@
     }
     window.addEventListener('click', unlockAudioOnGesture);
 
-    // Hardware Offline Microphone Polling Fallback (captures voice via Windows MS-1033-80-DESK even inside Electron WebView!)
+    // Hardware Offline Microphone Polling Fallback (captures voice via Windows MS-1033-80-DESK in Brave Browser / Electron WebView!)
     async function pollHardwareOfflineMic() {
-      if (!streamMicEnabled || isSpeakingPhoneTTS) return;
+      if (!streamMicEnabled || isSpeakingPhoneTTS || isMobileBrowser) return;
       try {
         const c = new AbortController();
-        const t = setTimeout(() => c.abort(), 850);
+        const t = setTimeout(() => c.abort(), 1500);
         const res = await fetch(`${getApiBase()}/api/voice/poll?since=${hwMicPollSeq}`, { signal: c.signal });
         clearTimeout(t);
         if (!res.ok) return;
         const data = await res.json();
         if (data.ready && !hwMicAvailable) {
           hwMicAvailable = true;
+          updateMicButtonUI('listening');
           if (!isBotSleeping) {
-            document.getElementById('linkBadgeText').textContent = 'CLUMSY • Offline Hardware Mic Active';
+            document.getElementById('linkBadgeText').textContent = 'CLUMSY • Listening ("Hey Clumsy")';
           }
         }
         if (typeof data.latest_id === 'number') {
@@ -1314,11 +1322,12 @@
 
     function toggleStreamMic() {
       hasUserTappedScreen = true;
-      // If mic is enabled in state, but not actively running yet on mobile (e.g. awaiting gesture),
+      // If mic is enabled in state, but not actively running yet (e.g. awaiting gesture on phone),
       // tapping the Mic button synchronously starts SpeechRecognition inside the click gesture!
-      if (streamMicEnabled && !speechRecRunning && !speechRecStarting) {
+      if (streamMicEnabled && !speechRecRunning && !speechRecStarting && !hwMicAvailable) {
         document.getElementById('jarvisVoiceCaption').textContent = '🎙️ Listening — speak to CLUMSY-7X now!';
         setMobileReaction('listening', 90, 105);
+        webSpeechNetworkBlocked = false;
         startAlwaysOnMic(true);
         return;
       }
@@ -1327,6 +1336,8 @@
       if (streamMicEnabled) {
         document.getElementById('jarvisVoiceCaption').textContent = '🎙️ Microphone ON — listening for your voice...';
         setMobileReaction('listening', 90, 105);
+        webSpeechNetworkBlocked = false;
+        updateMicButtonUI('listening');
         startAlwaysOnMic(true);
       } else {
         if (interimCommitTimer) {

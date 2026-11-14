@@ -415,7 +415,24 @@ class LLMEngine:
         if m_sqrt:
             n = float(m_sqrt.group(1))
             return f"The square root of {n:g} is {math.sqrt(n):g}."
-        m_expr = re.match(r"^(?:what\s+is|calculate|compute|solve|evaluate)?\s*([\d\s.+\-*/()^%]+)\??$", low)
+        normalized = re.sub(
+            r"^(?:hey\s+clumsy|hi\s+clumsy|clumsy|please|can\s+you|could\s+you|would\s+you|tell\s+me|what\s+is|what's|whats|calculate|compute|solve|evaluate|find|answer)\s+",
+            "",
+            low,
+        )
+        normalized = re.sub(
+            r"^(?:please|can\s+you|could\s+you|solve|calculate|compute|evaluate|what\s+is|what's)\s+",
+            "",
+            normalized,
+        )
+        normalized = re.sub(r"\bplus\b", "+", normalized)
+        normalized = re.sub(r"\bminus\b", "-", normalized)
+        normalized = re.sub(r"\b(?:times|multiplied\s+by)\b", "*", normalized)
+        normalized = re.sub(r"\b(?:divided\s+by|over)\b", "/", normalized)
+        normalized = re.sub(r"[?!.=]+$", "", normalized).strip()
+        m_expr = re.match(r"^([\d\s.+\-*/()^%]+)$", normalized) or re.search(
+            r"(\d+(?:\.\d+)?(?:\s*[+\-*/^%]\s*\d+(?:\.\d+)?)+)", low
+        )
         if m_expr:
             expr_str = m_expr.group(1).strip()
             if any(c.isdigit() for c in expr_str) and any(op in expr_str for op in "+-*/^%"):

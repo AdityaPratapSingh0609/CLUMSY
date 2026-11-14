@@ -403,16 +403,29 @@
         return `The square root of ${n} is **${Number(Math.sqrt(n).toFixed(6))}**.`;
       }
 
-      const exprMatch = low.match(/^(?:what\s+is|calculate|compute|solve|evaluate)?\s*([\d\s.+\-*/()^%]+)\??$/);
-      if (exprMatch) {
-        const rawExpr = exprMatch[1].trim();
+      // Normalize word math operators ("2 plus 2", "10 times 5", "can you solve 2+2", etc.)
+      let normalized = low
+        .replace(/^(?:hey\s+clumsy|hi\s+clumsy|clumsy|please|can\s+you|could\s+you|would\s+you|tell\s+me|what\s+is|what's|whats|calculate|compute|solve|evaluate|find|answer)\s+/g, '')
+        .replace(/^(?:please|can\s+you|could\s+you|solve|calculate|compute|evaluate|what\s+is|what's)\s+/g, '')
+        .replace(/\bplus\b/g, '+')
+        .replace(/\bminus\b/g, '-')
+        .replace(/\b(?:times|multiplied\s+by)\b/g, '*')
+        .replace(/\b(?:divided\s+by|over)\b/g, '/')
+        .replace(/\b(?:to\s+the\s+power\s+of|power)\b/g, '**')
+        .replace(/[?!.=]+$/g, '')
+        .trim();
+
+      // Also check if an arithmetic expression like "2+2" or "(12 * 4) + 5" appears anywhere in the query
+      const inlineMath = normalized.match(/^([\d\s.+\-*/()^%]+)$/) || low.match(/(\d+(?:\.\d+)?(?:\s*[+\-*/^%]\s*\d+(?:\.\d+)?)+)/);
+      if (inlineMath) {
+        const rawExpr = inlineMath[1].trim();
         if (/\d/.test(rawExpr) && /[+\-*/^%]/.test(rawExpr)) {
           try {
             const safeExpr = rawExpr.replace(/\^/g, '**');
             if (/^[\d\s.+\-*/()%]+$/.test(safeExpr)) {
               const val = Function(`"use strict"; return (${safeExpr});`)();
               if (typeof val === 'number' && isFinite(val)) {
-                return `${rawExpr} = **${Number(val.toFixed(6))}**`;
+                return `**${rawExpr} = ${Number(val.toFixed(6))}**`;
               }
             }
           } catch (_) {}
@@ -834,18 +847,53 @@
       ].join('\n');
     }
 
+    async queryWikipediaKnowledge(userQuery) {
+      try {
+        const clean = String(userQuery || '')
+          .replace(/^(?:hey\s+clumsy|hi\s+clumsy|clumsy|can\s+you|could\s+you|please|tell\s+me\s+about|tell\s+me|explain|what\s+is\s+the|what\s+is\s+an?|what\s+is|what\s+are|who\s+is|who\s+was|where\s+is|how\s+does|how\s+do|define|describe)\s+/i, '')
+          .replace(/\b(?:work|works|working|mean|means)\s*[?!.]*$/i, '')
+          .replace(/[?!.]+$/, '')
+          .trim();
+        if (!clean || clean.length < 2) return null;
+        const proto = 'https:';
+        const c = new AbortController();
+        const t = setTimeout(() => c.abort(), 5000);
+        const sUrl = `${proto}//en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(clean)}&utf8=&format=json&origin=*&srlimit=1`;
+        const srRes = await fetch(sUrl, { signal: c.signal });
+        if (!srRes.ok) {
+          clearTimeout(t);
+          return null;
+        }
+        const srData = await srRes.json();
+        const hit = srData && srData.query && srData.query.search && srData.query.search[0];
+        if (!hit || !hit.title) {
+          clearTimeout(t);
+          return null;
+        }
+        const sumUrl = `${proto}//en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(hit.title)}`;
+        const sumRes = await fetch(sumUrl, { signal: c.signal });
+        clearTimeout(t);
+        if (!sumRes.ok) return null;
+        const sumData = await sumRes.json();
+        if (sumData && sumData.extract && sumData.extract.length > 40) {
+          return `### ${sumData.title}\n\n${sumData.extract}`;
+        }
+      } catch (_) {}
+      return null;
+    }
+
     async queryOnlineCloudOmni(userQuery, sysPrompt) {
       if (typeof navigator !== 'undefined' && navigator.onLine === false) return null;
       const proto = 'https:';
-      // 1. Primary OpenAI-compatible reasoning endpoint
+      // 1. Primary OpenAI-fast endpoint
       try {
         const c = new AbortController();
-        const t = setTimeout(() => c.abort(), 14000);
+        const t = setTimeout(() => c.abort(), 8500);
         const res = await fetch(`${proto}//text.pollinations.ai/openai`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            model: 'openai',
+            model: 'openai-fast',
             messages: [
               { role: 'system', content: sysPrompt },
               ...this.history.slice(-6),
@@ -865,16 +913,20 @@
         }
       } catch (_) {}
 
-      // 2. Fast GET streaming fallback endpoint
+      // 2. Wikipedia Live Knowledge Graph Fallback (Zero rate-limit, full CORS, 6.8M+ articles!)
+      const wikiReply = await this.queryWikipediaKnowledge(userQuery);
+      if (wikiReply) return wikiReply;
+
+      // 3. Secondary GET streaming endpoint
       try {
         const c2 = new AbortController();
-        const t2 = setTimeout(() => c2.abort(), 7500);
-        const url = `${proto}//text.pollinations.ai/${encodeURIComponent(userQuery)}?model=openai&system=${encodeURIComponent(sysPrompt)}`;
+        const t2 = setTimeout(() => c2.abort(), 6500);
+        const url = `${proto}//text.pollinations.ai/${encodeURIComponent(userQuery)}?model=openai-fast&system=${encodeURIComponent(sysPrompt)}`;
         const res2 = await fetch(url, { signal: c2.signal });
         clearTimeout(t2);
         if (res2.ok) {
           const txt = await res2.text();
-          if (txt && txt.trim() && !txt.trim().startsWith('<!DOCTYPE')) {
+          if (txt && txt.trim() && !txt.trim().startsWith('<!DOCTYPE') && !txt.includes('"FREE_LIMIT"')) {
             return txt.trim();
           }
         }

@@ -9,7 +9,7 @@
   <script src="/robot3d.js"></script>
   <script src="/eyeballs.js"></script>
   <script src="/jarvis_hud.js"></script>
-  <script src="/clumsy_brain.js"></script>
+  <script src="/clumsy_brain.js?v=11"></script>
   <style>
     :root {
       --bg: #131314;
@@ -1555,12 +1555,12 @@
       }
     }
 
-    // Poll native Windows Offline Hardware Mic (/api/voice/poll) so voice works even in Electron WebView!
+    // Poll native Windows Offline Hardware Mic (/api/voice/poll) when browser SpeechRecognition is not active (e.g. Electron WebView)!
     async function pollDesktopHardwareMic() {
-      if (isSpeakingDesktopTTS) return;
+      if (isSpeakingDesktopTTS || isDictating) return;
       try {
         const c = new AbortController();
-        const t = setTimeout(() => c.abort(), 850);
+        const t = setTimeout(() => c.abort(), 1500);
         const res = await fetch(`/api/voice/poll?since=${desktopHwMicSeq}`, { signal: c.signal });
         clearTimeout(t);
         if (!res.ok) return;

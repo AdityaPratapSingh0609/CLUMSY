@@ -30,6 +30,7 @@ $choices = New-Object System.Speech.Recognition.Choices
 $choices.Add(@(
   "hey clumsy",
   "hi clumsy",
+  "hello clumsy",
   "wake up",
   "go to sleep",
   "thank you",
@@ -38,12 +39,16 @@ $choices.Add(@(
   "tell me a joke",
   "how are you",
   "who are you",
+  "what can you do",
   "what time is it",
+  "what is two plus two",
+  "can you solve two plus two",
   "explain quantum mechanics",
   "explain black holes",
   "explain machine learning",
   "explain artificial intelligence",
   "explain neural networks",
+  "explain photosynthesis",
   "write a python code",
   "write a java code",
   "write python code for binary search",
@@ -51,7 +56,11 @@ $choices.Add(@(
   "check my phone battery",
   "play music",
   "pause music",
-  "next track"
+  "next track",
+  "open youtube",
+  "open netflix",
+  "open spotify",
+  "open gmail"
 ))
 $gb = New-Object System.Speech.Recognition.GrammarBuilder($choices)
 $cmdGrammar = New-Object System.Speech.Recognition.Grammar($gb)
@@ -67,13 +76,33 @@ Write-Output "MIC_READY"
 
 while ($true) {
   $res = $rec.Recognize([TimeSpan]::FromSeconds(4))
-  if ($null -ne $res -and $res.Confidence -ge 0.25 -and $res.Text.Trim().Length -gt 0) {
+  if ($null -ne $res -and $res.Confidence -ge 0.52 -and $res.Text.Trim().Length -ge 3) {
     $txt = $res.Text.Trim()
     Write-Output "TRANSCRIPT:$txt"
     [Console]::Out.Flush()
   }
 }
 """
+
+NOISE_STOPWORDS = {
+    "and", "and and", "the", "it", "is", "to", "of", "in", "on", "at", "for",
+    "with", "as", "by", "an", "be", "this", "that", "from", "or", "but", "not",
+    "are", "was", "were", "so", "if", "out", "up", "jon", "watt", "watt and",
+    "he", "she", "we", "they", "you", "me", "my", "his", "her", "uh", "um", "ah",
+}
+
+
+def _is_valid_voice_command(text: str) -> bool:
+    clean = " ".join((text or "").strip().lower().split())
+    if len(clean) < 3 or clean in NOISE_STOPWORDS:
+        return False
+    words = clean.split()
+    if all(w in NOISE_STOPWORDS for w in words):
+        return False
+    # Single-word transcripts must be an explicit wake/greeting/action word
+    if len(words) == 1 and clean not in {"clumsy", "hello", "hey", "hi", "thanks", "wink", "sleep"}:
+        return False
+    return True
 
 
 class HardwareMicrophoneDaemon:
@@ -116,7 +145,7 @@ class HardwareMicrophoneDaemon:
                         logger.info("🎙️ Native Windows Offline Hardware Microphone (MS-1033-80-DESK) active.")
                     elif line.startswith("TRANSCRIPT:"):
                         transcript = line[len("TRANSCRIPT:") :].strip()
-                        if transcript:
+                        if transcript and _is_valid_voice_command(transcript):
                             with self._lock:
                                 self._seq += 1
                                 self._queue.append(

@@ -1,4 +1,4 @@
-const CACHE_NAME = "deskbot-eyes-v10";
+const CACHE_NAME = "deskbot-eyes-v11";
 const ASSETS = ["/", "/index.html", "/mobile", "/mobile.html", "/eyeballs.js", "/clumsy_brain.js", "/manifest.json"];
 
 self.addEventListener("install", (event) => {
