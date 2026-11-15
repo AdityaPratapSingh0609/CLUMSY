@@ -62,3 +62,11 @@ Check this file before running a new command.
 ode tests/fuzz_1000_prompts_math_science_code.js -> 1,000/1,000 PASSED (100.0%) | 0 FAILED in 0.26s
 - python -m unittest discover -s tests -t . -> Ran 193 tests in 30.168s | OK (100.0%)
 - Configured vercel.json with clean rewrites for dashboard and knowledge_math_science.js
+
+### Stage 52: Exact Math & Website Intent Gating Fix + 100 Computer Science Codes Benchmark [2026-11-15 17:50:17]
+- Fixed Wikipedia routing leak: strictly guarded _shouldQueryWikipedia against any coding, website, or math calculations
+- Enhanced trySolveMath with exact and numerical trigonometry solver (cos, sin, tan, deg/rad, fractions)
+- Added dedicated fullstack HTML website generator for business queries (e.g. oil business, portfolio, enterprise)
+- python scripts/build_100_cs_codes.py -> Generated tests/fuzz_100_computer_science_codes.js
+- node tests/fuzz_100_computer_science_codes.js -> 100/100 PASSED (100.0%) | 0 FAILED in 0.09s
+- node tests/fuzz_1000_prompts_math_science_code.js -> 1,000/1,000 PASSED (100.0%) | 0 FAILED in 0.20s

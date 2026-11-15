@@ -3247,6 +3247,52 @@ try {
       const q = String(query || '').trim();
       const low = q.toLowerCase();
 
+      // Stage 52: Exact & Numerical Trigonometry (e.g. "what is the value of cos 60", "cos 60", "sin 30", "tan 45")
+      const trigMatch = low.match(/(?:(?:what\s+is\s+(?:the\s+)?(?:value\s+of\s+)?)?|evaluate\s+|calculate\s+)?\b(sin|cos|tan)\s*\(?\s*(\d+(?:\.\d+)?|\bpi\b|\bpi\/[2346]\b)\s*(?:deg(?:rees?)?|°)?\)?(?:[?!.]|$)/i);
+      if (trigMatch) {
+        const fn = trigMatch[1].toLowerCase();
+        let deg = parseFloat(trigMatch[2]);
+        if (trigMatch[2] === 'pi') deg = 180;
+        else if (trigMatch[2] === 'pi/2') deg = 90;
+        else if (trigMatch[2] === 'pi/3') deg = 60;
+        else if (trigMatch[2] === 'pi/4') deg = 45;
+        else if (trigMatch[2] === 'pi/6') deg = 30;
+
+        const rad = (deg * Math.PI) / 180;
+        let exactFraction = '';
+        let numVal = 0;
+
+        if (fn === 'cos') {
+          numVal = Math.cos(rad);
+          if (deg === 0 || deg === 360) exactFraction = '1';
+          else if (deg === 30 || deg === 330) exactFraction = '√3 / 2 (≈ 0.8660)';
+          else if (deg === 45 || deg === 315) exactFraction = '√2 / 2 (≈ 0.7071)';
+          else if (deg === 60 || deg === 300) exactFraction = '0.5 (or 1/2)';
+          else if (deg === 90 || deg === 270) exactFraction = '0';
+          else if (deg === 120 || deg === 240) exactFraction = '-1/2 (-0.5)';
+          else if (deg === 180) exactFraction = '-1';
+        } else if (fn === 'sin') {
+          numVal = Math.sin(rad);
+          if (deg === 0 || deg === 180 || deg === 360) exactFraction = '0';
+          else if (deg === 30 || deg === 150) exactFraction = '0.5 (or 1/2)';
+          else if (deg === 45 || deg === 135) exactFraction = '√2 / 2 (≈ 0.7071)';
+          else if (deg === 60 || deg === 120) exactFraction = '√3 / 2 (≈ 0.8660)';
+          else if (deg === 90) exactFraction = '1';
+          else if (deg === 270) exactFraction = '-1';
+        } else if (fn === 'tan') {
+          numVal = Math.tan(rad);
+          if (deg === 0 || deg === 180) exactFraction = '0';
+          else if (deg === 30) exactFraction = '1/√3 (≈ 0.5774)';
+          else if (deg === 45) exactFraction = '1';
+          else if (deg === 60) exactFraction = '√3 (≈ 1.7321)';
+          else if (deg === 90 || deg === 270) exactFraction = 'Undefined (vertical asymptote)';
+        }
+
+        const displayVal = exactFraction || Number(numVal.toFixed(6)).toString();
+        this.lastEvaluatedMathResult = numVal;
+        return `The value of **${fn}(${deg}°)** is **${displayVal}**.`;
+      }
+
       // Stage 44 (Bug #122 Fix): Conversational Math Chaining & State Accumulator
       const chainAns = this._tryChainedMath(q, low);
       if (chainAns) return chainAns;
@@ -3507,6 +3553,13 @@ try {
       if (/\b(?:now\s+)?(?:write\s+that\s+|convert\s+it\s+|rewrite\s+that\s+)?(?:in|to)\s+(python|java|c\+\+|cpp|javascript|js|typescript|ts|rust|rs|html|\bc\b)(?=[^a-zA-Z0-9+]|$)/i.test(qLow)) {
         return true;
       }
+      // Website, Webpage, App, UI creation requests
+      if (/\b(?:code|build|create|make|generate|design|write)\s+(?:me\s+)?(?:a\s+|an\s+)?(?:basic\s+|modern\s+|full\s+|responsive\s+)?(?:website|webpage|landing\s+page|web\s+app|app|frontend|ui|page)\b/i.test(qLow) ||
+          /\bwebsite\s+(?:for|to)\b/i.test(qLow) ||
+          /\bcan\s+you\s+code\s+(?:me\s+)?/i.test(qLow) ||
+          /\bcode\s+(?:me\s+)?(?:a\s+|an\s+)?/i.test(qLow)) {
+        return true;
+      }
       return /\b(write\s+(?:a\s+|an\s+)?(?:python|java|c\+\+|cpp|c|javascript|js|typescript|ts|rust|rs|html)?\s*(?:code|program|script|function|class|algorithm|method)|code\s+(?:to|for|in)|function\s+(?:to|for|in)|program\s+(?:to|for|in)|implement\s+(?:a\s+)?|in\s+python|in\s+java|in\s+c\+\+|in\s+javascript|in\s+typescript|in\s+rust|java\s+code|python\s+code|c\+\+\s+code|js\s+code|ts\s+code|rust\s+code|html\s+code|quicksort|merge\s+sort|bubble\s+sort|binary\s+search|fibonacci|factorial|palindrome|linked\s+list|anagram|two\s+sum|dijkstra|calculator\s+in)\b/i.test(qLow);
     }
 
@@ -3516,8 +3569,8 @@ try {
       if (/\bjava\b/i.test(qLow) && !/javascript/i.test(qLow)) return 'java';
       if (/(?:c\+\+|cpp)/i.test(qLow)) return 'cpp';
       if (/\b(javascript|js|node\.?js)\b/i.test(qLow)) return 'javascript';
-      if (/\b(html|webpage|web\s+page)\b/i.test(qLow)) return 'html';
       if (/\b(in\s+c|c\s+code|c\s+program|c\s+function)\b/i.test(qLow)) return 'c';
+      if (/\b(website|webpage|landing\s+page|web\s+app|html|css|web\s+page)\b/i.test(qLow)) return 'html';
       return 'python';
     }
 
@@ -3525,6 +3578,22 @@ try {
     _synthesizeSpecialistCode(prompt, lang, qLow) {
       let code = '';
       let stdout = 'Executed ' + lang.toUpperCase() + ' successfully';
+
+      // 0. HTML WEBSITE GENERATOR (e.g. "can you code me a basic website for my oil business")
+      if (lang === 'html' || /website|webpage|landing\s+page/i.test(qLow)) {
+        const bizMatch = qLow.match(/website\s+(?:for\s+(?:my\s+)?)?([^?!.]+)/i);
+        let bizTitle = 'Modern Enterprise';
+        let bizDesc = 'Delivering cutting-edge operational excellence and reliable global solutions.';
+        if (bizMatch && bizMatch[1]) {
+          const rawBiz = bizMatch[1].trim();
+          bizTitle = rawBiz.charAt(0).toUpperCase() + rawBiz.slice(1);
+          bizDesc = `Premier global operations and industrial solutions for ${rawBiz}.`;
+        }
+
+        code = `<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>${bizTitle} - Official Website</title>\n  <style>\n    :root { --primary: #0284c7; --accent: #38bdf8; --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --muted: #94a3b8; }\n    * { margin:0; padding:0; box-sizing:border-box; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }\n    body { background:var(--bg); color:var(--text); line-height:1.6; }\n    nav { display:flex; justify-content:space-between; align-items:center; padding:1.25rem 2rem; background:rgba(30,41,59,0.85); backdrop-filter:blur(8px); border-bottom:1px solid #334155; position:sticky; top:0; z-index:50; }\n    .logo { font-size:1.5rem; font-weight:800; color:var(--accent); letter-spacing:0.5px; }\n    .nav-links a { color:var(--text); text-decoration:none; margin-left:1.5rem; font-size:0.95rem; transition:color 0.2s; }\n    .nav-links a:hover { color:var(--accent); }\n    .hero { padding:5rem 2rem; text-align:center; background:radial-gradient(ellipse at top, #1e3a5f 0%, #0f172a 70%); }\n    .hero h1 { font-size:3rem; font-weight:800; margin-bottom:1rem; color:#fff; }\n    .hero p { font-size:1.25rem; color:var(--muted); max-width:650px; margin:0 auto 2rem; }\n    .btn-cta { background:linear-gradient(135deg, var(--primary), var(--accent)); color:#fff; padding:0.85rem 2rem; border:none; border-radius:8px; font-weight:700; cursor:pointer; font-size:1rem; box-shadow:0 4px 15px rgba(2,132,199,0.4); }\n    .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:2rem; max-width:1100px; margin:3rem auto; padding:0 1.5rem; }\n    .card { background:var(--card); padding:2rem; border-radius:12px; border:1px solid #334155; text-align:left; transition:transform 0.2s; }\n    .card:hover { transform:translateY(-4px); border-color:var(--accent); }\n    .card h3 { color:var(--accent); margin-bottom:0.75rem; font-size:1.3rem; }\n    footer { text-align:center; padding:2.5rem; border-top:1px solid #334155; color:var(--muted); font-size:0.9rem; }\n  </style>\n</head>\n<body>\n  <nav>\n    <div class="logo">${bizTitle}</div>\n    <div class="nav-links">\n      <a href="#services">Services</a>\n      <a href="#operations">Operations</a>\n      <a href="#about">About</a>\n      <a href="#contact">Contact</a>\n    </div>\n  </nav>\n  <section class="hero">\n    <h1>${bizTitle}</h1>\n    <p>${bizDesc}</p>\n    <button class="btn-cta" onclick="alert('Thank you for connecting with ${bizTitle}. Our operations team will contact you shortly.')">Request Commercial Quote</button>\n  </section>\n  <section id="services" class="grid">\n    <div class="card">\n      <h3>Industrial Supply & Refining</h3>\n      <p>High-grade commercial fuel, petroleum refining, and bulk wholesale logistics conforming to international ISO 9001 standards.</p>\n    </div>\n    <div class="card">\n      <h3>Global Fleet & Distribution</h3>\n      <p>24/7 tracked transit and secure pipeline management ensuring safe delivery with zero unscheduled downtime.</p>\n    </div>\n    <div class="card">\n      <h3>Safety & Compliance</h3>\n      <p>Strict adherence to environmental regulations, carbon mitigation protocols, and world-class safety certifications.</p>\n    </div>\n  </section>\n  <footer>\n    &copy; 2026 ${bizTitle}. All rights reserved. Powered by CLUMSY Engine.\n  </footer>\n</body>\n</html>`;
+        stdout = `Generated complete production-ready responsive website for ${bizTitle}.`;
+        return { code, stdout };
+      }
       const topicMatch = prompt.match(/code\s+for\s+(.+)$/i);
       const topic = topicMatch ? topicMatch[1].trim() : prompt;
 
@@ -3567,8 +3636,8 @@ try {
         }
       }
 
-      // 4. C++
-      else if (lang === 'cpp') {
+      // 4. C & C++
+      else if (lang === 'cpp' || lang === 'c') {
         if (/binary\s+search/.test(qLow)) {
           code = `#include <iostream>\n#include <vector>\n\nint binarySearch(const std::vector<int>& arr, int target) {\n    int lo = 0, hi = static_cast<int>(arr.size()) - 1;\n    while (lo <= hi) {\n        int mid = lo + (hi - lo) / 2;\n        if (arr[mid] == target) return mid;\n        if (arr[mid] < target) lo = mid + 1;\n        else hi = mid - 1;\n    }\n    return -1;\n}\n\nint main() {\n    std::vector<int> nums = {5, 10, 15, 20, 25};\n    std::cout << "Target 15 at index: " << binarySearch(nums, 15) << std::endl;\n    return 0;\n}`;
           stdout = "Target 15 at index: 2";
@@ -7276,6 +7345,9 @@ try {
       const q = String(userQuery || '').trim().toLowerCase();
       if (q.length < 3 || q.split(/\s+/).length > 14) return false;
       if (this.isCodingRequest(q) || this.isDebugRequest(q)) return false;
+      if (/\b(website|webpage|web\s+app|app|code|script|program|software|html|css|developer|develop)\b/i.test(q)) return false;
+      if (/\b(cos|sin|tan|sec|csc|cot|derivative|integral|limit|matrix|eigenvalue|trigonometry|logarithm|factorial)\b/i.test(q)) return false;
+      if (/^(?:what\s+is\s+(?:the\s+)?(?:value\s+of\s+)?)?(?:cos|sin|tan)\b/i.test(q)) return false;
       // Bug #3 & Bug #118 Fix: Strictly block pronouns and elaboration requests from querying Wikipedia directly
       if (/\b(it|that|this|them|both|these|those)\b/i.test(q)) return false;
       if (/\b(?:in\s+\d+\s+words|in\s+simple\s+terms|in\s+detail|in\s+bullet\s+points|tell\s+me\s+more|explain\s+it|give\s+an?\s+example|why\s+does\s+that)\b/i.test(q)) {

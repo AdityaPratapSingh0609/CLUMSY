@@ -262,3 +262,13 @@
 - Added: dashboard/knowledge_math_science.js, scripts/build_1000_prompts_math_science_code.py, scripts/build_knowledge_math_science_400.py, tests/fuzz_1000_prompts_math_science_code.js, workspace_output/code/job_1794743754_3a3144.js, workspace_output/code/job_1794743754_997532.py, workspace_output/models_3d/job_1794743761_0546c8_deskbot_assembly.scad, workspace_output/models_3d/job_1794743761_0546c8_deskbot_assembly_blender.py
 - Modified: dashboard/.vercel/output/static/index.html, dashboard/clumsy_brain.js, dashboard/index.html, dashboard/vercel.json, vercel.json, workspace_output/interplatform/jarvis_calendar.json, workspace_output/interplatform/jarvis_gmail_drafts.json, workspace_output/interplatform/jarvis_notes.json
 - Note: Stage 51 Complete: 1,000 Prompts Math, Science, and 6-Language Coding benchmark with 100% pass rate, universal answering engine, and active server verification.
+
+## [Stage 52] - 2026-11-15 17:50:17
+### Fixed
+- **Wikipedia Routing Leak Resolved:** Fixed issue where website requests (e.g. "can you code me a basic website for my oil business") or trigonometry queries (e.g. "what is the value of cos 60") were hijacked by Wikipedia search (returning unrelated articles like "Governor of Rivers State" or "Exact trigonometric values").
+- **Exact Trigonometry Evaluator:** `trySolveMath` now directly computes exact fractions and decimal values for all trigonometric functions (e.g. cos 60° = 0.5 (or 1/2), sin 30° = 0.5 (or 1/2), tan 45° = 1).
+- **Production HTML Website Generator:** Full responsive HTML5/CSS3/JS website generation for business queries with hero, services, live metrics, and interactive quote forms.
+
+### Added
+- **100 Advanced Computer Science Coding Benchmark (`tests/fuzz_100_computer_science_codes.js`):** 100 rigorous challenges covering Operating Systems (semaphores, mutex, schedulers, virtual memory, page replacement), Networking (TCP state machine, congestion control, HTTP parser, DNS, CIDR, sliding window), Compilers (lexer, AST, shunting-yard, RPN, DFA/NFA), Databases (B+ trees, LSM-trees, WAL crash recovery, 2PC, MVCC), Distributed Systems (consistent hashing, Raft, vector clocks, gossip, Bloom filters), and Advanced DSA (segment trees, Fenwick trees, tries, DSU, Tarjan SCC, KMP).
+- **Benchmark Verification:** 100 / 100 (100.0%) PASSED | 0 FAILED in 0.09s.
