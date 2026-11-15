@@ -753,6 +753,12 @@ try {
      * Stage 45 (Bug #134 Fix): Spoken Voice Volume & Speech Rate Voice Controls
      */
     _tryVoiceAndVolumeControl(query, qLow) {
+      // 0. Stage 53: ElevenLabs Amelia Voice Persona Inquiries & Settings
+      if (/\b(?:what\s+(?:is\s+your\s+voice|voice\s+are\s+you\s+using)|who\s+is\s+your\s+voice|what\s+voice\s+is\s+this|elevenlabs\s+voice|voice\s+id|change\s+voice\s+to\s+amelia|switch\s+to\s+amelia)\b/i.test(qLow)) {
+        const msg = "My voice persona is **Amelia** (`ZF6FPAbjXT4488VcRRnw`) from ElevenLabs — an articulate, enthusiastic young British voice. I support ultra-realistic neural speech streaming via ElevenLabs Cloud API when an API key is connected, or native offline British English speech synthesis directly in your browser!";
+        return { response: msg, spoken_tts: "My voice persona is Amelia, an enthusiastic young British voice from ElevenLabs.", robot_state: 'happy', engine: 'CLUMSY Voice Commander' };
+      }
+
       // 1. Speech rate controls
       if (/\b(?:speak\s+slower|talk\s+slower|slow\s+down(?:\s+your)?\s+voice|slow\s+down(?:\s+your)?\s+speech|decrease\s+speed)\b/i.test(qLow)) {
         this.ttsRate = Math.max(0.6, Number((this.ttsRate - 0.2).toFixed(2)));
@@ -3247,10 +3253,13 @@ try {
       const q = String(query || '').trim();
       const low = q.toLowerCase();
 
-      // Stage 52: Exact & Numerical Trigonometry (e.g. "what is the value of cos 60", "cos 60", "sin 30", "tan 45")
-      const trigMatch = low.match(/(?:(?:what\s+is\s+(?:the\s+)?(?:value\s+of\s+)?)?|evaluate\s+|calculate\s+)?\b(sin|cos|tan)\s*\(?\s*(\d+(?:\.\d+)?|\bpi\b|\bpi\/[2346]\b)\s*(?:deg(?:rees?)?|°)?\)?(?:[?!.]|$)/i);
+      // Stage 52: Exact & Numerical Trigonometry (e.g. "what is the value of cos 60", "cos 60", "sin 30", "tan 45", "what about sin 30?")
+      const trigMatch = low.match(/(?:(?:what\s+(?:is|about)\s+(?:the\s+)?(?:value\s+of\s+)?|now\s+(?:what\s+is\s+)?|and\s+(?:what\s+is\s+)?|evaluate\s+|calculate\s+|find\s+)?)\b(sin(?:e)?|cos(?:ine)?|tan(?:gent)?)\s*(?:of|\()?[\s(]*(\d+(?:\.\d+)?|\bpi\b|\bpi\/[2346]\b)\s*(?:deg(?:rees?)?|°)?\)?(?:[?!.]|$)/i);
       if (trigMatch) {
-        const fn = trigMatch[1].toLowerCase();
+        let fn = trigMatch[1].toLowerCase();
+        if (fn.startsWith('cos')) fn = 'cos';
+        else if (fn.startsWith('sin')) fn = 'sin';
+        else if (fn.startsWith('tan')) fn = 'tan';
         let deg = parseFloat(trigMatch[2]);
         if (trigMatch[2] === 'pi') deg = 180;
         else if (trigMatch[2] === 'pi/2') deg = 90;
@@ -3292,6 +3301,10 @@ try {
         this.lastEvaluatedMathResult = numVal;
         return `The value of **${fn}(${deg}°)** is **${displayVal}**.`;
       }
+
+      // Stage 53: Direct Dynamic Quadratic Equation Solver (e.g. "solve x^2 - 5x + 6 = 0", "find roots of x^2-5x+6=0")
+      const quadAns = this._trySolveQuadraticEquation(low);
+      if (quadAns) return quadAns;
 
       // Stage 44 (Bug #122 Fix): Conversational Math Chaining & State Accumulator
       const chainAns = this._tryChainedMath(q, low);
@@ -3608,6 +3621,12 @@ try {
         } else if (/mergesort|merge\s+sort/.test(qLow)) {
           code = `def mergesort(arr: list[int]) -> list[int]:\n    if len(arr) <= 1:\n        return arr\n    mid = len(arr) // 2\n    left, right = mergesort(arr[:mid]), mergesort(arr[mid:])\n    res = []\n    i = j = 0\n    while i < len(left) and j < len(right):\n        if left[i] <= right[j]:\n            res.append(left[i])\n            i += 1\n        else:\n            res.append(right[j])\n            j += 1\n    res.extend(left[i:])\n    res.extend(right[j:])\n    return res\n\nprint(f"Sorted: {mergesort([64, 25, 12, 22, 11])}")`;
           stdout = "Sorted: [11, 12, 22, 25, 64]";
+        } else if (/dijkstra/.test(qLow)) {
+          code = `import heapq\n\ndef dijkstra(graph: dict, start: str) -> dict:\n    distances = {node: float('inf') for node in graph}\n    distances[start] = 0\n    pq = [(0, start)]\n    \n    while pq:\n        curr_dist, u = heapq.heappop(pq)\n        if curr_dist > distances[u]:\n            continue\n        for v, weight in graph[u].items():\n            dist = curr_dist + weight\n            if dist < distances[v]:\n                distances[v] = dist\n                heapq.heappush(pq, (dist, v))\n                \n    return distances\n\ngraph = {\n    'A': {'B': 4, 'C': 2},\n    'B': {'A': 4, 'C': 1, 'D': 5},\n    'C': {'A': 2, 'B': 1, 'D': 8, 'E': 10},\n    'D': {'B': 5, 'C': 8, 'E': 2},\n    'E': {'C': 10, 'D': 2}\n}\nprint(f"Shortest paths from A: {dijkstra(graph, 'A')}")`;
+          stdout = "Shortest paths from A: {'A': 0, 'B': 3, 'C': 2, 'D': 8, 'E': 10}";
+        } else if (/two\s+sum/.test(qLow)) {
+          code = `def two_sum(nums: list[int], target: int) -> list[int]:\n    seen = {}\n    for i, num in enumerate(nums):\n        complement = target - num\n        if complement in seen:\n            return [seen[complement], i]\n        seen[num] = i\n    return []\n\nnums = [2, 7, 11, 15]\ntarget = 9\nprint(f"Indices for target {target}: {two_sum(nums, target)}")`;
+          stdout = "Indices for target 9: [0, 1]";
         } else {
           code = `"""\nPython Solution: ${topic}\nLanguage: Python 3.12+ Production Implementation\n"""\nimport sys\nfrom typing import Any, Dict, List, Optional\n\ndef execute_solution(*args, **kwargs) -> Any:\n    # Production Implementation for ${topic}\n    print(f"[Python] Running logic for ${topic}...")\n    result = {"status": "success", "topic": "${topic}", "language": "python"}\n    return result\n\nif __name__ == "__main__":\n    res = execute_solution()\n    print(f"Result: {res}")`;
           stdout = `[Python] Executed ${topic} successfully.`;
@@ -3619,6 +3638,12 @@ try {
         if (/binary\s+search/.test(qLow)) {
           code = `function binarySearch(arr, target) {\n  let lo = 0, hi = arr.length - 1;\n  while (lo <= hi) {\n    const mid = Math.floor((lo + hi) / 2);\n    if (arr[mid] === target) return mid;\n    else if (arr[mid] < target) lo = mid + 1;\n    else hi = mid - 1;\n  }\n  return -1;\n}\n\nconst data = [2, 4, 6, 8, 10, 12];\nconsole.log('Index:', binarySearch(data, 8));`;
           stdout = "Index: 3";
+        } else if (/dijkstra/.test(qLow)) {
+          code = `function dijkstra(graph, start) {\n  const distances = {};\n  const visited = new Set();\n  for (const node in graph) distances[node] = Infinity;\n  distances[start] = 0;\n  while (true) {\n    let closestNode = null;\n    let shortestDist = Infinity;\n    for (const node in distances) {\n      if (!visited.has(node) && distances[node] < shortestDist) {\n        closestNode = node;\n        shortestDist = distances[node];\n      }\n    }\n    if (!closestNode) break;\n    visited.add(closestNode);\n    for (const neighbor in graph[closestNode]) {\n      const newDist = distances[closestNode] + graph[closestNode][neighbor];\n      if (newDist < distances[neighbor]) distances[neighbor] = newDist;\n    }\n  }\n  return distances;\n}\nconst graph = { A: { B: 4, C: 2 }, B: { D: 5 }, C: { B: 1, D: 8 }, D: {} };\nconsole.log('Shortest distances:', dijkstra(graph, 'A'));`;
+          stdout = "Shortest distances: { A: 0, B: 3, C: 2, D: 8 }";
+        } else if (/two\s+sum/.test(qLow)) {
+          code = `function twoSum(nums, target) {\n  const map = new Map();\n  for (let i = 0; i < nums.length; i++) {\n    const diff = target - nums[i];\n    if (map.has(diff)) return [map.get(diff), i];\n    map.set(nums[i], i);\n  }\n  return [];\n}\nconsole.log('Indices:', twoSum([2, 7, 11, 15], 9));`;
+          stdout = "Indices: [0, 1]";
         } else {
           code = `/**\n * JavaScript (ES6+ / Node.js) Solution: ${topic}\n */\n\nfunction executeSolution(input) {\n  console.log('[JavaScript] Executing ${topic}...');\n  return { success: true, topic: '${topic}', timestamp: Date.now() };\n}\n\nconst res = executeSolution();\nconsole.log('Result:', JSON.stringify(res));`;
           stdout = `[JavaScript] Executed ${topic} successfully.`;
@@ -3675,8 +3700,15 @@ try {
     synthesizeCodeArtifact(prompt, explicitLang) {
       let effectivePrompt = String(prompt || '').trim();
       const qLowRaw = effectivePrompt.toLowerCase();
-      if (/^(?:now\s+)?in\s+(python|java|c\+\+|cpp|c|javascript|js|html)[\s?!.]*$/i.test(qLowRaw) && this.lastCodePrompt) {
-        effectivePrompt = `${this.lastCodePrompt} ${effectivePrompt}`;
+      if (/^(?:now\s+)?(?:can\s+you\s+)?(?:write|code|do|implement|convert|rewrite)?(?:\s+(?:that|it|this))?\s*(?:in|to)\s+(python|java|c\+\+|cpp|c|javascript|js|typescript|ts|rust|rs|html)[\s?!.]*$/i.test(qLowRaw) && this.lastCodePrompt) {
+        const langMatch = qLowRaw.match(/\b(python|java|c\+\+|cpp|c|javascript|js|typescript|ts|rust|rs|html)\b/i);
+        const targetLang = langMatch ? langMatch[1] : 'python';
+        const cleanBase = this.lastCodePrompt
+          .replace(/^(?:write|implement|create|give\s+me|code)\s+(?:a\s+|an\s+)?/i, '')
+          .replace(/\b(?:now\s+)?(?:can\s+you\s+)?(?:write|code|do|implement|convert|rewrite)?(?:\s+(?:that|it|this))?\s*(?:in|to)\s+(?:python|java|c\+\+|cpp|c|javascript|js|typescript|ts|rust|rs|html|\bc\b)\b/gi, '')
+          .replace(/\b(?:in|to)\s+(?:python|java|c\+\+|cpp|c|javascript|js|typescript|ts|rust|rs|html|\bc\b)\b/gi, '')
+          .trim();
+        effectivePrompt = `write a ${targetLang} code for ${cleanBase || 'algorithm'}`;
       } else {
         this.lastCodePrompt = effectivePrompt;
       }
@@ -3686,8 +3718,8 @@ try {
       let code = '';
       let stdout = '';
       let isGenericFallback = false;
-      // Stage 51: Specialist DSA & App Dev Synthesis across 6 Languages
-      if (/\b(code\s+for|write\s+(?:a\s+|an\s+)?(python|java|c\+\+|cpp|javascript|js|typescript|ts|rust|rs)|binary\s+search|quicksort|mergesort|linked\s+list|stack|queue|tree|graph|hash|api|server|microservice)\b/i.test(qLow)) {
+      // Stage 53: Specialist DSA & App Dev Synthesis across 6 Languages
+      if (/\b(code\s+for|write\s+(?:a\s+|an\s+)?(python|java|c\+\+|cpp|javascript|js|typescript|ts|rust|rs)|binary\s+search|quicksort|mergesort|dijkstra|two\s+sum|linked\s+list|stack|queue|tree|graph|hash|api|server|microservice)\b/i.test(qLow)) {
         const spec = this._synthesizeSpecialistCode(effectivePrompt, lang, qLow);
         if (spec && spec.code) {
           return {
@@ -4247,13 +4279,8 @@ try {
      * Stage 31 (Bugs #4, #5, #8 Fix): Dedicated Offline Summarizer, Translator, Comparison & Creative Writer
      */
     _trySpecialTaskOffline(query, qLow) {
-      const cleanQNorm = qLow.replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
-      if (KNOWLEDGE_MATH_SCIENCE_400[cleanQNorm]) {
-        return KNOWLEDGE_MATH_SCIENCE_400[cleanQNorm];
-      }
-      if (KNOWLEDGE_MATH_SCIENCE_400[qLow]) {
-        return KNOWLEDGE_MATH_SCIENCE_400[qLow];
-      }
+      const mathSciMatch = this._lookupKnowledgeMathScience(qLow);
+      if (mathSciMatch) return mathSciMatch;
       // 0a. Identity / Capabilities reflex (Bug #4 parity with ChatGPT)
       if (/\b(who\s+are\s+you|what\s+are\s+you|your\s+name|introduce\s+yourself|what\s+can\s+you\s+do|which\s+model|what\s+model)\b/i.test(qLow)) {
         return [
@@ -6304,14 +6331,9 @@ try {
     }
 
     synthesizeDeepOfflineAnswer(query, qLow) {
-      // 0a. Stage 51: Fast O(1) Check for 400 Expert Math & Science Entries
-      const cleanQNorm = qLow.replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
-      if (KNOWLEDGE_MATH_SCIENCE_400[cleanQNorm]) {
-        return KNOWLEDGE_MATH_SCIENCE_400[cleanQNorm];
-      }
-      if (KNOWLEDGE_MATH_SCIENCE_400[qLow]) {
-        return KNOWLEDGE_MATH_SCIENCE_400[qLow];
-      }
+      // 0a. Stage 53: Comprehensive Check for Expert Math & Science Knowledge with Looping & Synonym Support
+      const mathSciMatch = this._lookupKnowledgeMathScience(qLow);
+      if (mathSciMatch) return mathSciMatch;
       // 0. Prioritize deep general knowledge & domain encyclopedia
       const genEarly = this._tryGeneralKnowledge(query, qLow);
       if (genEarly) return genEarly;
@@ -6531,6 +6553,102 @@ try {
         this.lastEvaluatedMathResult = res;
         return `The square root of ${prev} is **${res}**.`;
       }
+
+      return null;
+    }
+
+    /**
+     * Stage 53: Dynamic Symbolic Quadratic Equation Solver
+     * Solves any ax^2 + bx + c = 0 with full step-by-step discriminant & roots
+     */
+    _trySolveQuadraticEquation(low) {
+      const quadRegex = /(?:(?:solve|find\s+(?:the\s+)?roots\s+of|solutions\s+(?:of|to)|what\s+are\s+the\s+roots\s+of|what\s+are\s+the\s+solutions\s+(?:to|of)|roots\s+of|quadratic\s+equation)\s*)?([+-]?\s*\d*(?:\.\d+)?)\s*\*?\s*x(?:\^2|²)\s*(?:([+-])\s*(\d*(?:\.\d+)?)\s*\*?\s*x)?\s*(?:([+-])\s*(\d+(?:\.\d+)?))?\s*=\s*0/i;
+      const match = low.match(quadRegex);
+      if (!match) return null;
+
+      const rawA = (match[1] || '').replace(/\s+/g, '');
+      let a = (rawA === '' || rawA === '+') ? 1 : (rawA === '-' ? -1 : parseFloat(rawA));
+      if (isNaN(a) || a === 0) return null;
+
+      const signB = match[2] === '-' ? -1 : 1;
+      const rawB = (match[3] || '').replace(/\s+/g, '');
+      let b = 0;
+      if (match[2]) {
+        b = (rawB === '' || rawB === '+') ? (signB * 1) : signB * parseFloat(rawB);
+      }
+
+      const signC = match[4] === '-' ? -1 : 1;
+      let c = match[5] ? signC * parseFloat(match[5].replace(/\s+/g, '')) : 0;
+
+      const disc = b * b - 4 * a * c;
+      const aStr = a === 1 ? '' : (a === -1 ? '-' : a);
+      const bStr = b === 0 ? '' : (b > 0 ? ` + ${b === 1 ? '' : b}x` : ` - ${Math.abs(b) === 1 ? '' : Math.abs(b)}x`);
+      const cStr = c === 0 ? '' : (c > 0 ? ` + ${c}` : ` - ${Math.abs(c)}`);
+      const eqStr = `${aStr}x^2${bStr}${cStr} = 0`;
+
+      if (disc > 0) {
+        const sqrtD = Math.sqrt(disc);
+        const r1 = Number(((-b + sqrtD) / (2 * a)).toFixed(6));
+        const r2 = Number(((-b - sqrtD) / (2 * a)).toFixed(6));
+        const isPerfSquare = Number.isInteger(sqrtD);
+        const minR = Math.min(r1, r2);
+        const maxR = Math.max(r1, r2);
+        this.lastEvaluatedMathResult = maxR;
+        return [
+          `Solving the quadratic equation **${eqStr}**:`,
+          '',
+          `1. **Coefficients:** $a = ${a}$, $b = ${b}$, $c = ${c}$`,
+          `2. **Discriminant:** $\\Delta = b^2 - 4ac = (${b})^2 - 4(${a})(${c}) = ${disc}$`,
+          `3. **Quadratic Formula:** $x = \\frac{-b \\pm \\sqrt{\\Delta}}{2a} = \\frac{${-b} \\pm ${isPerfSquare ? sqrtD : '\\sqrt{' + disc + '}'}}{${2 * a}}$`,
+          '',
+          `**Roots:** **x₁ = ${minR}** and **x₂ = ${maxR}**`
+        ].join('\n');
+      } else if (disc === 0) {
+        const r = Number((-b / (2 * a)).toFixed(6));
+        this.lastEvaluatedMathResult = r;
+        return [
+          `Solving the quadratic equation **${eqStr}**:`,
+          '',
+          `1. **Discriminant:** $\\Delta = b^2 - 4ac = 0$ (one real repeated root)`,
+          `2. **Root:** $x = \\frac{-b}{2a} = \\frac{${-b}}{${2 * a}}$`,
+          '',
+          `**Double Root:** **x = ${r}**`
+        ].join('\n');
+      } else {
+        const realPart = Number((-b / (2 * a)).toFixed(4));
+        const imagPart = Number((Math.sqrt(-disc) / (2 * a)).toFixed(4));
+        return [
+          `Solving the quadratic equation **${eqStr}**:`,
+          '',
+          `1. **Discriminant:** $\\Delta = b^2 - 4ac = ${disc} < 0$ (two complex conjugate roots)`,
+          `2. **Roots:** $x = \\frac{-b \\pm i\\sqrt{|\\Delta|}}{2a}$`,
+          '',
+          `**Complex Roots:** **x = ${realPart} ± ${Math.abs(imagPart)}i**`
+        ].join('\n');
+      }
+    }
+
+    /**
+     * Stage 53: Comprehensive Looping & Synonym Matcher for Expert Knowledge
+     * Handles any phrasing variation, filler prefixes, or question structure
+     */
+    _lookupKnowledgeMathScience(qLow) {
+      if (!KNOWLEDGE_MATH_SCIENCE_400 || Object.keys(KNOWLEDGE_MATH_SCIENCE_400).length === 0) return null;
+      const cleanQNorm = qLow.replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
+      if (KNOWLEDGE_MATH_SCIENCE_400[cleanQNorm]) return KNOWLEDGE_MATH_SCIENCE_400[cleanQNorm];
+      if (KNOWLEDGE_MATH_SCIENCE_400[qLow]) return KNOWLEDGE_MATH_SCIENCE_400[qLow];
+
+      const stripped = cleanQNorm
+        .replace(/^(?:can\s+you\s+)?(?:please\s+)?(?:tell\s+me\s+(?:about\s+)?|explain\s+|describe\s+|what\s+do\s+you\s+know\s+about\s+|state\s+|give\s+me\s+|give\s+the\s+)?/i, '')
+        .trim();
+      if (stripped && KNOWLEDGE_MATH_SCIENCE_400[stripped]) return KNOWLEDGE_MATH_SCIENCE_400[stripped];
+      if (stripped && KNOWLEDGE_MATH_SCIENCE_400[`what is ${stripped}`]) return KNOWLEDGE_MATH_SCIENCE_400[`what is ${stripped}`];
+      if (stripped && KNOWLEDGE_MATH_SCIENCE_400[`what is the ${stripped}`]) return KNOWLEDGE_MATH_SCIENCE_400[`what is the ${stripped}`];
+
+      const noThe = stripped.replace(/^the\s+/, '');
+      if (noThe && KNOWLEDGE_MATH_SCIENCE_400[noThe]) return KNOWLEDGE_MATH_SCIENCE_400[noThe];
+      if (noThe && KNOWLEDGE_MATH_SCIENCE_400[`what is ${noThe}`]) return KNOWLEDGE_MATH_SCIENCE_400[`what is ${noThe}`];
+      if (noThe && KNOWLEDGE_MATH_SCIENCE_400[`what is the ${noThe}`]) return KNOWLEDGE_MATH_SCIENCE_400[`what is the ${noThe}`];
 
       return null;
     }
@@ -7289,15 +7407,26 @@ try {
 
       // Handle language switch specifically for code continuity
       if (langSwitchMatch) {
-        const targetLang = langSwitchMatch[1];
-        const algo = antecedent || this.lastCodePrompt || 'algorithm';
-        const cleanAlgo = algo.replace(/(?:in\s+)?(?:python|java|c\+\+|cpp|javascript|js|html|\bc\b)/gi, '').trim();
-        const codeResolved = `write ${cleanAlgo || 'program'} in ${targetLang}`;
-        this.lastCodePrompt = codeResolved;
+        let targetLang = langSwitchMatch[1].toLowerCase();
+        if (targetLang === 'js') targetLang = 'javascript';
+        else if (targetLang === 'ts') targetLang = 'typescript';
+        else if (targetLang === 'cpp') targetLang = 'c++';
+        else if (targetLang === 'rs') targetLang = 'rust';
+
+        const source = this.lastCodePrompt || antecedent || 'binary search';
+        const cleanAlgo = source
+          .replace(/^(?:write|implement|create|give\s+me|code)\s+(?:a\s+|an\s+)?/i, '')
+          .replace(/\b(?:now\s+)?(?:can\s+you\s+)?(?:write|code|do|implement|convert|rewrite)?(?:\s+(?:that|it|this))?\s*(?:in|to)\s+(?:python|java|c\+\+|cpp|c|javascript|js|typescript|ts|rust|rs|html|\bc\b)\b/gi, '')
+          .replace(/\b(?:in|to)\s+(?:python|java|c\+\+|cpp|c|javascript|js|typescript|ts|rust|rs|html|\bc\b)\b/gi, '')
+          .replace(/\b(?:code|program|script|function|algorithm|implementation|solution)\b/gi, '')
+          .trim();
+        const baseAlgo = cleanAlgo || 'binary search';
+        const codeResolved = `write a ${targetLang} code for ${baseAlgo}`;
+        this.lastCodePrompt = `write code for ${baseAlgo}`;
         return {
           isReferential: true,
           resolvedQuery: codeResolved,
-          antecedentTopic: cleanAlgo,
+          antecedentTopic: baseAlgo,
           constraint: `in ${targetLang}`
         };
       }
@@ -7348,6 +7477,9 @@ try {
       if (/\b(website|webpage|web\s+app|app|code|script|program|software|html|css|developer|develop)\b/i.test(q)) return false;
       if (/\b(cos|sin|tan|sec|csc|cot|derivative|integral|limit|matrix|eigenvalue|trigonometry|logarithm|factorial)\b/i.test(q)) return false;
       if (/^(?:what\s+is\s+(?:the\s+)?(?:value\s+of\s+)?)?(?:cos|sin|tan)\b/i.test(q)) return false;
+      // Stage 53: Block math equations, algebraic roots, quadratic expressions, and physical/chemical law keys from Wikipedia
+      if (/\b(?:roots?|quadratic|equation|polynomial|formula|euler|newton|avogadro|einstein|pythagor|photosynthesis|glucose|central\s+dogma|dna\s+base)\b/i.test(q)) return false;
+      if (/[\^=]|\bx\^|\b[a-z]\s*=\s*\d/i.test(q)) return false;
       // Bug #3 & Bug #118 Fix: Strictly block pronouns and elaboration requests from querying Wikipedia directly
       if (/\b(it|that|this|them|both|these|those)\b/i.test(q)) return false;
       if (/\b(?:in\s+\d+\s+words|in\s+simple\s+terms|in\s+detail|in\s+bullet\s+points|tell\s+me\s+more|explain\s+it|give\s+an?\s+example|why\s+does\s+that)\b/i.test(q)) {
@@ -7473,13 +7605,10 @@ try {
       ].join(' ');
 
       const qLow = userQuery.toLowerCase();
-      // 0a. Stage 51: Fast O(1) Check for 400 Expert Math & Science Entries
-      const cleanQNorm = qLow.replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
-      if (KNOWLEDGE_MATH_SCIENCE_400[cleanQNorm]) {
-        return { text: KNOWLEDGE_MATH_SCIENCE_400[cleanQNorm], engine: 'CLUMSY-7X Omni' };
-      }
-      if (KNOWLEDGE_MATH_SCIENCE_400[qLow]) {
-        return { text: KNOWLEDGE_MATH_SCIENCE_400[qLow], engine: 'CLUMSY-7X Omni' };
+      // 0a. Stage 53: Comprehensive Check for Expert Math & Science Entries with Looping
+      const mathSciMatch = this._lookupKnowledgeMathScience(qLow);
+      if (mathSciMatch) {
+        return { text: mathSciMatch, engine: 'CLUMSY-7X Omni' };
       }
 
       // 1. Check special structured tasks first (Summary, Translation, Email, Story, Poem, Comparison)
@@ -7568,27 +7697,18 @@ try {
       const query = String(rawQuery || '').trim();
       const qLow = query.toLowerCase();
 
-      // Stage 51: Instant O(1) Knowledge Check for Math & Science
-      const cleanQNorm = qLow.replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
-      if (KNOWLEDGE_MATH_SCIENCE_400[cleanQNorm] && !this.isCodingRequest(qLow)) {
-        const text = KNOWLEDGE_MATH_SCIENCE_400[cleanQNorm];
-        this._recordTurn(query, text);
-        return {
-          response: text,
-          spoken_tts: this.stripForSpeech(text),
-          robot_state: 'think',
-          engine: 'CLUMSY-7X Omni'
-        };
-      }
-      if (KNOWLEDGE_MATH_SCIENCE_400[qLow] && !this.isCodingRequest(qLow)) {
-        const text = KNOWLEDGE_MATH_SCIENCE_400[qLow];
-        this._recordTurn(query, text);
-        return {
-          response: text,
-          spoken_tts: this.stripForSpeech(text),
-          robot_state: 'think',
-          engine: 'CLUMSY-7X Omni'
-        };
+      // Stage 53: Comprehensive Knowledge Check for Math & Science with Looping Support
+      if (!this.isCodingRequest(qLow)) {
+        const text = this._lookupKnowledgeMathScience(qLow);
+        if (text) {
+          this._recordTurn(query, text);
+          return {
+            response: text,
+            spoken_tts: this.stripForSpeech(text),
+            robot_state: 'think',
+            engine: 'CLUMSY-7X Omni'
+          };
+        }
       }
       const words = qLow.split(/\s+/).filter(Boolean);
       const wordCount = words.length;

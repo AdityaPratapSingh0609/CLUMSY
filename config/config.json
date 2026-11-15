@@ -1,5 +1,8 @@
 {
-  "project": {"name": "DESKBOT", "version": "0.1.0"},
+  "project": {
+    "name": "DESKBOT",
+    "version": "0.1.0"
+  },
   "llm": {
     "model_path": "models/qwen2.5-1.5b-instruct-q4_k_m.gguf",
     "context_length": 4096,
@@ -7,9 +10,23 @@
     "temperature": 0.3,
     "n_gpu_layers": 0
   },
-  "stt": {"model_size": "tiny.en", "compute_type": "int8", "language": "en", "sample_rate": 16000},
-  "tts": {"voice_model": "en_US-lessac-medium", "sample_rate": 22050},
-  "wake_word": {"phrase": "hey deskbot", "threshold": 0.7},
+  "stt": {
+    "model_size": "tiny.en",
+    "compute_type": "int8",
+    "language": "en",
+    "sample_rate": 16000
+  },
+  "tts": {
+    "voice_model": "en_US-lessac-medium",
+    "sample_rate": 22050,
+    "elevenlabs_voice_id": "ZF6FPAbjXT4488VcRRnw",
+    "elevenlabs_voice_name": "Amelia",
+    "voice_description": "Young and enthusiastic British female voice"
+  },
+  "wake_word": {
+    "phrase": "hey deskbot",
+    "threshold": 0.7
+  },
   "robot": {
     "serial_port": null,
     "baudrate": 115200,
@@ -17,7 +34,17 @@
     "servo_min_angle": 15,
     "servo_max_angle": 165
   },
-  "mesh": {"bluetooth_enabled": true, "lan_enabled": true, "websocket_port": 9120},
-  "dashboard": {"host": "127.0.0.1", "port": 8080},
-  "plugins": {"directory": "plugins", "hot_reload": true}
+  "mesh": {
+    "bluetooth_enabled": true,
+    "lan_enabled": true,
+    "websocket_port": 9120
+  },
+  "dashboard": {
+    "host": "127.0.0.1",
+    "port": 8080
+  },
+  "plugins": {
+    "directory": "plugins",
+    "hot_reload": true
+  }
 }

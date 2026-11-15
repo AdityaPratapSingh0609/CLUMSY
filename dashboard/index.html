@@ -1128,6 +1128,7 @@
           <button class="ws-pill-btn" id="wsMeshBtn" onclick="setWorkspaceMode('mesh')">🌐 Mesh</button>
         </div>
         <span class="badge" id="wsStatusBadge">WS: Live Ready</span>
+        <button class="badge" id="btnElevenLabsVoice" style="cursor:pointer; border-color: #a855f7; color: #c084fc;" onclick="configureElevenLabsVoice()" title="Voice: Amelia (ElevenLabs ZF6FPAbjXT4488VcRRnw)">🔊 Amelia (ElevenLabs)</button>
         <button class="badge" style="cursor:pointer;" onclick="pairDesktopBluetooth()">🟣 Bluetooth</button>
         <button class="badge" id="btnInstallDesktopPwa" style="background: var(--gemini-grad); color: #fff; border: none; cursor: pointer;" onclick="installDesktopApp()">⬇ Install</button>
         <a class="badge" href="/mobile" target="_blank">📱 Phone</a>
@@ -1529,16 +1530,99 @@
 
     let isSpeakingDesktopTTS = false;
     let desktopTtsSafetyTimer = null;
-    function speakJarvisReply(spokenText) {
+    const ELEVENLABS_VOICE_ID = 'ZF6FPAbjXT4488VcRRnw'; // Amelia (Young & enthusiastic British female)
+    let elevenLabsAudioPlayer = null;
+
+    function configureElevenLabsVoice() {
+      const currentKey = localStorage.getItem('elevenlabs_api_key') || '';
+      const newKey = prompt(
+        "Enter your ElevenLabs API Key to stream ultra-realistic neural speech with voice 'Amelia' (ID: ZF6FPAbjXT4488VcRRnw):\n(Leave empty to use native browser British English Amelia acoustic profile)",
+        currentKey
+      );
+      if (newKey !== null) {
+        if (newKey.trim()) {
+          localStorage.setItem('elevenlabs_api_key', newKey.trim());
+          alert("ElevenLabs API Key saved! CLUMSY will now stream in ultra-realistic Amelia neural audio.");
+        } else {
+          localStorage.removeItem('elevenlabs_api_key');
+          alert("Using native browser British English Amelia acoustic profile (offline ready).");
+        }
+      }
+    }
+
+    async function speakWithElevenLabs(text, apiKey) {
+      try {
+        if (elevenLabsAudioPlayer) {
+          elevenLabsAudioPlayer.pause();
+          elevenLabsAudioPlayer = null;
+        }
+        const resp = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}/stream`, {
+          method: 'POST',
+          headers: {
+            'Accept': 'audio/mpeg',
+            'xi-api-key': apiKey,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            text: text,
+            model_id: 'eleven_multilingual_v2',
+            voice_settings: {
+              stability: 0.5,
+              similarity_boost: 0.8,
+              style: 0.2,
+              use_speaker_boost: true
+            }
+          })
+        });
+        if (!resp.ok) throw new Error('ElevenLabs HTTP ' + resp.status);
+        const blob = await resp.blob();
+        const audioUrl = URL.createObjectURL(blob);
+        elevenLabsAudioPlayer = new Audio(audioUrl);
+        elevenLabsAudioPlayer.onplay = () => {
+          isSpeakingDesktopTTS = true;
+          if (jarvisHUD && typeof jarvisHUD.duckSynthMusic === 'function') jarvisHUD.duckSynthMusic(true);
+          if (eyeballEngine) eyeballEngine.setAudioLevel(0.85);
+        };
+        elevenLabsAudioPlayer.onended = () => {
+          isSpeakingDesktopTTS = false;
+          if (jarvisHUD && typeof jarvisHUD.duckSynthMusic === 'function') jarvisHUD.duckSynthMusic(false);
+          if (eyeballEngine) eyeballEngine.setAudioLevel(0.08);
+          URL.revokeObjectURL(audioUrl);
+        };
+        elevenLabsAudioPlayer.onerror = () => {
+          isSpeakingDesktopTTS = false;
+          if (jarvisHUD && typeof jarvisHUD.duckSynthMusic === 'function') jarvisHUD.duckSynthMusic(false);
+          if (eyeballEngine) eyeballEngine.setAudioLevel(0.08);
+          speakWithBrowserSpeechSynthesis(text);
+        };
+        await elevenLabsAudioPlayer.play();
+        return true;
+      } catch (err) {
+        console.warn('ElevenLabs stream failed, falling back to browser speech:', err);
+        return false;
+      }
+    }
+
+    function speakWithBrowserSpeechSynthesis(spokenText) {
       if (!spokenText || !('speechSynthesis' in window)) return;
-      if (window.clumsyBrain && window.clumsyBrain.ttsMuted) return;
       try {
         window.speechSynthesis.cancel();
         if (desktopTtsSafetyTimer) clearTimeout(desktopTtsSafetyTimer);
         const utter = new SpeechSynthesisUtterance(spokenText);
         utter.rate = (window.clumsyBrain && window.clumsyBrain.ttsRate) ? window.clumsyBrain.ttsRate : 1.04;
         utter.volume = (window.clumsyBrain && typeof window.clumsyBrain.ttsVolume === 'number') ? window.clumsyBrain.ttsVolume : 1.0;
-        utter.pitch = 0.96;
+        utter.pitch = 1.10; // Amelia persona: energetic young British female
+
+        const voices = window.speechSynthesis.getVoices();
+        if (voices && voices.length > 0) {
+          const ameliaVoice = voices.find(v => 
+            (/\b(?:amelia|libby|sonia|victoria|stephanie|hazel|natural|george|british|uk\s+english)\b/i.test(v.name) && /female/i.test(v.name)) ||
+            (v.lang && (v.lang.startsWith('en-GB') || v.lang.startsWith('en_GB')))
+          ) || voices.find(v => v.lang && (v.lang.startsWith('en-GB') || v.lang.startsWith('en_GB'))) ||
+          voices.find(v => /female/i.test(v.name));
+          if (ameliaVoice) utter.voice = ameliaVoice;
+        }
+
         utter.onstart = () => {
           isSpeakingDesktopTTS = true;
           if (jarvisHUD && typeof jarvisHUD.duckSynthMusic === 'function') jarvisHUD.duckSynthMusic(true);
@@ -1564,6 +1648,17 @@
       } catch (_) {
         isSpeakingDesktopTTS = false;
       }
+    }
+
+    async function speakJarvisReply(spokenText) {
+      if (!spokenText) return;
+      if (window.clumsyBrain && window.clumsyBrain.ttsMuted) return;
+      const elevenKey = localStorage.getItem('elevenlabs_api_key') || window.ELEVENLABS_API_KEY;
+      if (elevenKey) {
+        const ok = await speakWithElevenLabs(spokenText, elevenKey);
+        if (ok) return;
+      }
+      speakWithBrowserSpeechSynthesis(spokenText);
     }
     const speakClumsyReply = speakJarvisReply;
     window.speakClumsyReply = speakJarvisReply;

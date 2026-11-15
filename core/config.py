@@ -25,7 +25,13 @@ DEFAULTS: Dict[str, Any] = {
         "n_gpu_layers": 0,
     },
     "stt": {"model_size": "tiny.en", "compute_type": "int8", "language": "en", "sample_rate": 16000},
-    "tts": {"voice_model": "en_US-lessac-medium", "sample_rate": 22050},
+    "tts": {
+        "voice_model": "en_US-lessac-medium",
+        "sample_rate": 22050,
+        "elevenlabs_voice_id": "ZF6FPAbjXT4488VcRRnw",
+        "elevenlabs_voice_name": "Amelia",
+        "voice_description": "Young and enthusiastic British female voice",
+    },
     "wake_word": {"phrase": "hey deskbot", "threshold": 0.7},
     "robot": {
         "serial_port": None,
