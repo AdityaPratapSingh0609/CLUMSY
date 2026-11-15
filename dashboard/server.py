@@ -247,7 +247,10 @@ class DeskbotRequestHandler(SimpleHTTPRequestHandler):
         if clean_path in ("/mobile", "/eyes", "/mobile.html"):
             if self._try_serve_static_fast("mobile.html"):
                 return
-        if clean_path in ("/manifest.json", "/manifest-desktop.json", "/sw.js", "/eyeballs.js", "/robot3d.js", "/jarvis_hud.js", "/clumsy_brain.js", "/deskbot_render.jpg"):
+        if clean_path in ("/presentation", "/presentation.html", "/deck"):
+            if self._try_serve_static_fast("presentation.html"):
+                return
+        if clean_path in ("/manifest.json", "/manifest-desktop.json", "/sw.js", "/eyeballs.js", "/robot3d.js", "/jarvis_hud.js", "/clumsy_brain.js", "/deskbot_render.jpg", "/knowledge_math_science.js", "/presentation.html"):
             if self._try_serve_static_fast(clean_path.lstrip("/")):
                 return
 

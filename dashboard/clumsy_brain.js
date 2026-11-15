@@ -2064,6 +2064,7 @@ try {
      * STAGE 49: Instant General Knowledge, World Capitals, Physical Constants & Science Encyclopedia
      */
     _tryGeneralKnowledge(query, qLow) {
+      if (this.isCodingRequest(qLow)) return null;
       // 1. World Capitals
       if (/\bcapital\s+of\b/i.test(qLow) || /\bwhat\s+is\s+the\s+capital\s+of\b/i.test(qLow)) {
         const countryMap = {

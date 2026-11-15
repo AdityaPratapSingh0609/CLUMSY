@@ -2,6 +2,9 @@
   "version": 2,
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/index.py" },
+    { "source": "/presentation", "destination": "/dashboard/presentation.html" },
+    { "source": "/presentation.html", "destination": "/dashboard/presentation.html" },
+    { "source": "/deck", "destination": "/dashboard/presentation.html" },
     { "source": "/mobile", "destination": "/dashboard/mobile.html" },
     { "source": "/eyes", "destination": "/dashboard/mobile.html" },
     { "source": "/manifest.json", "destination": "/dashboard/manifest.json" },
