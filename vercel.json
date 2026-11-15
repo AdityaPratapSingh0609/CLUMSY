@@ -8,6 +8,8 @@
     { "source": "/manifest-desktop.json", "destination": "/dashboard/manifest-desktop.json" },
     { "source": "/sw.js", "destination": "/dashboard/sw.js" },
     { "source": "/eyeballs.js", "destination": "/dashboard/eyeballs.js" },
+    { "source": "/knowledge_math_science.js", "destination": "/dashboard/knowledge_math_science.js" },
+    { "source": "/clumsy_brain.js", "destination": "/dashboard/clumsy_brain.js" },
     { "source": "/robot3d.js", "destination": "/dashboard/robot3d.js" },
     { "source": "/jarvis_hud.js", "destination": "/dashboard/jarvis_hud.js" },
     { "source": "/deskbot_render.jpg", "destination": "/dashboard/deskbot_render.jpg" },
