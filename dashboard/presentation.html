@@ -832,8 +832,41 @@ Click a preset chip above or type any prompt to execute offline inference.
   </footer>
 
   <!-- Include clumsy_brain.js and knowledge engine for real-time live execution -->
-  <script src="knowledge_math_science.js"></script>
-  <script src="clumsy_brain.js"></script>
+  <script>
+    (function() {
+      function loadScript(src, cb) {
+        const s = document.createElement('script');
+        s.src = src;
+        s.onload = () => { if (cb) cb(null); };
+        s.onerror = (err) => { if (cb) cb(err); };
+        document.head.appendChild(s);
+      }
+
+      // Attempt to load from relative path, local server, or DESKBOT subdirectory
+      const isFile = window.location.protocol === 'file:';
+      const paths = isFile ? [
+        ['DESKBOT/dashboard/knowledge_math_science.js', 'DESKBOT/dashboard/clumsy_brain.js'],
+        ['http://127.0.0.1:8080/knowledge_math_science.js', 'http://127.0.0.1:8080/clumsy_brain.js'],
+        ['knowledge_math_science.js', 'clumsy_brain.js']
+      ] : [
+        ['knowledge_math_science.js', 'clumsy_brain.js'],
+        ['/knowledge_math_science.js', '/clumsy_brain.js']
+      ];
+
+      function tryPair(idx) {
+        if (idx >= paths.length) return;
+        const [kPath, bPath] = paths[idx];
+        loadScript(kPath, (err) => {
+          if (err) return tryPair(idx + 1);
+          loadScript(bPath, (bErr) => {
+            if (bErr) return tryPair(idx + 1);
+            if (typeof initBrain === 'function') initBrain();
+          });
+        });
+      }
+      tryPair(0);
+    })();
+  </script>
 
   <script>
     // Slide Navigation Logic
