@@ -1,15 +1,5 @@
 [
   {
-    "id": "gmail_1794597487",
-    "mode": "compose",
-    "to": "tony@stark.com",
-    "subject": "Arc Reactor Update body Diagnostics green",
-    "body": "Diagnostics green",
-    "url": "https://mail.google.com/mail/?view=cm&fs=1&to=tony%40stark.com&su=Arc+Reactor+Update+body+Diagnostics+green&body=Diagnostics+green",
-    "summary": "Composed Gmail draft to tony@stark.com \u2014 Subject: 'Arc Reactor Update body Diagnostics green'",
-    "timestamp": "2026-11-14 00:48:07"
-  },
-  {
     "id": "gmail_1794599313",
     "mode": "compose",
     "to": "tony@stark.com",
@@ -298,5 +288,15 @@
     "url": "https://mail.google.com/mail/?view=cm&fs=1&to=tony%40stark.com&su=Arc+Reactor+Update+body+Diagnostics+green&body=Diagnostics+green",
     "summary": "Composed Gmail draft on Laptop to tony@stark.com \u2014 Subject: 'Arc Reactor Update body Diagnostics green'",
     "timestamp": "2026-11-15 13:57:56"
+  },
+  {
+    "id": "gmail_1794737028",
+    "mode": "compose",
+    "to": "tony@stark.com",
+    "subject": "Arc Reactor Update body Diagnostics green",
+    "body": "Diagnostics green",
+    "url": "https://mail.google.com/mail/?view=cm&fs=1&to=tony%40stark.com&su=Arc+Reactor+Update+body+Diagnostics+green&body=Diagnostics+green",
+    "summary": "Composed Gmail draft on Laptop to tony@stark.com \u2014 Subject: 'Arc Reactor Update body Diagnostics green'",
+    "timestamp": "2026-11-15 15:33:48"
   }
 ]
