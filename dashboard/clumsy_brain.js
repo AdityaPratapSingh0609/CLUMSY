@@ -5076,6 +5076,7 @@ try {
      * Stage 41 (Bug #89 Fix): Direct Comparison Matrix & Versus Evaluator ("A vs B")
      */
     _tryComparisonMatrix(query, qLow) {
+      if (this.isCodingRequest(qLow)) return null;
       const vsMatch = query.match(/\b([a-zA-Z0-9+#]+(?:\s+[a-zA-Z0-9+#]+)?)\s+(?:vs\.?|versus|compared\s+to|against)\s+([a-zA-Z0-9+#]+(?:\s+[a-zA-Z0-9+#]+)?)(?:\b|$)/i);
       if (!vsMatch) return null;
 
@@ -5647,6 +5648,7 @@ try {
      * Stage 42 (Bug #99 Fix): SQL Query Synthesizer & Schema Optimization
      */
     _trySqlEngine(query, qLow) {
+      if (this.isCodingRequest(qLow)) return null;
       if (!/\b(?:sql|write\s+(?:a\s+)?sql|select\s+.*from)\b/i.test(qLow)) {
         return null;
       }
@@ -6068,7 +6070,8 @@ try {
      * Stage 42 (Bug #105 Fix): Chemical Equation Balancer & Stoichiometry Engine
      */
     _tryChemistryBalancer(query, qLow) {
-      if (!/\b(?:balance\s+(?:the\s+)?(?:chemical\s+)?equation|balance\s+[A-Za-z0-9]+\s*\+|balance\s+equation|balance\s+[A-Za-z0-9]+|balancer\s+law)\b/i.test(qLow)) {
+      if (this.isCodingRequest(qLow)) return null;
+      if (!/\b(?:balance\s+(?:the\s+)?(?:chemical\s+)?equation|balance\s+[A-Za-z0-9]+\s*\+|balance\s+equation|balancer\s+law)\b/i.test(qLow)) {
         return null;
       }
 
