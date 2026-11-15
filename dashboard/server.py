@@ -231,6 +231,9 @@ class DeskbotRequestHandler(SimpleHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", ctype)
         self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Expires", "0")
         self.send_header("Content-Length", str(len(raw)))
         self.end_headers()
         self.wfile.write(raw)
@@ -343,6 +346,7 @@ class DeskbotRequestHandler(SimpleHTTPRequestHandler):
                 alts = data.get("alternatives") if isinstance(data.get("alternatives"), list) else None
                 norm_q = normalize_voice_transcript(raw_q, alternatives=alts)
                 exec_os = bool(data.get("execute_os", False))
+                history = data.get("history") if isinstance(data.get("history"), list) else None
                 env = MeshEnvelope(
                     source_device=source_dev,
                     target_device="desktop_host",
@@ -353,6 +357,7 @@ class DeskbotRequestHandler(SimpleHTTPRequestHandler):
                         "voice": bool(data.get("voice", False)),
                         "execute_os": exec_os,
                         "source_device": source_dev,
+                        "history": history,
                     },
                 )
                 result = _run_coro_threadsafe(realtime_hub.handle_envelope(env))

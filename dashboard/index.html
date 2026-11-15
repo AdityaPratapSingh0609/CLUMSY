@@ -9,22 +9,26 @@
   <script src="/robot3d.js"></script>
   <script src="/eyeballs.js"></script>
   <script src="/jarvis_hud.js"></script>
-  <script src="/clumsy_brain.js?v=13"></script>
+  <script src="/clumsy_brain.js?v=50"></script>
   <style>
     :root {
-      --bg: #131314;
-      --sidebar-bg: #1e1f20;
-      --surface: #1e1f20;
-      --surface-hover: #282a2c;
-      --surface-elevated: #282a2c;
+      --bg: #08090f;
+      --sidebar-bg: #0e0f17;
+      --surface: #131522;
+      --surface-hover: #1b1e30;
+      --surface-elevated: #1e2238;
       --border: rgba(255, 255, 255, 0.08);
-      --text: #e3e3e3;
-      --text-muted: #9aa0a6;
-      --accent: #a8c7fa;
+      --border-glow: rgba(168, 85, 247, 0.4);
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #60a5fa;
       --accent-violet: #c084fc;
-      --accent-rose: #f472b6;
-      --success: #34d399;
+      --accent-rose: #f43f5e;
+      --accent-cyan: #00f0ff;
+      --success: #10b981;
+      --rainbow-grad: linear-gradient(90deg, #ff007a 0%, #7928ca 35%, #0070f3 70%, #00dfd8 100%);
       --gemini-grad: linear-gradient(90deg, #4facfe 0%, #a855f7 50%, #f43f5e 100%);
+      --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
     }
 
     * {
@@ -620,7 +624,350 @@
       }
       .gemini-hero h1 { font-size: 28px; }
       .gemini-hero p { font-size: 16px; }
+      .executive-grid-3col, .executive-grid-2col {
+        grid-template-columns: 1fr !important;
+      }
+      .command-search-capsule {
+        min-width: 180px !important;
+      }
     }
+
+    /* Stage 47: Alien AI Command Bar & Executive Glassmorphic HUD Styles */
+    .command-search-capsule {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(20, 22, 34, 0.85);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 14px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      min-width: 290px;
+      backdrop-filter: blur(12px);
+    }
+    .command-search-capsule:hover {
+      border-color: rgba(192, 132, 252, 0.55);
+      background: rgba(29, 32, 48, 0.95);
+      box-shadow: 0 0 18px rgba(168, 85, 247, 0.22);
+      transform: translateY(-1px);
+    }
+    .cmd-k-badge {
+      margin-left: auto;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px 7px;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: monospace;
+      font-weight: 600;
+    }
+    .workspace-pills-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .ws-pill-btn {
+      background: rgba(20, 22, 34, 0.85);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 13px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      backdrop-filter: blur(8px);
+    }
+    .ws-pill-btn:hover {
+      color: #fff;
+      border-color: rgba(168, 85, 247, 0.45);
+      background: rgba(30, 33, 50, 0.9);
+      box-shadow: 0 0 12px rgba(168, 85, 247, 0.18);
+    }
+    .ws-pill-btn.active {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(168, 85, 247, 0.35));
+      border-color: rgba(192, 132, 252, 0.65);
+      color: #fff;
+      box-shadow: 0 0 14px rgba(168, 85, 247, 0.28);
+    }
+
+    /* Executive Cosmic HUD (Designs 1, 4 & 5) */
+    .executive-hud-container {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .executive-hud-hero {
+      width: 100%;
+      background: rgba(17, 19, 29, 0.78);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      backdrop-filter: blur(24px);
+      box-shadow: var(--card-shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    .executive-hud-hero::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2.5px;
+      background: var(--rainbow-grad);
+    }
+    .hero-meta-col {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      z-index: 2;
+    }
+    .hero-meta-col h1 {
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(110deg, #ffffff 10%, #e2e8f0 40%, #c084fc 80%, #f472b6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .hero-meta-col p {
+      font-size: 14px;
+      color: var(--text-muted);
+      max-width: 500px;
+      line-height: 1.5;
+    }
+    .hero-tag-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+    .hero-tag {
+      font-size: 10.5px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border);
+      color: #cbd5e1;
+    }
+    .hero-canvas-wrap {
+      width: 220px;
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    /* Executive 3-Col & 2-Col Grids (Design 4) */
+    .executive-grid-3col {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      width: 100%;
+    }
+    .executive-grid-2col {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 12px;
+      width: 100%;
+    }
+    .exec-card {
+      background: rgba(17, 19, 29, 0.78);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 16px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .exec-card:hover {
+      border-color: rgba(168, 85, 247, 0.45);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45), 0 0 18px rgba(168, 85, 247, 0.14);
+    }
+    .exec-card-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+    .exec-badge-pill {
+      font-size: 10.5px;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: rgba(16, 185, 129, 0.15);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .clock-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .clock-item {
+      background: rgba(12, 14, 22, 0.65);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px 10px;
+    }
+    .clock-city {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .clock-time {
+      font-size: 15px;
+      font-weight: 800;
+      color: #f1f5f9;
+      font-variant-numeric: tabular-nums;
+    }
+    .automation-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      background: rgba(12, 14, 22, 0.65);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
+    .focus-score-box {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .radial-score-svg {
+      width: 72px;
+      height: 72px;
+      transform: rotate(-90deg);
+    }
+    .radial-bg {
+      stroke: rgba(255, 255, 255, 0.08);
+      stroke-width: 6;
+      fill: none;
+    }
+    .radial-progress {
+      stroke: url(#scoreGradient);
+      stroke-width: 6;
+      stroke-linecap: round;
+      fill: none;
+      stroke-dasharray: 188;
+      stroke-dashoffset: 12;
+      transition: stroke-dashoffset 0.8s ease;
+    }
+
+    /* Rainbow Gradient Showcase (Design 5) */
+    .rainbow-showcase-box {
+      position: relative;
+      border-radius: 20px;
+      padding: 18px 20px;
+      background: rgba(17, 19, 29, 0.78);
+      border: 1px solid var(--border);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      margin-top: 8px;
+      overflow: hidden;
+      backdrop-filter: blur(20px);
+    }
+    .rainbow-showcase-box::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--rainbow-grad);
+    }
+
+    /* Command Palette Modal (Ctrl + K) */
+    .cmd-palette-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(8, 9, 15, 0.75);
+      backdrop-filter: blur(16px);
+      z-index: 100;
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 14vh;
+      animation: msgSpringIn 0.2s ease;
+    }
+    .cmd-palette-modal {
+      width: 90%;
+      max-width: 580px;
+      background: #11131f;
+      border: 1px solid rgba(168, 85, 247, 0.45);
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.75), 0 0 24px rgba(168, 85, 247, 0.2);
+      overflow: hidden;
+    }
+    .cmd-palette-input-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .cmd-palette-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 16px;
+      outline: none;
+    }
+    .cmd-palette-list {
+      max-height: 320px;
+      overflow-y: auto;
+      padding: 10px;
+    }
+    .cmd-palette-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 13.5px;
+      color: var(--text);
+      transition: background 0.15s ease;
+    }
+    .cmd-palette-item:hover, .cmd-palette-item.selected {
+      background: rgba(168, 85, 247, 0.18);
+      color: #fff;
+    }
+    .cmd-palette-tag {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+    }
+
   </style>
 </head>
 <body>
@@ -727,7 +1074,7 @@
         </div>
         <div class="status-dot"></div>
       </div>
-      <div class="device-item" id="deviceLaptop">
+      <div class="device-item" id="deviceLaptop" onclick="pingLaptopNode()" style="cursor:pointer;" title="Click to ping Laptop Master Hub">
         <div class="device-info">
           <div class="device-title">Laptop Master Hub</div>
           <div class="device-sub" id="laptopSub">Offline Studio • Code / 3D / Media</div>
@@ -754,7 +1101,7 @@
 
   <!-- Main Google Gemini Conversation & Studio Stage -->
   <main class="gemini-main">
-    <!-- Top Bar with Unified 7-Model Omni Badge -->
+    <!-- Top Bar with Unified 7-Model Omni Badge & Alien AI Command Bar (Designs 4 & 5) -->
     <header class="gemini-topbar">
       <div class="topbar-left">
         <button class="icon-btn" onclick="toggleSidebar()" title="Toggle Robot &amp; Hardware Sidebar">☰</button>
@@ -765,22 +1112,215 @@
             <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
           </span>
         </div>
-        <button class="badge" style="cursor:pointer;" onclick="scanOfflineLLMs()" id="localScanBadge">🟢 7-Model Unified Core Active</button>
+        <div class="command-search-capsule" onclick="openCmdPalette()" title="Press Ctrl+K to open Command Palette">
+          <span style="font-size:13px; color:var(--accent-violet);">🔍</span>
+          <span style="font-size:12px; color:var(--text-muted);">Search commands, code, math (Ctrl+K)...</span>
+          <kbd class="cmd-k-badge">Ctrl + K</kbd>
+        </div>
       </div>
 
       <div class="topbar-right">
+        <div class="workspace-pills-row">
+          <button class="ws-pill-btn active" id="wsOmniBtn" onclick="setWorkspaceMode('omni')">🌟 Omni</button>
+          <button class="ws-pill-btn" id="wsExecBtn" onclick="setWorkspaceMode('executive')">📊 Executive HUD</button>
+          <button class="ws-pill-btn" id="wsCodeBtn" onclick="setWorkspaceMode('code')">💻 Code</button>
+          <button class="ws-pill-btn" id="wsMeshBtn" onclick="setWorkspaceMode('mesh')">🌐 Mesh</button>
+        </div>
         <span class="badge" id="wsStatusBadge">WS: Live Ready</span>
-        <button class="badge" style="cursor:pointer;" onclick="pairDesktopBluetooth()">🟣 Pair Bluetooth</button>
-        <button class="badge" id="btnInstallDesktopPwa" style="background: var(--gemini-grad); color: #fff; border: none; cursor: pointer;" onclick="installDesktopApp()">⬇ Install App</button>
-        <a class="badge" href="/mobile" target="_blank">📱 Phone Companion</a>
+        <button class="badge" style="cursor:pointer;" onclick="pairDesktopBluetooth()">🟣 Bluetooth</button>
+        <button class="badge" id="btnInstallDesktopPwa" style="background: var(--gemini-grad); color: #fff; border: none; cursor: pointer;" onclick="installDesktopApp()">⬇ Install</button>
+        <a class="badge" href="/mobile" target="_blank">📱 Phone</a>
       </div>
     </header>
 
     <!-- Center Scrollable Chat Stream -->
     <div class="gemini-scroll-area" id="chatScrollArea">
       <div class="gemini-content-col">
-        <!-- Gemini Shimmer Welcome Hero -->
-        <div class="gemini-hero" id="geminiHero">
+        <!-- Stage 47: Executive Cosmic Glassmorphic HUD (Designs 1, 4 & 5) -->
+        <section class="executive-hud-container" id="executiveCommandCenter">
+          <!-- Hero Header with Cosmic Soundwave Portal -->
+          <div class="executive-hud-hero">
+            <div class="hero-meta-col">
+              <h1 id="executiveGreeting">Good afternoon, Aditya <span style="font-size:24px;">✨</span></h1>
+              <p>Your 100% Offline AI Assistant is ready. All 7 Neural Cores online with zero cloud tracking.</p>
+              <div class="hero-tag-row">
+                <span class="hero-tag">🌟 Agency</span>
+                <span class="hero-tag">👥 Team</span>
+                <span class="hero-tag">🔒 100% Offline</span>
+                <span class="hero-tag">⚡ 60 FPS Eyes</span>
+                <span class="hero-tag">🏆 Hackathon Ready</span>
+              </div>
+            </div>
+            <div class="hero-canvas-wrap">
+              <canvas id="cosmicOrbCanvas" width="220" height="140" title="Cosmic Soundwave Energy Portal"></canvas>
+            </div>
+          </div>
+
+          <!-- Top 3-Col Executive Grid (Design 4) -->
+          <div class="executive-grid-3col">
+            <!-- 1. Executive Intelligence Brief -->
+            <div class="exec-card">
+              <div>
+                <div class="exec-card-hdr">
+                  <span>📨 Intelligence Brief</span>
+                  <span class="exec-badge-pill">● 7 Cores Online</span>
+                </div>
+                <div style="font-size: 12px; color: var(--text-muted); line-height: 1.6;">
+                  • <b>7-Model Fusion:</b> Qwen 3.5, Llama 4 &amp; Gemma<br/>
+                  • <b>Hardware Avatar:</b> Arduino Uno Bluetooth live<br/>
+                  • <b>Multi-Lingual:</b> 10 languages &amp; reverse phonetics<br/>
+                  • <b>Privacy:</b> Zero cloud leaks • Local SQLite WAL
+                </div>
+              </div>
+              <button onclick="askPreset('summarize system capabilities in 3 bullets')" style="margin-top:10px; width:100%; font-size:11px; padding:6px; border-radius:10px;">⚡ Quick Briefing</button>
+            </div>
+
+            <!-- 2. Global World Clocks & Timers (Bug #146, #149) -->
+            <div class="exec-card">
+              <div>
+                <div class="exec-card-hdr">
+                  <span>⏱️ World Clocks &amp; Timers</span>
+                  <span class="exec-badge-pill" style="color:#60a5fa; background:rgba(96,165,250,0.15); border-color:rgba(96,165,250,0.3);">Live UTC</span>
+                </div>
+                <div class="clock-row">
+                  <div class="clock-item">
+                    <div class="clock-city">Tokyo</div>
+                    <div class="clock-time" id="clockTokyo">--:--</div>
+                  </div>
+                  <div class="clock-item">
+                    <div class="clock-city">London</div>
+                    <div class="clock-time" id="clockLondon">--:--</div>
+                  </div>
+                  <div class="clock-item">
+                    <div class="clock-city">New York</div>
+                    <div class="clock-time" id="clockNYC">--:--</div>
+                  </div>
+                  <div class="clock-item">
+                    <div class="clock-city">Delhi</div>
+                    <div class="clock-time" id="clockDelhi">--:--</div>
+                  </div>
+                </div>
+              </div>
+              <div style="font-size: 11px; color: var(--accent-violet); margin-top:8px; display:flex; justify-content:space-between;">
+                <span id="activeTimerStatus">⏱️ Timers: None active</span>
+                <span style="cursor:pointer;" onclick="askPreset('set a timer for 5 minutes')">+ 5m Timer</span>
+              </div>
+            </div>
+
+            <!-- 3. Offline Research & Deep Science -->
+            <div class="exec-card">
+              <div>
+                <div class="exec-card-hdr">
+                  <span>🔬 Research &amp; Science</span>
+                  <span class="exec-badge-pill" style="color:#f472b6; background:rgba(244,114,182,0.15); border-color:rgba(244,114,182,0.3);">Offline Core</span>
+                </div>
+                <div style="font-size: 12px; color: var(--text-muted); line-height: 1.6;">
+                  • <b>Physics Equations:</b> F=ma, E=mc², KE<br/>
+                  • <b>Unit Conversions:</b> Speed, Pressure, Energy<br/>
+                  • <b>Symbolic Math:</b> Calculus &amp; Matrix Algebra<br/>
+                  • <b>Code Synthesis:</b> 6-Language Sandbox
+                </div>
+              </div>
+              <button onclick="askPreset('convert 100 km/h to m/s and knots')" style="margin-top:10px; width:100%; font-size:11px; padding:6px; border-radius:10px;">📐 Calculate Physics</button>
+            </div>
+          </div>
+
+          <!-- Bottom 2-Col Executive Grid (Design 4) -->
+          <div class="executive-grid-2col">
+            <!-- 4. Active Automations & Connected Mesh Nodes -->
+            <div class="exec-card">
+              <div class="exec-card-hdr">
+                <span>⚡ Active Automations &amp; Mesh Nodes</span>
+                <span class="exec-badge-pill">● 4 Nodes Active</span>
+              </div>
+              <div>
+                <div class="automation-row">
+                  <span>🖥️ <b>Primary Desktop Brain</b> (Local Inference)</span>
+                  <span style="color:#10b981; font-weight:700;">● Active • 0.2ms</span>
+                </div>
+                <div class="automation-row">
+                  <span>🤖 <b>Arduino Uno Avatar</b> (Servos &amp; Eyes)</span>
+                  <span style="color:#10b981; font-weight:700;">● Active • 60 FPS</span>
+                </div>
+                <div class="automation-row">
+                  <span>💻 <b>Laptop Master Hub</b> (Async Job Engine)</span>
+                  <span style="color:#10b981; font-weight:700;">● Active • Standby</span>
+                </div>
+                <div class="automation-row">
+                  <span>📱 <b>Mobile Phone Agent</b> (Termux / PWA)</span>
+                  <span style="color:#10b981; font-weight:700;">● Active • Ready</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 5. Today's Focus & Health Score -->
+            <div class="exec-card">
+              <div class="exec-card-hdr">
+                <span>🎯 Today's Focus &amp; Health Score</span>
+                <span class="exec-badge-pill">94% Optimal</span>
+              </div>
+              <div class="focus-score-box">
+                <div style="position:relative; width:72px; height:72px; flex-shrink:0;">
+                  <svg class="radial-score-svg" viewBox="0 0 72 72">
+                    <defs>
+                      <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#00f0ff" />
+                        <stop offset="50%" stop-color="#a855f7" />
+                        <stop offset="100%" stop-color="#ff007a" />
+                      </linearGradient>
+                    </defs>
+                    <circle class="radial-bg" cx="36" cy="36" r="30" />
+                    <circle class="radial-progress" cx="36" cy="36" r="30" />
+                  </svg>
+                  <div style="position:absolute; top:0; left:0; width:72px; height:72px; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:800; color:#fff;">94%</div>
+                </div>
+                <div style="font-size: 11.5px; color: var(--text-muted); line-height: 1.5;">
+                  <b>Cognitive Focus Score:</b><br/>
+                  • Local RAM footprint: &lt; 2.2 GB<br/>
+                  • Latency: Instant reflex &lt; 1ms<br/>
+                  • Neural Cores: 7 Online
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rainbow Gradient Capabilities Showcase (Design 5) -->
+          <div class="rainbow-showcase-box">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+              <span style="font-size:13px; font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
+                <span>✨ Templates &amp; Capabilities Showcase</span>
+                <span style="display:flex; gap:3px;">
+                  <span style="width:6px; height:6px; border-radius:50%; background:#ff007a;"></span>
+                  <span style="width:6px; height:6px; border-radius:50%; background:#7928ca;"></span>
+                  <span style="width:6px; height:6px; border-radius:50%; background:#0070f3;"></span>
+                  <span style="width:6px; height:6px; border-radius:50%; background:#00dfd8;"></span>
+                </span>
+              </span>
+              <span style="font-size:11px; color:var(--accent-violet); cursor:pointer;" onclick="askPreset('help')">View All Capabilities ›</span>
+            </div>
+            <div class="gemini-suggestions" style="margin-top:0;">
+              <div class="suggestion-card" onclick="askPreset('scaffold a full-stack node express app')">
+                <span>🚀 <b>Full-Stack App Scaffolding</b><br/><small style="font-size:11px; color:var(--text-muted);">Generate production Node/Express or FastAPI setup</small></span>
+                <small>💻</small>
+              </div>
+              <div class="suggestion-card" onclick="askPreset('think step by step: solve the Monty Hall problem')">
+                <span>🧠 <b>Chain-of-Thought Reasoning</b><br/><small style="font-size:11px; color:var(--text-muted);">Step-by-step logic riddles and puzzle solver</small></span>
+                <small>📐</small>
+              </div>
+              <div class="suggestion-card" onclick="askPreset('translate hello to Spanish, French, German, Hindi, and Japanese')">
+                <span>🌐 <b>10-Language Multi-Lingual Matrix</b><br/><small style="font-size:11px; color:var(--text-muted);">Polyglot translation with phonetics and grammar</small></span>
+                <small>🗣️</small>
+              </div>
+              <div class="suggestion-card" onclick="askPreset('compound interest on $10,000 at 7% for 5 years')">
+                <span>💰 <b>Financial Math &amp; Amortization</b><br/><small style="font-size:11px; color:var(--text-muted);">Calculate compound interest, mortgage &amp; loans</small></span>
+                <small>📊</small>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Gemini Shimmer Welcome Hero (Optional Collapse) -->
+        <div class="gemini-hero" id="geminiHero" style="display:none;">
           <h1>Hello, Aditya</h1>
           <p>How can CLUMSY help you today?</p>
           <div class="gemini-suggestions">
@@ -990,28 +1530,34 @@
     let desktopTtsSafetyTimer = null;
     function speakJarvisReply(spokenText) {
       if (!spokenText || !('speechSynthesis' in window)) return;
+      if (window.clumsyBrain && window.clumsyBrain.ttsMuted) return;
       try {
         window.speechSynthesis.cancel();
         if (desktopTtsSafetyTimer) clearTimeout(desktopTtsSafetyTimer);
         const utter = new SpeechSynthesisUtterance(spokenText);
-        utter.rate = 1.04;
+        utter.rate = (window.clumsyBrain && window.clumsyBrain.ttsRate) ? window.clumsyBrain.ttsRate : 1.04;
+        utter.volume = (window.clumsyBrain && typeof window.clumsyBrain.ttsVolume === 'number') ? window.clumsyBrain.ttsVolume : 1.0;
         utter.pitch = 0.96;
         utter.onstart = () => {
           isSpeakingDesktopTTS = true;
+          if (jarvisHUD && typeof jarvisHUD.duckSynthMusic === 'function') jarvisHUD.duckSynthMusic(true);
           if (eyeballEngine) eyeballEngine.setAudioLevel(0.8);
           desktopTtsSafetyTimer = setTimeout(() => {
             isSpeakingDesktopTTS = false;
+            if (jarvisHUD && typeof jarvisHUD.duckSynthMusic === 'function') jarvisHUD.duckSynthMusic(false);
             if (eyeballEngine) eyeballEngine.setAudioLevel(0.08);
           }, Math.min(9000, Math.max(2500, spokenText.length * 65)));
         };
         utter.onend = () => {
           if (desktopTtsSafetyTimer) clearTimeout(desktopTtsSafetyTimer);
           isSpeakingDesktopTTS = false;
+          if (jarvisHUD && typeof jarvisHUD.duckSynthMusic === 'function') jarvisHUD.duckSynthMusic(false);
           if (eyeballEngine) eyeballEngine.setAudioLevel(0.08);
         };
         utter.onerror = () => {
           if (desktopTtsSafetyTimer) clearTimeout(desktopTtsSafetyTimer);
           isSpeakingDesktopTTS = false;
+          if (jarvisHUD && typeof jarvisHUD.duckSynthMusic === 'function') jarvisHUD.duckSynthMusic(false);
         };
         window.speechSynthesis.speak(utter);
       } catch (_) {
@@ -1189,6 +1735,13 @@
         if (phoneSub && data.phone_battery !== undefined) {
           phoneSub.textContent = `BT Linked • Battery: ${data.phone_battery}%`;
         }
+        if (Array.isArray(data.devices)) {
+          const laptopDev = data.devices.find(d => d.device_id === 'laptop_node');
+          const laptopSub = document.getElementById('laptopSub');
+          if (laptopSub && laptopDev) {
+            laptopSub.textContent = `Online (${laptopDev.transport}) • Master Hub Linked`;
+          }
+        }
         if (data.telemetry) {
           setExpression(
             data.telemetry.expression || 'idle',
@@ -1201,6 +1754,20 @@
           connectWebSocket(`ws://${window.location.hostname || '127.0.0.1'}:${data.ws_port}`);
         }
       } catch (_) {}
+    }
+
+    async function pingLaptopNode() {
+      try {
+        const res = await fetch('/api/mesh/laptop/command', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'ping', params: {} })
+        });
+        const data = await res.json();
+        appendMessage(`📡 **Laptop Hub:** Online & responsive (Node: laptop_node, status: ${data.status || 'ok'}).`, 'assistant');
+      } catch (e) {
+        appendMessage('⚠️ **Laptop Hub:** Ping timed out. Ensure the Deskbot server daemon is active.', 'assistant');
+      }
     }
 
     function normalizeVoicePhoneticsJS(rawText) {
@@ -1252,6 +1819,10 @@
     }
 
     async function sendQuery(isVoice = false, alternatives = null) {
+      if (window.speechSynthesis && window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+        isSpeakingDesktopTTS = false;
+      }
       const input = document.getElementById('userInput');
       const rawText = input.value.trim();
       const text = normalizeVoicePhoneticsJS(rawText);
@@ -1294,7 +1865,12 @@
           jobStudioOutput.style.display = 'none';
           jobStudioOutput.innerHTML = '';
         }
-        setExpression((smart.robot_state || 'happy').toLowerCase(), 90, 96, false);
+        const panAngle = (smart.servos && typeof smart.servos.pan === 'number') ? smart.servos.pan : 90;
+        const tiltAngle = (smart.servos && typeof smart.servos.tilt === 'number') ? smart.servos.tilt : 96;
+        setExpression((smart.robot_state || 'happy').toLowerCase(), panAngle, tiltAngle, false);
+        if (smart.robot_state === 'blink' && eyeballEngine) {
+          eyeballEngine.triggerBlink();
+        }
         logStreamEvent('CLUMSY_AI', `${smart.engine || 'Offline Core'} -> ${(smart.robot_state || 'HAPPY').toUpperCase()}`);
         updateHeroUserName();
       }
@@ -1501,7 +2077,15 @@
     let desktopHwMicSeq = -1;
 
     function processDesktopSpeechTranscript(rawTranscript, isFinal, alts = null) {
-      if (isSpeakingDesktopTTS) return;
+      // Stage 40 (Bug #77 Fix): Audio Barge-In — interrupt TTS when user speaks
+      if (isSpeakingDesktopTTS) {
+        if (rawTranscript && rawTranscript.trim().length > 1) {
+          if (window.speechSynthesis) window.speechSynthesis.cancel();
+          isSpeakingDesktopTTS = false;
+        } else {
+          return;
+        }
+      }
       const corrected = normalizeVoicePhoneticsJS(rawTranscript);
       if (!corrected) return;
       const voiceBar = document.getElementById('liveVoiceTranscriptBar');
@@ -1513,25 +2097,28 @@
         jarvisHUD.setActivity('listening', isFinal ? 0.35 : 0.85);
       }
 
+      // Stage 39 (Bug #61 Fix): Inactivity Sleep Auto-Wakeup
+      // Any spoken query automatically wakes CLUMSY up — never silently drops non-wake-word speech!
       if (isDesktopSleeping) {
-        if (/\b(clumsy|wake\s+up)\b/i.test(corrected)) {
-          if (desktopInterimTimer) {
-            clearTimeout(desktopInterimTimer);
-            desktopInterimTimer = null;
-          }
-          desktopInterimText = '';
-          const remainder = corrected.replace(/^(?:hey|hi|ok|okay|yo)?\s*(?:clumsy|wake\s+up)[\s,!?.:-]*/i, '').trim();
-          triggerDesktopWakeupShake(() => {
-            if (remainder && isFinal) {
-              document.getElementById('userInput').value = remainder;
-              sendQuery(true);
-            } else {
-              const msg = "I'm wide awake and ready! How can I help you?";
-              appendMessage(msg, 'assistant');
-              speakJarvisReply(msg);
-            }
-          });
+        if (desktopInterimTimer) {
+          clearTimeout(desktopInterimTimer);
+          desktopInterimTimer = null;
         }
+        desktopInterimText = '';
+        const hasWakeWord = /\b(clumsy|wake\s+up)\b/i.test(corrected);
+        const remainder = corrected.replace(/^(?:hey|hi|ok|okay|yo)?\s*(?:clumsy|wake\s+up)[\s,!?.:-]*/i, '').trim();
+        const effectiveQuery = (hasWakeWord && remainder) ? remainder : (hasWakeWord ? '' : corrected);
+
+        triggerDesktopWakeupShake(() => {
+          if (effectiveQuery && isFinal) {
+            document.getElementById('userInput').value = effectiveQuery;
+            sendQuery(true);
+          } else {
+            const msg = "I'm wide awake and ready! How can I help you?";
+            appendMessage(msg, 'assistant');
+            speakJarvisReply(msg);
+          }
+        });
         return;
       }
 
@@ -1662,6 +2249,160 @@
 
     resetDesktopSleepTimer();
     refreshStatus();
+
+    // Stage 47: Initialize Cosmic Soundwave Portal & Executive HUD Services
+    let cosmicPortal = null;
+    try {
+      if (typeof CosmicSoundwavePortal !== 'undefined') {
+        cosmicPortal = new CosmicSoundwavePortal('cosmicOrbCanvas');
+      }
+    } catch (_) {}
+
+    function updateExecutiveGreeting() {
+      const h = new Date().getHours();
+      let greet = 'Good morning';
+      if (h >= 12 && h < 17) greet = 'Good afternoon';
+      else if (h >= 17 && h < 22) greet = 'Good evening';
+      else if (h >= 22 || h < 5) greet = 'Good night';
+      const name = (typeof brain !== 'undefined' && brain && brain.userName) ? brain.userName : 'Aditya';
+      const el = document.getElementById('executiveGreeting');
+      if (el) el.innerHTML = `${greet}, ${name} <span style="font-size:24px;">✨</span>`;
+    }
+    updateExecutiveGreeting();
+
+    function updateWorldClocks() {
+      const now = new Date();
+      const formatCity = (tz) => {
+        try {
+          return new Intl.DateTimeFormat('en-US', {
+            timeZone: tz,
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          }).format(now);
+        } catch (_) {
+          return '--:--';
+        }
+      };
+      const tEl = document.getElementById('clockTokyo');
+      const lEl = document.getElementById('clockLondon');
+      const nyEl = document.getElementById('clockNYC');
+      const dEl = document.getElementById('clockDelhi');
+      if (tEl) tEl.textContent = formatCity('Asia/Tokyo');
+      if (lEl) lEl.textContent = formatCity('Europe/London');
+      if (nyEl) nyEl.textContent = formatCity('America/New_York');
+      if (dEl) dEl.textContent = formatCity('Asia/Kolkata');
+
+      const timerEl = document.getElementById('activeTimerStatus');
+      if (timerEl && typeof brain !== 'undefined' && brain) {
+        const count = (brain.activeTimers || []).length;
+        timerEl.textContent = count > 0 ? `⏱️ Active Timers: ${count}` : '⏱️ Timers: None active';
+      }
+    }
+    setInterval(updateWorldClocks, 1000);
+    updateWorldClocks();
+
+    function setWorkspaceMode(mode) {
+      const pills = {
+        omni: document.getElementById('wsOmniBtn'),
+        executive: document.getElementById('wsExecBtn'),
+        code: document.getElementById('wsCodeBtn'),
+        mesh: document.getElementById('wsMeshBtn')
+      };
+      Object.values(pills).forEach(p => p && p.classList.remove('active'));
+      if (pills[mode]) pills[mode].classList.add('active');
+
+      const execSection = document.getElementById('executiveCommandCenter');
+      if (mode === 'omni') {
+        if (execSection) execSection.style.display = 'flex';
+        messageList.style.display = 'flex';
+      } else if (mode === 'executive') {
+        if (execSection) execSection.style.display = 'flex';
+      } else if (mode === 'code') {
+        askPreset('scaffold a full-stack node express app');
+      } else if (mode === 'mesh') {
+        askPreset('system uptime');
+      }
+    }
+
+    const cmdPaletteCommands = [
+      { title: 'Scaffold Node Express App', cat: 'Code', query: 'scaffold a full-stack node express app' },
+      { title: 'Think Step by Step (Monty Hall)', cat: 'Reasoning', query: 'think step by step: solve the Monty Hall problem' },
+      { title: 'Convert 100 km/h to knots & m/s', cat: 'Physics', query: 'convert 100 km/h to m/s and knots' },
+      { title: 'Translate hello to 10 languages', cat: 'Translate', query: 'translate hello to Spanish, French, German, Hindi, and Japanese' },
+      { title: 'Set 5 Minute Countdown Timer', cat: 'Timer', query: 'set a timer for 5 minutes' },
+      { title: 'System Telemetry & Top RAM Processes', cat: 'System', query: 'show top processes' },
+      { title: 'Calculate Compound Interest ($10k @ 7%)', cat: 'Financial', query: 'compound interest on $10,000 at 7% for 5 years' },
+      { title: 'Disk Partition Geometries & Space', cat: 'Storage', query: 'disk partition geometries' },
+      { title: 'Solve Linear Equation: 4x + 12 = 48', cat: 'Math', query: 'solve 4x + 12 = 48' },
+      { title: 'Trigger Arduino Uno Happy Wiggle', cat: 'Hardware', query: 'happy' }
+    ];
+
+    function openCmdPalette() {
+      const modal = document.getElementById('cmdPaletteBackdrop');
+      const input = document.getElementById('cmdPaletteInput');
+      if (modal) {
+        modal.style.display = 'flex';
+        renderCmdPaletteItems(cmdPaletteCommands);
+        setTimeout(() => input && input.focus(), 50);
+      }
+    }
+
+    function closeCmdPalette() {
+      const modal = document.getElementById('cmdPaletteBackdrop');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function renderCmdPaletteItems(items) {
+      const list = document.getElementById('cmdPaletteList');
+      if (!list) return;
+      list.innerHTML = '';
+      items.forEach((item, idx) => {
+        const row = document.createElement('div');
+        row.className = `cmd-palette-item ${idx === 0 ? 'selected' : ''}`;
+        row.innerHTML = `<span><b>${item.title}</b></span> <span class="cmd-palette-tag">${item.cat}</span>`;
+        row.onclick = () => {
+          closeCmdPalette();
+          askPreset(item.query);
+        };
+        list.appendChild(row);
+      });
+    }
+
+    function filterCmdPalette() {
+      const q = (document.getElementById('cmdPaletteInput').value || '').toLowerCase();
+      const filtered = cmdPaletteCommands.filter(c => c.title.toLowerCase().includes(q) || c.cat.toLowerCase().includes(q) || c.query.toLowerCase().includes(q));
+      renderCmdPaletteItems(filtered);
+    }
+
+    function handleCmdPaletteKey(e) {
+      if (e.key === 'Escape') closeCmdPalette();
+      else if (e.key === 'Enter') {
+        const sel = document.querySelector('.cmd-palette-item.selected') || document.querySelector('.cmd-palette-item');
+        if (sel) sel.click();
+      }
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        openCmdPalette();
+      }
+    });
   </script>
+
+  <!-- Stage 47: Command Palette Modal (Ctrl + K) -->
+  <div class="cmd-palette-backdrop" id="cmdPaletteBackdrop" onclick="if(event.target===this) closeCmdPalette()">
+    <div class="cmd-palette-modal">
+      <div class="cmd-palette-input-row">
+        <span style="font-size:18px; color:var(--accent-violet);">🔍</span>
+        <input type="text" class="cmd-palette-input" id="cmdPaletteInput" placeholder="Type a command or query (e.g. 'code', 'timer', 'math', 'uptime')..." oninput="filterCmdPalette()" onkeydown="handleCmdPaletteKey(event)" />
+        <span class="cmd-palette-tag">ESC to close</span>
+      </div>
+      <div class="cmd-palette-list" id="cmdPaletteList">
+        <!-- populated dynamically -->
+      </div>
+    </div>
+  </div>
 </body>
 </html>

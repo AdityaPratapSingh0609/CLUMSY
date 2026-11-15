@@ -60,7 +60,19 @@ $choices.Add(@(
   "open youtube",
   "open netflix",
   "open spotify",
-  "open gmail"
+  "open gmail",
+  "look left",
+  "look right",
+  "look up",
+  "look down",
+  "center eyes",
+  "blink eyes",
+  "blink",
+  "wink",
+  "be happy",
+  "go to sleep",
+  "wake up",
+  "ping nodes"
 ))
 $gb = New-Object System.Speech.Recognition.GrammarBuilder($choices)
 $cmdGrammar = New-Object System.Speech.Recognition.Grammar($gb)
@@ -100,7 +112,7 @@ def _is_valid_voice_command(text: str) -> bool:
     if all(w in NOISE_STOPWORDS for w in words):
         return False
     # Single-word transcripts must be an explicit wake/greeting/action word
-    if len(words) == 1 and clean not in {"clumsy", "hello", "hey", "hi", "thanks", "wink", "sleep"}:
+    if len(words) == 1 and clean not in {"clumsy", "hello", "hey", "hi", "thanks", "wink", "sleep", "blink", "happy", "left", "right"}:
         return False
     return True
 
@@ -178,6 +190,16 @@ class HardwareMicrophoneDaemon:
                 "latest_id": self._seq,
                 "items": items,
             }
+
+    def clear_buffer(self) -> None:
+        """Clear and flush the internal transcript ring buffer (Stage 43, Bug #113)."""
+        with self._lock:
+            self._queue.clear()
+
+    def get_queue_size(self) -> int:
+        """Return the current count of buffered transcripts."""
+        with self._lock:
+            return len(self._queue)
 
 
 hardware_mic_daemon = HardwareMicrophoneDaemon()

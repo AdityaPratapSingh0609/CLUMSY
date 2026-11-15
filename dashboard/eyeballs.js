@@ -389,8 +389,19 @@
     }
 
     setServoAngles(panDeg, tiltDeg) {
-      if (typeof panDeg === "number") this.panDeg = panDeg;
-      if (typeof tiltDeg === "number") this.tiltDeg = tiltDeg;
+      if (typeof panDeg === "number") {
+        this.panDeg = Math.max(15, Math.min(165, panDeg));
+        this.targetGazeX = ((this.panDeg - 90) / 75) * 0.85;
+      }
+      if (typeof tiltDeg === "number") {
+        this.tiltDeg = Math.max(15, Math.min(165, tiltDeg));
+        this.targetGazeY = -((this.tiltDeg - 90) / 75) * 0.85;
+      }
+    }
+
+    setGaze(gx, gy) {
+      this.targetGazeX = Math.max(-1.0, Math.min(1.0, Number(gx) || 0));
+      this.targetGazeY = Math.max(-1.0, Math.min(1.0, Number(gy) || 0));
     }
 
     setAudioLevel(normalizedLevel) {

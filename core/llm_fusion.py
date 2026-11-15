@@ -283,7 +283,7 @@ class JarvisFusionModel:
             )
         )
 
-    def generate(self, user_query: str) -> Dict[str, Any]:
+    def generate(self, user_query: str, history: Optional[List[Dict[str, str]]] = None) -> Dict[str, Any]:
         """Run 4-model fusion routing & synthesis within the single-slot RAM guard."""
         t0 = time.perf_counter()
         normalized_query = normalize_voice_transcript(user_query)
@@ -292,7 +292,8 @@ class JarvisFusionModel:
 
         backend = self.custom_backends.get(lead_id)
         engine = self.ram_guard.acquire_specialist(lead_id, backend=backend)
-        base_out = engine.generate(normalized_query, history=self.history)
+        effective_history = history if history is not None else self.history
+        base_out = engine.generate(normalized_query, history=effective_history)
 
         q_low = (normalized_query or "").lower().strip()
         tool_call = dict(base_out["tool_call"])

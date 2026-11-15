@@ -108,6 +108,7 @@ class DashboardRealtimeHub:
             query = str(params.get("query") or params.get("transcript") or "").strip()
             is_voice = action == "voice.transcript" or bool(params.get("voice", False))
             execute_os = bool(params.get("execute_os", False))
+            history = params.get("history") if isinstance(params.get("history"), list) else None
             if is_voice:
                 self.robot_bridge.set_listening()
                 await self.event_bus.emit(
@@ -115,7 +116,7 @@ class DashboardRealtimeHub:
                     {"transcript": query, "telemetry": self.robot_bridge.get_telemetry()},
                 )
 
-            result = self.brain.process_query(query, execute_os=execute_os)
+            result = self.brain.process_query(query, history=history, execute_os=execute_os)
             telemetry = self.robot_bridge.get_telemetry()
             job_artifact = result.get("job_artifact")
             auto_open_url = (

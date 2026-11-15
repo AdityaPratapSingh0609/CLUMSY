@@ -44,40 +44,99 @@ class VirtualArduinoBotSimulator:
         c_tilt = clamp_servo_deg(tilt)
         return f"<P{c_pan},T{c_tilt},E{expression.strip().lower()}>"
 
-    def process_packet(self, raw_line: str, now_ts: float | None = None) -> Dict[str, Any]:
-        """Parse either a compact `<P90,T95,Ehappy>` frame or a JSON command line."""
+    @staticmethod
+    def encode_binary_frame(pan: int, tilt: int, expression: str = "idle") -> bytes:
+        """Encode an 8-byte high-speed framed binary packet with CRC32 (Stage 43, Bug #114).
+
+        Format:
+          [0..1]: Magic 0xAA, 0x55
+          [2]: Clamped Pan (15..165)
+          [3]: Clamped Tilt (15..165)
+          [4]: Expression ID (0=idle, 1=happy, 2=excited, 3=love, 4=listen, 5=think, 6=code, 7=blink, 8=wink, 9=sleep)
+          [5]: Reserved (0x00)
+          [6..7]: CRC32 truncated to 16 bits (2 bytes big-endian)
+        """
+        import zlib
+        c_pan = clamp_servo_deg(pan)
+        c_tilt = clamp_servo_deg(tilt)
+        expr_map = {
+            "idle": 0, "happy": 1, "excited": 2, "love": 3,
+            "listening": 4, "listen": 4, "thinking": 5, "think": 5,
+            "coding": 6, "code": 6, "blink": 7, "wink": 8, "sleep": 9,
+        }
+        expr_id = expr_map.get(expression.strip().lower(), 0)
+        payload = bytes([0xAA, 0x55, c_pan, c_tilt, expr_id, 0x00])
+        crc = zlib.crc32(payload) & 0xFFFF
+        return payload + crc.to_bytes(2, "big")
+
+    @staticmethod
+    def decode_binary_frame(frame: bytes) -> Dict[str, Any]:
+        """Decode and verify CRC of an 8-byte framed binary packet (Stage 43, Bug #114)."""
+        import zlib
+        if len(frame) != 8 or frame[0] != 0xAA or frame[1] != 0x55:
+            return {"valid": False, "error": "invalid_magic_or_length"}
+        payload = frame[:6]
+        expected_crc = int.from_bytes(frame[6:8], "big")
+        actual_crc = zlib.crc32(payload) & 0xFFFF
+        if expected_crc != actual_crc:
+            return {"valid": False, "error": "crc_mismatch"}
+        pan = clamp_servo_deg(frame[2])
+        tilt = clamp_servo_deg(frame[3])
+        expr_inv = {
+            0: "idle", 1: "happy", 2: "excited", 3: "love",
+            4: "listening", 5: "thinking", 6: "coding", 7: "blink", 8: "wink", 9: "sleep",
+        }
+        expr = expr_inv.get(frame[4], "idle")
+        return {
+            "valid": True,
+            "pan": pan,
+            "tilt": tilt,
+            "expression": expr,
+        }
+
+    def process_packet(self, raw_line: str | bytes, now_ts: float | None = None) -> Dict[str, Any]:
+        """Parse compact `<P90,T95,Ehappy>` frame, 8-byte framed binary packet, or JSON."""
         t0 = time.perf_counter()
         now = now_ts if now_ts is not None else t0
-        line = (raw_line or "").strip()
-        if not line:
-            return {"ack": False, "error": "empty_packet"}
 
-        pan = int(self.target_pan)
-        tilt = int(self.target_tilt)
-        expr = self.expression
-
-        if line.startswith("<") and line.endswith(">"):
-            body = line[1:-1]
-            for token in body.split(","):
-                if token.startswith("P"):
-                    pan = int(token[1:])
-                elif token.startswith("T"):
-                    tilt = int(token[1:])
-                elif token.startswith("E"):
-                    expr = token[1:].strip().lower()
+        if isinstance(raw_line, (bytes, bytearray)):
+            dec = self.decode_binary_frame(bytes(raw_line))
+            if not dec.get("valid"):
+                return {"ack": False, "error": dec.get("error", "invalid_binary")}
+            pan = int(dec["pan"])
+            tilt = int(dec["tilt"])
+            expr = str(dec["expression"])
         else:
-            obj = json.loads(line)
-            if "eyes" in obj and isinstance(obj["eyes"], dict):
-                expr = str(obj["eyes"].get("expression", expr)).lower()
-            elif "expression" in obj:
-                expr = str(obj["expression"]).lower()
+            line = (raw_line or "").strip()
+            if not line:
+                return {"ack": False, "error": "empty_packet"}
 
-            if "servos" in obj and isinstance(obj["servos"], dict):
-                pan = int(obj["servos"].get("pan", pan))
-                tilt = int(obj["servos"].get("tilt", tilt))
+            pan = int(self.target_pan)
+            tilt = int(self.target_tilt)
+            expr = self.expression
+
+            if line.startswith("<") and line.endswith(">"):
+                body = line[1:-1]
+                for token in body.split(","):
+                    if token.startswith("P"):
+                        pan = int(token[1:])
+                    elif token.startswith("T"):
+                        tilt = int(token[1:])
+                    elif token.startswith("E"):
+                        expr = token[1:].strip().lower()
             else:
-                pan = int(obj.get("pan", pan))
-                tilt = int(obj.get("tilt", tilt))
+                obj = json.loads(line)
+                if "eyes" in obj and isinstance(obj["eyes"], dict):
+                    expr = str(obj["eyes"].get("expression", expr)).lower()
+                elif "expression" in obj:
+                    expr = str(obj["expression"]).lower()
+
+                if "servos" in obj and isinstance(obj["servos"], dict):
+                    pan = int(obj["servos"].get("pan", pan))
+                    tilt = int(obj["servos"].get("tilt", tilt))
+                else:
+                    pan = int(obj.get("pan", pan))
+                    tilt = int(obj.get("tilt", tilt))
 
         self.start_pan = self.current_pan
         self.start_tilt = self.current_tilt

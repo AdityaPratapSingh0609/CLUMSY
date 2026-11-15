@@ -37,23 +37,32 @@ class AssistantBrain:
         if not self.tools.list_tools():
             PluginLoader(self.tools).load_all()
         self.shortcuts = ShortcutIntentMatcher()
+        self.history: list[dict[str, str]] = []
 
     def process_query(
         self,
         user_text: str,
         alternatives: Optional[list[str]] = None,
+        history: Optional[list[dict[str, str]]] = None,
         execute_os: bool = False,
     ) -> Dict[str, Any]:
         normalized_text = normalize_voice_transcript(user_text, alternatives=alternatives)
         logger.info("Brain received query: '%s' (normalized: '%s')", user_text, normalized_text)
         self.robot.set_thinking()
 
-        result = self.llm.generate(normalized_text)
+        effective_history = history if history is not None else list(self.history)
+        result = self.llm.generate(normalized_text, history=effective_history)
         thought = result["thought"]
         tool_call = result["tool_call"]
         tool_name = tool_call["tool"]
         tool_params = dict(tool_call["params"])
         spoken_response = result["spoken_response"]
+
+        # Track conversation turns in persistent internal history
+        self.history.append({"role": "user", "content": user_text})
+        self.history.append({"role": "assistant", "content": spoken_response})
+        if len(self.history) > 20:
+            self.history = self.history[-20:]
 
         try:
             target_expression = Expression(result["robot_expression"])
@@ -79,10 +88,17 @@ class AssistantBrain:
                 else {}
             )
             res = self.mesh.route_command(target, "launch_app", {"app_name": app_name})
-            action_executed = {"tool": "launch_app", "result": res, "plugin": plugin_res}
+            action_executed = {"tool": "launch_app", "target": target, "result": res, "plugin": plugin_res}
             node = self.mesh.get_device(target)
             node_name = node.name if node else target
-            spoken_response = f"Launching {app_name} for you on your {node_name}."
+            spoken_response = f"Locking workstation on your {node_name} immediately." if app_name.lower() == "lock" else f"Launching {app_name} for you on your {node_name}."
+        elif tool_name in ("lock_device", "lock_pc", "system_lock"):
+            target = tool_params.get("target", "laptop_node" if "laptop" in normalized_text.lower() else "desktop_host")
+            res = self.mesh.route_command(target, "lock", {})
+            action_executed = {"tool": "lock_device", "target": target, "result": res}
+            node = self.mesh.get_device(target)
+            node_name = node.name if node else target
+            spoken_response = f"Locking workstation on your {node_name} immediately."
         elif tool_name == "interplatform_hub":
             plat = tool_params.get("platform")
             job_artifact = self.job_engine.execute_job(
@@ -157,6 +173,7 @@ class AssistantBrain:
             "normalized_query": normalized_text,
             "thought": thought,
             "response": spoken_response,
+            "spoken_response": spoken_response,
             "action": action_executed,
             "job_artifact": job_artifact,
             "tool_call": tool_call,

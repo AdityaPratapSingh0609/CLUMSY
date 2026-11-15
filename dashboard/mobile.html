@@ -10,23 +10,27 @@
   <link rel="manifest" href="/manifest.json" />
   <link rel="apple-touch-icon" href="/deskbot_render.jpg" />
   <title>CLUMSY-7X Omni // Living AI Companion</title>
-  <script src="/eyeballs.js"></script>
-  <script src="/clumsy_brain.js?v=13"></script>
+  <script src="/eyeballs.js?v=50"></script>
+  <script src="/clumsy_brain.js?v=50"></script>
   <style>
     :root {
-      --bg: #050508;
-      --card: rgba(18, 18, 26, 0.78);
-      --border: rgba(255, 255, 255, 0.13);
+      --bg: #05060a;
+      --card: rgba(18, 19, 28, 0.82);
+      --border: rgba(255, 255, 255, 0.12);
       --accent: #c084fc;
       --accent-pink: #f472b6;
       --accent-blue: #60a5fa;
+      --dusk-orange: #f59e0b;
+      --dusk-amber: #d97706;
+      --dusk-crimson: #ef4444;
+      --dusk-cyan: #00f0ff;
       --success: #34d399;
       --danger: #fb7185;
       --text: #fafafa;
       --muted: #a1a1aa;
-      --aurora-1: rgba(168, 85, 247, 0.24);
-      --aurora-2: rgba(52, 211, 153, 0.18);
-      --aurora-3: rgba(244, 114, 182, 0.16);
+      --aurora-1: rgba(245, 158, 11, 0.22);
+      --aurora-2: rgba(239, 68, 68, 0.18);
+      --aurora-3: rgba(0, 240, 255, 0.15);
     }
 
     * {
@@ -487,6 +491,124 @@
     .btn-action:active {
       transform: scale(0.95);
     }
+
+    /* Stage 48: Mobile Dusk Glow & 3D Voice Assistant Orb Styles (Designs 2 & 3) */
+    .mobile-orb-stage {
+      position: absolute;
+      inset: 64px 0 160px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 5;
+      padding: 0 18px;
+      transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow-y: auto;
+    }
+    .mobile-orb-stage.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.94);
+    }
+    .mobile-greeting-box {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    .mobile-greeting-hi {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.4px;
+      background: linear-gradient(90deg, #ffffff 10%, #fde68a 60%, #f59e0b 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .mobile-greeting-sub {
+      font-size: 13px;
+      color: #cbd5e1;
+      margin-top: 4px;
+      font-weight: 500;
+    }
+    .mobile-voice-orb-canvas {
+      width: 230px;
+      height: 230px;
+      margin: 6px 0;
+      filter: drop-shadow(0 0 28px rgba(245, 158, 11, 0.4));
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .mobile-chips-scroll {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      max-width: 100%;
+      padding: 6px 4px;
+      scrollbar-width: none;
+      margin-top: 6px;
+    }
+    .mobile-chips-scroll::-webkit-scrollbar { display: none; }
+    .chip-pill {
+      background: rgba(22, 24, 38, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #f1f5f9;
+      padding: 7px 15px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+      transition: all 0.2s ease;
+    }
+    .chip-pill:active {
+      transform: scale(0.95);
+      border-color: #f59e0b;
+      background: rgba(245, 158, 11, 0.2);
+    }
+    .mobile-quick-card-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      width: 100%;
+      max-width: 420px;
+      margin-top: 12px;
+    }
+    .mobile-qcard {
+      background: rgba(22, 24, 38, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 18px;
+      padding: 13px 12px;
+      cursor: pointer;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      text-align: left;
+    }
+    .mobile-qcard:active {
+      transform: scale(0.96);
+      border-color: rgba(245, 158, 11, 0.55);
+    }
+    .qcard-icon { font-size: 20px; margin-bottom: 5px; }
+    .qcard-title { font-size: 13px; font-weight: 700; color: #fff; }
+    .qcard-sub { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+    .mode-switch-btn {
+      background: rgba(22, 24, 38, 0.75);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 5px 11px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+      transition: all 0.2s ease;
+    }
+    .mode-switch-btn.active {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(239, 68, 68, 0.3));
+      border-color: rgba(245, 158, 11, 0.7);
+      color: #fff;
+      box-shadow: 0 0 14px rgba(245, 158, 11, 0.35);
+    }
   </style>
 </head>
 <body data-emotion="happy">
@@ -515,9 +637,51 @@
     </div>
   </div>
 
-  <!-- STEP 2: Full-Screen Living Eyeballs Avatar (Clean Autonomous Face) -->
+  <!-- STEP 2: Full-Screen Living Eyeballs Avatar & 3D Voice Orb (Clean Autonomous Companion) -->
   <div id="eyesStreamScreen">
-    <canvas id="mobileEyeballCanvas"></canvas>
+    <canvas id="mobileEyeballCanvas" style="display:none;"></canvas>
+
+    <!-- Stage 48: Mobile 3D Voice Assistant Orb & Quick Cards Stage (Designs 2 & 3) -->
+    <div class="mobile-orb-stage" id="mobileOrbStage">
+      <div class="mobile-greeting-box">
+        <div class="mobile-greeting-hi">Hi, Aditya <span style="font-size:22px;">👋</span></div>
+        <div class="mobile-greeting-sub">I'm your Voice Assistant. How can I help?</div>
+      </div>
+
+      <canvas id="mobileVoiceOrbCanvas" class="mobile-voice-orb-canvas" width="240" height="240" onclick="toggleStreamMic()" title="Tap to Toggle Microphone"></canvas>
+
+      <div class="mobile-chips-scroll">
+        <button class="chip-pill" onclick="askMobilePreset('translate hello to Spanish, French, and Japanese')">🗣️ Translate</button>
+        <button class="chip-pill" onclick="askMobilePreset('convert 100 km/h to knots')">📐 Physics Units</button>
+        <button class="chip-pill" onclick="askMobilePreset('set a timer for 5 minutes')">⏱️ 5m Timer</button>
+        <button class="chip-pill" onclick="askMobilePreset('think step by step: solve the Monty Hall problem')">🧠 Logic Riddle</button>
+        <button class="chip-pill" onclick="askMobilePreset('scaffold a full-stack node express app')">💻 Code App</button>
+        <button class="chip-pill" onclick="askMobilePreset('show top processes')">⚡ Telemetry</button>
+      </div>
+
+      <div class="mobile-quick-card-grid" id="mobileQuickGrid" style="display:none;">
+        <div class="mobile-qcard" onclick="askMobilePreset('translate where is the bathroom to Spanish and Japanese')">
+          <div class="qcard-icon">🗣️</div>
+          <div class="qcard-title">Polyglot Matrix</div>
+          <div class="qcard-sub">10 World Languages</div>
+        </div>
+        <div class="mobile-qcard" onclick="askMobilePreset('compound interest on $5000 at 7% for 3 years')">
+          <div class="qcard-icon">💰</div>
+          <div class="qcard-title">Financial Math</div>
+          <div class="qcard-sub">Interest &amp; Amortization</div>
+        </div>
+        <div class="mobile-qcard" onclick="askMobilePreset('what time is it in Tokyo and London?')">
+          <div class="qcard-icon">⏱️</div>
+          <div class="qcard-title">World Clocks</div>
+          <div class="qcard-sub">Global UTC Timezones</div>
+        </div>
+        <div class="mobile-qcard" onclick="askMobilePreset('kinetic energy of 10kg at 5m/s')">
+          <div class="qcard-icon">🔬</div>
+          <div class="qcard-title">Physics Solver</div>
+          <div class="qcard-sub">Formulas &amp; Conversions</div>
+        </div>
+      </div>
+    </div>
 
     <div class="top-hud">
       <div class="hud-left-group">
@@ -532,9 +696,11 @@
           ✦ CLUMSY-7X Omni
         </div>
       </div>
-      <div style="display: flex; gap: 6px;">
-        <button class="hud-action-btn" onclick="pairBluetoothDevice()">🔵 Bluetooth</button>
-        <button class="hud-action-btn" id="btnInstallPwa" onclick="installMobileApp()">⬇ Install App</button>
+      <div style="display: flex; gap: 4px; align-items:center;">
+        <button class="mode-switch-btn active" id="btnModeOrb" onclick="setMobileMode('orb')">🎙️ Orb</button>
+        <button class="mode-switch-btn" id="btnModeEyes" onclick="setMobileMode('eyes')">👁️ Eyes</button>
+        <button class="mode-switch-btn" id="btnModeCards" onclick="setMobileMode('cards')">⚡ Cards</button>
+        <button class="hud-action-btn" onclick="pairBluetoothDevice()">🔵 BT</button>
       </div>
     </div>
 
@@ -598,6 +764,156 @@
       if (btn) btn.textContent = cap.classList.contains('expanded') ? '⤡ Compact' : '⤢ Expand';
     }
 
+    /**
+     * Stage 48: Mobile 3D Luminescent Voice Assistant Orb
+     * Inspired by Reference Design 3 (Glowing Voice Sphere with Chromatic Rim)
+     */
+    class MobileVoiceOrb {
+      constructor(canvasId) {
+        this.canvas = typeof canvasId === 'string' ? document.getElementById(canvasId) : canvasId;
+        if (!this.canvas) return;
+        this.ctx = this.canvas.getContext('2d');
+        this.energy = 0.35;
+        this.targetEnergy = 0.35;
+        this.time = 0;
+        this._render = this._render.bind(this);
+        requestAnimationFrame(this._render);
+      }
+      setEnergy(e) {
+        this.targetEnergy = Math.max(0.2, Math.min(1.2, Number(e) || 0.35));
+      }
+      pulse() {
+        this.energy = 1.0;
+      }
+      _render(now) {
+        if (!this.canvas) return;
+        this.energy += (this.targetEnergy - this.energy) * 0.1;
+        this.time = now * 0.0022;
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+        const ctx = this.ctx;
+        const cx = w / 2;
+        const cy = h / 2;
+        ctx.clearRect(0, 0, w, h);
+
+        const radius = Math.min(w, h) * 0.38;
+
+        // 1. Ambient Golden Amber Outer Waves
+        for (let i = 0; i < 3; i++) {
+          const rippleR = radius + (i * 22 + (this.time * 28) % 35) * (0.6 + this.energy * 0.6);
+          const alpha = Math.max(0, (1 - (rippleR - radius) / 70) * (0.15 + this.energy * 0.25));
+          ctx.beginPath();
+          ctx.arc(cx, cy, rippleR, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(245, 158, 11, ${alpha})`;
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+
+        // 2. Central Deep Cosmic Sphere
+        const voidGrad = ctx.createRadialGradient(cx, cy - radius * 0.2, radius * 0.1, cx, cy, radius);
+        voidGrad.addColorStop(0, '#1c1a2d');
+        voidGrad.addColorStop(0.5, '#0e0e18');
+        voidGrad.addColorStop(0.9, '#07070b');
+        voidGrad.addColorStop(1, '#000000');
+        ctx.fillStyle = voidGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 3. Chromatic Rim Lighting (Top: Sunset Amber / Orange, Bottom: Cyan / Electric Blue)
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, Math.PI * 0.88, Math.PI * 2.12);
+        ctx.strokeStyle = 'rgba(245, 158, 11, 0.95)';
+        ctx.lineWidth = 4 + this.energy * 3;
+        ctx.shadowColor = '#f59e0b';
+        ctx.shadowBlur = 24 * this.energy;
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, Math.PI * 1.12);
+        ctx.strokeStyle = 'rgba(0, 240, 255, 0.92)';
+        ctx.lineWidth = 3.5 + this.energy * 2.5;
+        ctx.shadowColor = '#00f0ff';
+        ctx.shadowBlur = 20 * this.energy;
+        ctx.stroke();
+        ctx.restore();
+
+        // 4. Horizon chromatic planetary ring
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(0.12);
+        ctx.beginPath();
+        ctx.ellipse(0, 0, radius * 1.08, radius * 0.42, 0, 0, Math.PI * 2);
+        const ringGrad = ctx.createLinearGradient(-radius, 0, radius, 0);
+        ringGrad.addColorStop(0, 'rgba(0, 240, 255, 0.7)');
+        ringGrad.addColorStop(0.5, 'rgba(168, 85, 247, 0.45)');
+        ringGrad.addColorStop(1, 'rgba(245, 158, 11, 0.85)');
+        ctx.strokeStyle = ringGrad;
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+        ctx.restore();
+
+        // 5. Specular highlight
+        const highlight = ctx.createRadialGradient(cx - radius * 0.35, cy - radius * 0.35, 2, cx - radius * 0.35, cy - radius * 0.35, radius * 0.5);
+        highlight.addColorStop(0, 'rgba(255, 255, 255, 0.55)');
+        highlight.addColorStop(0.4, 'rgba(245, 158, 11, 0.25)');
+        highlight.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = highlight;
+        ctx.beginPath();
+        ctx.arc(cx - radius * 0.35, cy - radius * 0.35, radius * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        requestAnimationFrame(this._render);
+      }
+    }
+
+    let mobileVoiceOrb = null;
+    try {
+      mobileVoiceOrb = new MobileVoiceOrb('mobileVoiceOrbCanvas');
+    } catch (_) {}
+
+    let currentMobileMode = 'orb'; // 'orb' | 'eyes' | 'cards'
+    function setMobileMode(mode) {
+      currentMobileMode = mode;
+      const bOrb = document.getElementById('btnModeOrb');
+      const bEyes = document.getElementById('btnModeEyes');
+      const bCards = document.getElementById('btnModeCards');
+      if (bOrb) bOrb.classList.toggle('active', mode === 'orb');
+      if (bEyes) bEyes.classList.toggle('active', mode === 'eyes');
+      if (bCards) bCards.classList.toggle('active', mode === 'cards');
+
+      const orbStage = document.getElementById('mobileOrbStage');
+      const eyeCanvas = document.getElementById('mobileEyeballCanvas');
+      const quickGrid = document.getElementById('mobileQuickGrid');
+      const orbCanvas = document.getElementById('mobileVoiceOrbCanvas');
+
+      if (mode === 'orb') {
+        if (orbStage) orbStage.classList.remove('hidden');
+        if (eyeCanvas) eyeCanvas.style.display = 'none';
+        if (orbCanvas) orbCanvas.style.display = 'block';
+        if (quickGrid) quickGrid.style.display = 'none';
+      } else if (mode === 'eyes') {
+        if (orbStage) orbStage.classList.add('hidden');
+        if (eyeCanvas) eyeCanvas.style.display = 'block';
+      } else if (mode === 'cards') {
+        if (orbStage) orbStage.classList.remove('hidden');
+        if (eyeCanvas) eyeCanvas.style.display = 'none';
+        if (orbCanvas) orbCanvas.style.display = 'none';
+        if (quickGrid) quickGrid.style.display = 'grid';
+      }
+      try { if (navigator.vibrate) navigator.vibrate(35); } catch (_) {}
+    }
+
+    function askMobilePreset(prompt) {
+      const input = document.getElementById('mobileQueryInput');
+      if (input) input.value = prompt;
+      sendMobileCommand();
+      try { if (navigator.vibrate) navigator.vibrate(40); } catch (_) {}
+    }
+
     function animateVoiceEq(energy) {
       const eq = document.getElementById('mobileVoiceEq');
       if (!eq) return;
@@ -616,12 +932,16 @@
     setInterval(() => {
       if (isSpeakingPhoneTTS) {
         animateVoiceEq(0.85);
+        if (mobileVoiceOrb) mobileVoiceOrb.setEnergy(0.95);
       } else if (latestInterimText) {
         animateVoiceEq(0.75);
+        if (mobileVoiceOrb) mobileVoiceOrb.setEnergy(0.85);
       } else if (streamMicEnabled && !isBotSleeping) {
         animateVoiceEq(0.18);
+        if (mobileVoiceOrb) mobileVoiceOrb.setEnergy(0.35);
       } else {
         animateVoiceEq(0.0);
+        if (mobileVoiceOrb) mobileVoiceOrb.setEnergy(0.2);
       }
     }, 110);
 
@@ -1520,6 +1840,56 @@
     if (window.clumsyBrain && typeof window.clumsyBrain.probeOfflineEngines === 'function') {
       window.clumsyBrain.probeOfflineEngines();
     }
+
+    // Stage 46 (Bug #152 Fix): Mobile PWA Touch Gestures & Haptic Feedback
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let lastTapTime = 0;
+    const eyeExpressions = ['happy', 'focused', 'excited', 'thinking', 'alert', 'sleepy', 'love', 'wink'];
+    let eyeExprIdx = 0;
+
+    window.addEventListener('touchstart', (e) => {
+      if (!e.touches || e.touches.length === 0) return;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      const now = Date.now();
+
+      // Double-tap gesture: toggle microphone dictation
+      if (now - lastTapTime < 320 && now - lastTapTime > 60) {
+        const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+        if (tag !== 'input' && tag !== 'button' && !e.target.closest('button') && !e.target.closest('input')) {
+          if (navigator.vibrate) navigator.vibrate([40, 60, 40]);
+          toggleStreamMic();
+          const cap = document.getElementById('jarvisVoiceCaption');
+          if (cap) cap.textContent = '🎙️ Double-Tap Gesture: Dictation Toggled';
+        }
+      }
+      lastTapTime = now;
+    }, { passive: true });
+
+    window.addEventListener('touchend', (e) => {
+      if (!e.changedTouches || e.changedTouches.length === 0) return;
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+
+      // Horizontal swipe threshold: 60px horizontal, less than 55px vertical
+      if (Math.abs(dx) > 60 && Math.abs(dy) < 55) {
+        if (currentMobileMode === 'orb') {
+          setMobileMode(dx > 0 ? 'cards' : 'eyes');
+        } else if (currentMobileMode === 'eyes') {
+          if (dx > 0) {
+            setMobileMode('orb');
+          } else {
+            eyeExprIdx = (eyeExprIdx + 1) % eyeExpressions.length;
+            const nextExpr = eyeExpressions[eyeExprIdx];
+            setMobileReaction(nextExpr, 90, 100);
+          }
+        } else if (currentMobileMode === 'cards') {
+          setMobileMode(dx > 0 ? 'eyes' : 'orb');
+        }
+        if (navigator.vibrate) navigator.vibrate(35);
+      }
+    }, { passive: true });
   </script>
 </body>
 </html>
