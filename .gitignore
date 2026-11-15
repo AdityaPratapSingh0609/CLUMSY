@@ -15,3 +15,5 @@ workspace_output/models_3d/
 workspace_output/fuzzer_js_results.json
 
 .vercel
+
+*.zip
